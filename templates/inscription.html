@@ -1,0 +1,50 @@
+{% extends "baseform.html" %}
+{% load static %}
+{% block title %}Niki - Inscription{% endblock %}
+{% block navform %}{% endblock %}
+{% block content %}
+
+<style type="text/css">
+		body > .grid {
+		height: 100%;
+	  	}
+</style>
+
+<div class="ui middle aligned center aligned grid">
+	<div class="column">
+    	<h2 class="ui blue header">
+			<img src="{% static "images/logocarre.png" %}" class="image">
+      		<div class="content">
+        	Inscription à Niki
+      		</div>
+    	</h2>
+    <form class="ui large fluid form" action ="{% url "inscription" %}" method="POST">
+		{% csrf_token %}
+      	<div class="ui stacked segment">
+			{% for field in form %}
+	        	{% if field.errors %}
+				<div class = "error field">
+				{% else %}
+				<div class = "field">
+				{% endif %}
+				{{ field }}
+				{% if field.errors %}
+					<div class = "ui pointing red basic label">
+						{% for error in field.errors %}
+							{{ error|title }}
+						{% endfor %}
+					</div>
+				{% endif %}
+        		</div>
+			{% endfor %}
+        	<button class = "ui fluid large blue submit button" type = "submit" value = "Submit">Soumettre</button>
+      	</div>
+    </form>
+
+	<div class="ui message">
+     Retour à la page de <a href="{% url "login" %}">connexion</a>
+    </div>
+
+  	</div>
+</div>
+{% endblock %}

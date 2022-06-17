@@ -1,0 +1,49 @@
+{% extends "baseform.html" %}
+{% load static %}
+{% block title %}Niki - Appareils{% endblock %}
+{% block formlinks %}
+<a class="item" href = "{% url "gestionconnexion" %}">
+	<i class="laptop icon"></i>
+	Appareils
+</a>
+{% endblock %}
+{% block content %}
+<div class="ui center aligned container">
+	<h2 class="ui blue center aligned header">
+  		<div class="content">
+    		Gestion des appareils
+  		</div>
+	</h2>
+	<div class="ui stacked segment">
+		{% if list %}
+		<table class = "ui celled padded table">
+			<thead>
+			<tr>
+				<th class = "center aligned single line">Nom de l'appareil</th>
+				<th class = "center aligned single line">Adresse MAC</th>
+				<th class = "center aligned single line">Statut</th>
+			<tr>
+			</thead>
+			{% for mac in list %}
+				<tr>
+					<td class = "center aligned single line">{{ mac.nom }}</td>
+					<td class = "center aligned single line">{{ mac.mac }}</td>
+					<td class = "center aligned single line">
+						{% if mac.accepted == 1 %}
+        					<i class="large green checkmark icon"></i>
+      					{% else %}
+        					<i class="large red close icon"></i>
+      					{% endif %}
+					</td>
+				</tr>
+			{% endfor %}
+		</table>
+		{% else %}
+			<p>Pas d'adresse enregistrée pour l'instant</p>
+		{% endif %}
+	</div>
+	<div class="ui message">
+     <a href="{% url "ajoutmac" %}">Ajouter un nouvel appareil</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "baseform.html" %}
+{% load static %}
+{% block title %}Niki - Gestion{% endblock %}
+{% block formlinks %}
+{% if utilisateur.has_cotiz %}	
+	<a class="item" href = "{% url "gestionconnexion" %}">
+		<i class="laptop icon"></i>
+		Appareils
+	</a>
+{% endif %}	
+{% endblock %}
+{% block content %}
+<div class="ui middle aligned center aligned grid">
+	<div class="column">
+		<h2 class="ui blue header">
+      		<div class="content">
+        		Gestion du compte
+      		</div>
+    	</h2>
+	    <form class="ui large fluid form" action ="{% url "gestioncompte" %}" method="POST">
+			{% csrf_token %}
+	      	<div class="ui stacked segment">
+				{% for field in form %}
+		        	{% if field.errors %}
+					<div class = "error field">
+					{% else %}
+					<div class = "field">
+					{% endif %}
+					{{ field.label_tag }}
+					{{ field }}
+					{% if field.errors %}
+						<div class = "ui pointing red basic label">
+							{% for error in field.errors %}
+								{{ error|title }}
+							{% endfor %}
+						</div>
+					{% endif %}
+	        		</div>
+				{% endfor %}
+			<button class = "ui blue fluid submit button" type = "submit" value = "Submit">Enregistrer les modifications</button>
+	    </form>
+	</div>
+	{% if not utilisateur.has_cotiz %}	
+		<div class = "ui message">
+			Ta cotisation n'est pas à jour. Contacte un membre de l'équipe !
+		</div>
+	{% endif %}	
+	</div>
+</div>
+{% endblock %}

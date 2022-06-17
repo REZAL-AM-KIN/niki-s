@@ -1,0 +1,46 @@
+{% extends "baseform.html" %}
+{% load static %}
+{% load project_tags %}
+{% block title %}Niki - Evènements{% endblock %}
+{% block content %}
+<div class="ui center aligned container">
+	<h2 class="ui blue center aligned header">
+  		<div class="content">
+    		Evènements ouverts
+  		</div>
+	</h2>
+	<div class="ui segment">
+		{% if list %}
+            <table class = "ui celled padded table">
+                <thead>
+                <tr>
+                    <th class = "center aligned single line">Titre</th>
+                    <th class = "center aligned single line">Description</th>
+                    <th class = "center aligned single line">Date</th>
+                    <th class = "center aligned single line">Inscription</th>
+                <tr>
+                </thead>
+                {% for event in list %}
+                    <tr>
+                        <td class = "center aligned single line">{{ event.titre }}</td>
+                        <td class = "center aligned single line">{{ event.description }}</td>
+                        <td class = "center aligned single line">{{ event.date_event }}</td>
+                        {% if not event in subscribed %}
+                        <td class = "center aligned single line"><a class = "ui blue button" href="{% url "subevent" event.pk 0 %}">Je m'inscris !</a></td>
+                        {% else %}
+                        <td class = "center aligned single line"><i class="large check circle green icon"></i></td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+            </table>
+		{% else %}
+			<p>Pas d'évènement ouvert pour l'instant</p>
+		{% endif %}
+        </div>
+    {% if perms.appevents.add_event %}
+    <div class="ui segment">
+        <a href="/admin">Créer un nouvel évènement</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

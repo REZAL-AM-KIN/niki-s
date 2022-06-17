@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="pusher">
+  	<div class="ui inverted vertical masthead center aligned segment">
+    	<div class="ui container">
+      		<div class="ui large secondary inverted pointing menu">
+        		<a class="toc item">
+          		<i class="sidebar icon"></i>
+        		</a>
+		        {% include "mainlinks.html" %}
+				{% if utilisateur.is_gadz %}
+					{% include "navbar_gadz.html" %}
+				{% elif utilisateur.is_conscrit %}
+					{% include "navbar_conscrit.html" %}
+				{% endif %}
+				{% if user.is_staff %}
+					{% include "navbar_staff.html" %}
+				{% endif %}
+	        	<div class="right item">
+					Bienvenue {{ user.first_name }}
+			        <a class="ui inverted button" href = "{% url "logout" %}">Déconnexion</a>
+	        	</div>
+      		</div>
+   		</div>
+
+    	<div class="ui text container">
+      		<h1 class="ui inverted header">
+        	Bienvenue sur Niki
+      		</h1>
+      		<h2>La nouvelle plateforme intranet de la résidence</h2>
+      		<a href = "{% url "gestioncompte" %}"><div class="ui huge primary button">Gérer mon compte <i class="right arrow icon"></i></div></a>
+    	</div>
+  	</div>
+	<div class="ui vertical stripe segment">
+    	<div class="ui middle aligned stackable grid container">
+      		<div class="row">
+        		<div class="eight wide column">
+					<h3 class="ui header">Qui sommes-nous ?</h3>
+	          		<p>AM REZAL KIN est une association loi 1901 dont le but est de gérer le réseau de la résidence James Chasseriaud d'Aix en Provence. Nous proposons entre autres un service d'accès internet. Le bureau de l'association est composé de membres bénévoles qui oeuvrent sur leur temps libre pour maintenir un service de qualité. Nous ne sommes en aucun cas un fournisseur d'accès à internet et nous ne pouvons être tenus responsables des déconnexions dues à nos propres fournisseurs d'accès.</p>
+					<h3 class="ui header">Documentation</h3>
+	          		<p>La documentation pour apprendre à gérer ses paramètres de compte et sa connexion internet est accessible sur notre espace dédié Confluence.</p>
+	          	</div>
+        		<div class="six wide right floated column">
+          			<img src="{% static "images/logocourt.png" %}" class="ui large rounded image">
+        		</div>
+      		</div>
+      		<div class="row">
+        		<div class="center aligned column">
+          			<a class="ui huge button" href = "http://confluence.rezal.fr">Documentation</a>
+        		</div>
+      		</div>
+    	</div>
+  	</div>
+</div>
+
+{% endblock %}

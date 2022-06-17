@@ -1,0 +1,33 @@
+<div class="ui large top fixed hidden menu">
+	<div class="ui container">
+		{% include "mainlinks.html" %}
+		{% if utilisateur.is_gadz %}
+			{% include "navbar_gadz.html" %}
+		{% endif %}
+		{% if utilisateur.is_conscrit %}
+			{% include "navbar_conscrit.html" %}
+		{% endif %}
+		{% if user.is_staff %}
+			{% include "navbar_staff.html" %}
+		{% endif %}
+	    <div class="right menu">
+	      	<div class="item">
+	        	<a class="ui primary button" href = "{% url "logout" %}">Déconnexion</a>
+	      	</div>
+	    </div>
+	</div>
+</div>
+
+<div class="ui vertical inverted sidebar menu">
+	{% include "mainlinks.html" %}
+	{% if utilisateur.is_gadz %}
+		{% include "navbar_gadz.html" %}
+	{% endif %}
+	{% if utilisateur.is_conscrit %}
+		{% include "navbar_conscrit.html" %}
+	{% endif %}
+	{% if user.is_staff %}
+		{% include "navbar_staff.html" %}
+	{% endif %}
+	<a class="item" href = "{% url "logout" %}">Déconnexion</a>
+</div>

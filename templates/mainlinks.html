@@ -1,0 +1,5 @@
+<a class="item" href="{% url "index" %}">Accueil</a>
+
+{% if consommateur.activated %}
+    <a class="item" href="{% url "listevents" %}">Evènements</a>
+{% endif %}

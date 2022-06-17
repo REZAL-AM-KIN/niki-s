@@ -1,0 +1,49 @@
+{% extends "baseform.html" %}
+{% load static %}
+{% block title %}Niki - Administration{% endblock %}
+{% block content %}
+<div class = "ui container">
+	<div class = "ui cards">
+	<a class="ui blue card" href = "/admin">
+	  	<div class="content">
+	    	<i class="right floated cogs icon"></i>
+	    	<div class="header">Administration générale</div>
+    		<div class="description">
+      			<p>Site d'administration de Django pour toute la gestion</p>
+    		</div>
+ 		</div>
+	</a>
+	
+	<a class="ui blue card" href = "{% url "gestiondemandemac" %}">
+	  	<div class="content">
+	    	<i class="right floated check icon"></i>
+	    	<div class="header">Validation MAC</div>
+    		<div class="description">
+      			<p>Page d'administration spécifique pour la gestion des demandes d'adresses MAC complémentaires</p>
+    		</div>
+ 		</div>
+	</a>
+
+	<a class="ui blue card" href = "/api/">
+		<div class="content">
+		  <i class="right floated exchange icon"></i>
+		  <div class="header">API</div>
+		  <div class="description">
+				<p>Page de test disponible pour l'API</p>
+		  </div>
+	   </div>
+   	</a>
+	</div>
+
+	<a class="ui blue card" href = "/api-docs">
+		<div class="content">
+		  <i class="right floated book icon"></i>
+		  <div class="header">Manuel API</div>
+		  <div class="description">
+				<p>Description autogénérée de l'API</p>
+		  </div>
+	   </div>
+   	</a>
+	</div>
+</div>
+{% endblock %}

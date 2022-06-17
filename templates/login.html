@@ -1,0 +1,47 @@
+{% extends "baseform.html" %}
+{% load static %}
+{% block title %}Niki - Login{% endblock %}
+{% block navform %}{% endblock %}
+{% block content %}
+
+<style type="text/css">
+		body > .grid {
+		height: 100%;
+	  	}
+</style>
+
+<div class="ui middle aligned center aligned grid">
+	<div class="column">
+    	<h2 class="ui blue image header">
+      		<img src="{% static "images/logocarre.png" %}" class="image">
+      		<div class="content">
+        	Connexion à Niki
+      		</div>
+    	</h2>
+    <form class="ui large form" action ="{% url "login" %}" method="POST">
+		{% csrf_token %}
+      	<div class="ui stacked segment">
+        	<div class="field">
+          		<div class="ui left icon input">
+            		<i class="user icon"></i>
+					{{ form.user }}
+          		</div>
+        	</div>
+        	<div class="field">
+          		<div class="ui left icon input">
+            		<i class="lock icon"></i>
+            		{{ form.password }}
+          		</div>
+        	</div>
+			<button class = "ui fluid large blue submit button" type = "submit" value = "Submit">Connexion</button>
+      	</div>
+    </form>
+		<div class = "ui message">
+		Mot de passe oublié ? <a href="{% url "password_reset" %}">Clique ici !</a>
+		</div>
+	    <div class="ui message">
+	     Nouveau parmi nous ? <a href="{% url "inscription" %}">Inscription</a>
+	    </div>
+  	</div>
+</div>
+{% endblock %}
