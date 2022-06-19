@@ -13,8 +13,8 @@ from appuser.models import Utilisateur
 
 class Consommateur(models.Model):
     consommateur = models.ForeignKey("appuser.Utilisateur", on_delete=CASCADE)
-    solde = models.DecimalField(max_digits=5, decimal_places=2, default=0)
-    totaldep = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    solde = models.DecimalField(max_digits=5, decimal_places=2, default=0, editable=False)
+    totaldep = models.DecimalField(max_digits=5, decimal_places=2, default=0, editable=False)
     activated=models.BooleanField(default=True)
 
     def __str__(self):
