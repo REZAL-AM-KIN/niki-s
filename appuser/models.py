@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from datetime import date
-from dateutil.relativedelta import relativedelta
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -23,7 +22,7 @@ class Utilisateur(User):
     is_gadz = models.BooleanField(default=False)
     is_conscrit = models.BooleanField(default=False)
     has_cotiz = models.BooleanField(default=False)
-    date_expiration = models.DateField(blank=True, editable=False)
+    date_expiration = models.DateField(blank=True, null=True)
 
     def __unicode__(self):
         return self.username
@@ -45,12 +44,8 @@ class Utilisateur(User):
                 if LdapUser.objects.filter(full_name=self.username).count() == 1:
                     ldapuser_to_delete=LdapUser.objects.get(full_name=self.username)
                     ldapuser_to_delete.delete()
-        if self.has_cotiz==True:
-            date_expiration_to_set=date.today() + relativedelta(years=1)
-            if self.date_expiration is None or self.date_expiration < date_expiration_to_set:
-                self.date_expiration=date_expiration_to_set
-        else:
-            self.date_expiration=date.today()
+        if self.date_expiration == "" and self.has_cotiz == True:
+            self.date_expiration = date.today
         super(Utilisateur, self).save(*args, **kwargs)
 
 class LdapUser(ldapdb.models.Model):

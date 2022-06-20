@@ -22,8 +22,8 @@ class AdminUtilisateur(admin.ModelAdmin):
         "has_cotiz",
         "is_staff",
         "is_superuser",
-        "date_expiration"
     )
+
 
 admin.site.register(Utilisateur, AdminUtilisateur)
 admin.site.unregister(User)
