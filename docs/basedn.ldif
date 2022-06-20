@@ -1,0 +1,7 @@
+dn: ou=groups,dc=rezal,dc=fr
+objectClass: organizationalUnit
+ou: groups
+
+dn: ou=users,dc=rezal,dc=fr
+objectClass: organizationalUnit
+ou: users

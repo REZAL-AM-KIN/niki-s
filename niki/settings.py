@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 
 import os
 from pathlib import Path
+import ldap
 
 from django.conf.global_settings import LOGOUT_REDIRECT_URL
 
@@ -26,6 +27,8 @@ SECRET_KEY = "!k#$kliodbhcw1wfardw9ua5241c+-_csaao&sv_x2)70*xxf&"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+LOCALDB = True
+WITHLDAP = True
 
 ALLOWED_HOSTS = []
 
@@ -44,6 +47,7 @@ INSTALLED_APPS = [
     "appevents",
     "rest_framework",
     "api",
+    "ldapdb",
 ]
 
 MIDDLEWARE = [
@@ -86,13 +90,37 @@ WSGI_APPLICATION = "niki.wsgi.application"
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
 DATABASES = {
+    "ldap": {
+        'ENGINE': 'ldapdb.backends.ldap',
+        'NAME': 'ldap://localhost',
+        'USER': 'cn=admin,dc=rezal,dc=fr',
+        'PASSWORD': 'lenwe',
+        # 'TLS': True,
+        'CONNECTION_OPTIONS': {
+            ldap.OPT_X_TLS_DEMAND: True,
+        }
+    },
+#    "default": {
+#        'NAME': 'niki',
+#        'ENGINE': 'django.db.backends.mysql',
+#        'USER': 'username',
+#        'PASSWORD': 'password',
+#        'HOST':'addr',
+#    },
+#    "radcheck": {
+#        'NAME': 'radius',
+#        'ENGINE': 'django.db.backends.mysql',
+#        'USER': 'username',
+#        'PASSWORD': 'password',
+#        'HOST':'addr',
+#    },
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
-DATABASE_ROUTERS = ["niki.dbrouter.dbrouter"]
+DATABASE_ROUTERS = ["niki.dbrouter.dbrouter","ldapdb.router.Router"]
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
@@ -144,5 +172,3 @@ EMAIL_PORT = ""
 EMAIL_USE_TLS = ""
 DEFAULT_FROM_EMAIL = ""
 SERVER_EMAIL = ""
-
-LOCALDB = True
