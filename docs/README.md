@@ -10,10 +10,12 @@
   - [Appkfet](#appkfet)
     - [Models](#models-2)
     - [Fonctions pertinentes](#fonctions-pertinentes-1)
+    - [Admin](#admin)
   - [Appevents](#appevents)
     - [Views](#views-2)
     - [Models](#models-3)
     - [Fonctions pertinentes](#fonctions-pertinentes-2)
+    - [Admin](#admin-1)
 - [API](#api)
   - [Installation](#installation)
   - [Conception de l'API](#conception-de-lapi)
@@ -22,7 +24,14 @@
     - [Recharge](#recharge)
     - [Bucquage](#bucquage)
 - [Spécifications techniques supplémentaires](#spécifications-techniques-supplémentaires)
+  - [Installation](#installation-1)
+    - [En dev](#en-dev)
+    - [Développer avec VSCode](#développer-avec-vscode)
+    - [En prod](#en-prod)
   - [Decorators](#decorators)
+  - [Template tags](#template-tags)
+  - [Templates](#templates)
+  - [LDAP](#ldap)
   - [Mails](#mails)
 
 # Objectifs
@@ -109,7 +118,7 @@ Un routeur de base de données `Authrouter.py` est utilisé pour communiquer ave
 
 ### Models
 
-- radcheck - réplication de la table radcheck de la base Radius
+- radcheck - réplication de la table radcheck de la base Radius. Cette table restera toujours vide grâce au routeur de BDD
 - Device
   - La fonction save a été surchargée pour interagir avec Radius
   - La fonction delete a été surchargée pour interagir avec Radius
@@ -121,7 +130,7 @@ Le modèle `Consommateur` est directement lié à un utilisateur du Rezal (modè
 fonctions `credit` et `debit`, permettant de créditer et débiter le compte de l'utilisateur. Le débit ne fonctionne **
 QUE** si l'utilisateur a un solde supérieur ou égal à la valeur débitée.
 
-Il existe un champ permettant de visualiser le cumuler de sa consommation.
+Il existe un champ permettant de visualiser le cumulé de sa consommation.
 
 L'entité d'un produit dépend des groupes existants dans la solution.
 
@@ -145,6 +154,8 @@ Fonctionnellement :
 
 - has_consommateur : renvoie `True` si l'utilisateur à un consommateur associé
 
+### Admin
+
 ## Appevents
 
 Blabla
@@ -158,6 +169,10 @@ Blabla
 Blabla
 
 ### Fonctions pertinentes
+
+Blabla
+
+### Admin
 
 Blabla
 
@@ -199,11 +214,33 @@ l'utilisateur: `appkefet | recharge | can add recharge`
 
 # Spécifications techniques supplémentaires
 
+## Installation
+
+### En dev
+
+### Développer avec VSCode
+
+### En prod
+
+Blabla
+
 ## Decorators
 
 Ils permettent de restreindre les accès aux pages en fonction des droits et des attributs sur le modèle `User`. A
 ajouter juste avant une vue pour limiter son accès. Ils sont cumulables. On retiendra notamment les
 décorateurs `@login_required` et `@user_passes_test`.
+
+## Template tags
+
+extra_filters
+
+## Templates
+
+Blabla
+
+## LDAP
+
+Blabla
 
 ## Mails
 
