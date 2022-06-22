@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from http.client import HTTPResponse
+from django.http import HTTPResponse
 from django.shortcuts import render
 from appevents.models import Event, Product_event, Participation_event
 from appkfet.views import has_consommateur
