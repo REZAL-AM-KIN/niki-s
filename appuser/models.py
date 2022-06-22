@@ -33,7 +33,7 @@ class Utilisateur(User):
         salt = os.urandom(4)
         h = hashlib.sha1(password.encode('utf-8'))
         h.update(salt)
-        self.ldap_password = base64.b64encode(h.digest() + salt)
+        self.ldap_password = base64.b64encode(h.digest() + salt).strip().decode('utf-8')
 
     def __unicode__(self):
         return self.username
@@ -49,7 +49,7 @@ class Utilisateur(User):
                     ldapuser_to_modify.password=self.password
                     ldapuser_to_modify.save(force_update=True)
                 else:
-                    ldapuser_to_save=LdapUser(full_name=self.username, email=self.email, first_name=self.first_name, last_name=self.last_name, password=self.password)
+                    ldapuser_to_save=LdapUser(full_name=self.username, email=self.email, first_name=self.first_name, last_name=self.last_name, password=self.ldap_password)
                     ldapuser_to_save.save()
             else:
                 if LdapUser.objects.filter(full_name=self.username).count() == 1:
