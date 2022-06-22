@@ -88,6 +88,6 @@ def exportparticipation(request, event):
     query_to_export=Participation_event.objects.filter(product_participation__parent_event=event)
     writer.writerow(['ID Participation','Username','Nom','Prénom','Produit','Quantité','Participation OK'])
     for line in query_to_export:
-        output.append([line.pk, line.cible_participation.consommateur.username, line.cible_participation.consommateur.last_name, line.cible_participation.consommateur.first_name, line.product_participation.nom, line.number, line.participation_OK])
+        output.append([line.pk, line.cible_participation.consommateur.username, line.cible_participation.consommateur.last_name, line.cible_participation.consommateur.first_name, line.product_participation.nom, line.number, line.participation_ok])
     writer.writerows(output)
     return response
