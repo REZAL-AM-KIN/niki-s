@@ -81,7 +81,7 @@ def subproductevent(request, step, product_to_sub):
         return render(request, "appevents/event.html", {"form": form, "step":step, "product_to_sub_instance":product_to_sub_instance})
 
 @login_required
-def exportparticipation(event):
+def exportparticipation(request, event):
     output=[]
     response=HTTPResponse(content_type='text/csv')
     writer=csv.writer(response)
