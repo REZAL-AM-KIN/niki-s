@@ -84,6 +84,7 @@ def subproductevent(request, step, product_to_sub):
 def exportparticipation(request, event):
     output=[]
     response=HttpResponse(content_type='text/csv')
+    response.write(u'\ufeff'.encode('utf8'))
     writer=csv.writer(response)
     query_to_export=Participation_event.objects.filter(product_participation__parent_event=event)
     writer.writerow(['ID Participation','Username','Nom','Prénom','Produit','Quantité','Participation OK'])
