@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from datetime import date
+import os
+import hashlib
+import base64
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -23,6 +26,14 @@ class Utilisateur(User):
     is_conscrit = models.BooleanField(default=False)
     has_cotiz = models.BooleanField(default=False)
     date_expiration = models.DateField(blank=True, null=True)
+    ldap_password=models.CharField(blank=True)
+
+    def set_password(self, password):
+        super(Utilisateur, self).set_password(password)
+        salt = os.urandom(4)
+        h = hashlib.sha1(password)
+        h.update(salt)
+        self.ldap_password = base64.b64encode(h.digest() + salt)
 
     def __unicode__(self):
         return self.username
