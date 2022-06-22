@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from django.http import HTTPResponse
+from django.http import HttpResponse
 from django.shortcuts import render
 from appevents.models import Event, Product_event, Participation_event
 from appkfet.views import has_consommateur
@@ -83,7 +83,7 @@ def subproductevent(request, step, product_to_sub):
 @login_required
 def exportparticipation(request, event):
     output=[]
-    response=HTTPResponse(content_type='text/csv')
+    response=HttpResponse(content_type='text/csv')
     writer=csv.writer(response)
     query_to_export=Participation_event.objects.filter(product_participation__parent_event=event)
     writer.writerow(['ID Participation','Username','Nom','Prénom','Produit','Quantité','Participation OK'])
