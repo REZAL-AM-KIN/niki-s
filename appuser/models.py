@@ -26,7 +26,7 @@ class Utilisateur(User):
     is_conscrit = models.BooleanField(default=False)
     has_cotiz = models.BooleanField(default=False)
     date_expiration = models.DateField(blank=True, null=True)
-    ldap_password=models.CharField(blank=True)
+    ldap_password=models.CharField(max_length=200, blank=True)
 
     def set_password(self, password):
         super(Utilisateur, self).set_password(password)
