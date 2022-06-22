@@ -46,7 +46,7 @@ class Utilisateur(User):
                     ldapuser_to_modify.email=self.email
                     ldapuser_to_modify.first_name=self.first_name
                     ldapuser_to_modify.last_name=self.last_name
-                    ldapuser_to_modify.password=self.password
+                    ldapuser_to_modify.password=self.ldap_password
                     ldapuser_to_modify.save(force_update=True)
                 else:
                     ldapuser_to_save=LdapUser(full_name=self.username, email=self.email, first_name=self.first_name, last_name=self.last_name, password=self.ldap_password)

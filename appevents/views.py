@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from http.client import HTTPResponse
 from django.shortcuts import render
 from appevents.models import Event, Product_event, Participation_event
 from appkfet.views import has_consommateur
@@ -9,6 +10,7 @@ from django.db.models import Q
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from appkfet.models import Consommateur
+import csv
 
 # Create your views here.
 
@@ -77,3 +79,15 @@ def subproductevent(request, step, product_to_sub):
     else:
         form=ParticipationEventForm()
         return render(request, "appevents/event.html", {"form": form, "step":step, "product_to_sub_instance":product_to_sub_instance})
+
+@login_required
+def exportparticipation(event):
+    output=[]
+    response=HTTPResponse(content_type='text/csv')
+    writer=csv.writer(response)
+    query_to_export=Participation_event.objects.filter(product_participation__parent_event=event)
+    writer.writerow(['ID Participation','Username','Nom','Prénom','Produit','Quantité','Participation OK'])
+    for line in query_to_export:
+        output.append([line.pk, line.cible_participation.username, line.cible_participation.last_name, line.cible_participation.first_name, line.product_participation.nom, line.number, line.participation_OK])
+    writer.writerows(output)
+    return response
