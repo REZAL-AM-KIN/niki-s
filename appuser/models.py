@@ -7,8 +7,7 @@ from django.db import models
 from niki.settings import WITHLDAP
 if WITHLDAP:
     import ldapdb.models
-    from ldapdb.models import fields
-    from ldapdb.models import (PasswordField, CharField, DateTimeField)  
+    from ldapdb.models.fields import (PasswordField, CharField, DateTimeField)  
 
 
 # Create your models here.
