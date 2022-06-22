@@ -62,7 +62,7 @@ class LdapUser(ldapdb.models.Model):
     last_name = fields.CharField("Final name", db_column='sn')
     full_name = fields.CharField(db_column='cn', primary_key=True)
     email = fields.CharField(db_column='mail')
-    password = fields.CharField(db_column='userPassword')
+    password = fields.PasswordField(db_column='userPassword')
 
     def __str__(self):
         return self.first_name
