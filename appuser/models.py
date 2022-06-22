@@ -8,6 +8,7 @@ from niki.settings import WITHLDAP
 if WITHLDAP:
     import ldapdb.models
     from ldapdb.models import fields
+    from ldapdb.models import (PasswordField, CharField, DateTimeField)  
 
 
 # Create your models here.
@@ -55,14 +56,14 @@ class LdapUser(ldapdb.models.Model):
     # LDAP meta-data
     base_dn = "ou=users,dc=rezal,dc=fr"
     object_classes = ['inetOrgPerson']
-    last_modified = fields.DateTimeField(db_column='modifyTimestamp', editable=False)
+    last_modified = DateTimeField(db_column='modifyTimestamp', editable=False)
 
     # inetOrgPerson
-    first_name = fields.CharField(db_column='givenName', verbose_name="Prime name")
-    last_name = fields.CharField("Final name", db_column='sn')
-    full_name = fields.CharField(db_column='cn', primary_key=True)
-    email = fields.CharField(db_column='mail')
-    password = fields.PasswordField()
+    first_name = CharField(db_column='givenName', verbose_name="Prime name")
+    last_name = CharField("Final name", db_column='sn')
+    full_name = CharField(db_column='cn', primary_key=True)
+    email = CharField(db_column='mail')
+    password = PasswordField(db_column='userPassword')
 
     def __str__(self):
         return self.first_name
