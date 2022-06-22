@@ -11,6 +11,7 @@ class Event(models.Model):
     cansubscribe=models.BooleanField(default=True, verbose_name="Ouvert à l'inscription")
     date_event=models.DateTimeField()
     created_by=models.ForeignKey(User, on_delete=CASCADE, editable=False, verbose_name="Créé par")
+    ended=models.BooleanField(default=False)
 
     def __str__(self):
        return self.titre + " - " + str(self.date_event)
@@ -32,6 +33,7 @@ class Participation_event(models.Model):
     product_participation=models.ForeignKey("Product_event", on_delete=CASCADE)
     number=models.IntegerField(default=1, verbose_name="Quantité")
     participation_ok=models.BooleanField(default=False)
+    participation_bucquee=models.BooleanField(default=False)
 
     def __unicode__(self):
         return self.pk

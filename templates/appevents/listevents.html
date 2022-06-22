@@ -42,5 +42,10 @@
         <a href="/admin">Créer un nouvel évènement</a>
     </div>
     {% endif %}
+    {% if perms.appkfet.add_bucquage %}
+    <div class="ui segment">
+        <a href="{% url "listeventstobucque" %}">Bucquer un évènement</a>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

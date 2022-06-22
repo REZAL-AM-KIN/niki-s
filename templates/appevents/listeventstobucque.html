@@ -1,0 +1,39 @@
+{% extends "baseform.html" %}
+{% load static %}
+{% load project_tags %}
+{% block title %}Niki - Evènements{% endblock %}
+{% block content %}
+<div class="ui center aligned container">
+	<h2 class="ui blue center aligned header">
+  		<div class="content">
+    		Evènements à bucquer
+  		</div>
+	</h2>
+	<div class="ui segment">
+		{% if list %}
+            <table class = "ui celled padded table">
+                <thead>
+                <tr>
+                    <th class = "center aligned single line">Titre</th>
+                    <th class = "center aligned single line">Auteur évènement</th>
+                    <th class = "center aligned single line">Date évènement</th>
+                    <th class = "center aligned single line">Export participation</th>
+                    <th class = "center aligned single line">Bucquage</th>
+                <tr>
+                </thead>
+                {% for event in list %}
+                    <tr>
+                        <td class = "center aligned single line">{{ event.titre }}</td>
+                        <td class = "center aligned single line">{{ event.created_by }}</td>
+                        <td class = "center aligned single line">{{ event.date_event }}</td>
+                        <td class = "center aligned single line">EXPORT</td>
+                        <td class = "center aligned single line">BUCQUAGE</td>
+                    </tr>
+                {% endfor %}
+            </table>
+		{% else %}
+			<p>Pas d'évènement à bucquer pour l'instant</p>
+		{% endif %}
+        </div>
+</div>
+{% endblock %}

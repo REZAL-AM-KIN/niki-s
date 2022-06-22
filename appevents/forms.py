@@ -8,3 +8,6 @@ class ParticipationEventForm(forms.ModelForm):
     class Meta:
         model = Participation_event
         fields = ["number"]
+
+class BucqueEventForm(forms.Form):
+    file=forms.FileField()

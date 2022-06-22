@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from appevents.models import Event, Product_event, Participation_event
 from appkfet.views import has_consommateur
-from .forms import ParticipationEventForm
+from .forms import BucqueEventForm, ParticipationEventForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Q
 from django.shortcuts import render, redirect
@@ -87,8 +87,24 @@ def exportparticipation(request, event):
     response.write(u'\ufeff'.encode('utf8'))
     writer=csv.writer(response)
     query_to_export=Participation_event.objects.filter(product_participation__parent_event=event)
-    writer.writerow(['ID Participation','Username','Nom','Prénom','Produit','Quantité','Participation OK'])
+    writer.writerow(['ID Participation','Username','Nom','Prénom','Produit','Quantité','Participation OK','Participation bucquée'])
     for line in query_to_export:
-        output.append([line.pk, line.cible_participation.consommateur.username, line.cible_participation.consommateur.last_name, line.cible_participation.consommateur.first_name, line.product_participation.nom, line.number, line.participation_ok])
+        output.append([line.pk, line.cible_participation.consommateur.username, line.cible_participation.consommateur.last_name, line.cible_participation.consommateur.first_name, line.product_participation.nom, line.number, line.participation_ok, line.participation_bucquee])
     writer.writerows(output)
     return response
+
+@login_required
+#@user_passes_test(lambda u: u.has_perm('appkfet.can_add_bucquage') or u.has_perm('sites.can_view_mgmt')
+def listeventstobucque(request):
+    list_of_event_to_bucque=Event.objects.filter(ended=False)
+    return render(request, "appevent/listeventstobucque.html", {'list':list_of_event_to_bucque})
+
+@login_required
+def eventtobucque(request, event):
+    if request.method=="POST":
+        form=BucqueEventForm(request.POST)
+
+    else:
+        form=BucqueEventForm()
+    return render(request, "appevent/eventtobucque.html", {'form':form})
+    
