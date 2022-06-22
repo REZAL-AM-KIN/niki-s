@@ -94,7 +94,7 @@ def exportparticipation(request, event):
     return response
 
 @login_required
-#@user_passes_test(lambda u: u.has_perm('appkfet.can_add_bucquage') or u.has_perm('sites.can_view_mgmt')
+@user_passes_test(lambda u: u.has_perm('appkfet.can_add_event'))
 def listeventstobucque(request):
     list_of_event_to_bucque=Event.objects.filter(ended=False)
     return render(request, "appevents/listeventstobucque.html", {'list':list_of_event_to_bucque})
