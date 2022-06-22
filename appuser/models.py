@@ -31,7 +31,7 @@ class Utilisateur(User):
     def set_password(self, password):
         super(Utilisateur, self).set_password(password)
         salt = os.urandom(4)
-        h = hashlib.sha1(password)
+        h = hashlib.sha1(password.encode('utf-8'))
         h.update(salt)
         self.ldap_password = base64.b64encode(h.digest() + salt)
 
