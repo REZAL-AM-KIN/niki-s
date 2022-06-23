@@ -11,7 +11,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from appkfet.models import Consommateur
 import csv
-import re
+import xlwt
 
 # Create your views here.
 
@@ -82,7 +82,7 @@ def subproductevent(request, step, product_to_sub):
         return render(request, "appevents/event.html", {"form": form, "step":step, "product_to_sub_instance":product_to_sub_instance})
 
 @login_required
-def exportparticipation(request, event):
+def exportparticipationincsv(request, event):
     output=[]
     response=HttpResponse(content_type='text/csv')
     response.write(u'\ufeff'.encode('utf8'))
@@ -92,6 +92,32 @@ def exportparticipation(request, event):
     for line in query_to_export:
         output.append([line.pk, line.cible_participation.consommateur.username, line.cible_participation.consommateur.last_name, line.cible_participation.consommateur.first_name, line.product_participation.pk, line.product_participation.nom, line.number, line.participation_ok, line.participation_bucquee])
     writer.writerows(output)
+    return response
+
+@login_required
+def exportparticipationinxls(request,event):
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="participation.xls"'
+    wb = xlwt.Workbook(encoding='utf-8')
+    ws = wb.add_sheet('Event')
+    
+    # Sheet header, first row
+    row_num = 0
+    font_style = xlwt.XFStyle()
+    font_style.font.bold = True
+    columns =['ID Participation','Username','Nom','Prénom','ID Produit','Produit','Quantité','Participation OK','Participation bucquée']
+    for col_num in range(len(columns)):
+        ws.write(row_num, col_num, columns[col_num], font_style)
+
+    # Sheet body, remaining rows
+    font_style = xlwt.XFStyle()
+    query_to_export=Participation_event.objects.filter(product_participation__parent_event=event).values_list('pk', 'cible_participation.consommateur.username', 'cible_participation.consommateur.last_name', 'cible_participation.consommateur.first_name','product_participation.pk', 'product_participation.nom', 'number', 'participation_ok', 'participation_bucquee')
+    for row in query_to_export:
+        row_num += 1
+        for col_num in range(len(row)):
+            ws.write(row_num, col_num, row[col_num], font_style)
+
+    wb.save(response)
     return response
 
 @login_required

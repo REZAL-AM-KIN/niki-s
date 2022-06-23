@@ -8,7 +8,7 @@ urlpatterns = [
     path("listevents/", views.listevents, name="listevents"),
     path("subevent/<params>/<step>", views.subevent, name="subevent"),
     path("subproductevent/<step>/<product_to_sub>", views.subproductevent, name="subproductevent"),
-    path("exportparticipation/<event>", views.exportparticipation, name="exportparticipation"),
+    path("exportparticipationincsv/<event>", views.exportparticipationincsv, name="exportparticipationincsv"),
     path("listeventstobucque", views.listeventstobucque, name="listeventstobucque"),
     path("eventtobucque/<event>", views.eventtobucque, name="eventtobucque")
 ]

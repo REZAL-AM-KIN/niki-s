@@ -218,13 +218,28 @@ l'utilisateur: `appkefet | recharge | can add recharge`
 
 ### En dev
 
-Pour tester l'intégralité des fonctionnalités de l'application, à savoir le ldap, il est recommandé de la faire fonctionner sous linux.
+Pour tester l'intégralité des fonctionnalités de l'application, à savoir le ldap, il est recommandé de la faire fonctionner sous linux. En effet, la librairie python permettant d'intéragir avec le LDAP ne fonctionne que sous Linux.
+
+Paquets à installer sur la machine :
 
 `sudo apt-get install git gpg python3 python3-pip ssh python3.10-venv libsasl2-dev libldap2-dev libssl-dev ldap-utils`
 
-En effet, la librairie python permettant d'intéragir avec le LDAP ne fonctionne que sous Linux.
+Lancement de l'application : 
 
-Dans le cas où vous n'avez pas de machine linux sous la main, il est tout à fait possible de désactiver le module LDAP avec le paramètre `WITHLDAP` dans `settings.py`. Il faudra de plus commenter les parties de code qui intègre le module. Il ne sera pas nécessaire d'installer la dernière ligne de requirements.txt qui correspond à une customisation du packet django-ldapdb pour le rézal. 
+`pip install -r requirements.txt`
+
+`python3 manage.py makemigrations`
+
+`python3 manage.py migrate`
+
+`python3 manage.py createsuperuser`
+
+`python3 manage.py runserver 0.0.0.0:8000`
+
+Dans le cas où vous n'avez pas de machine linux sous la main, il est tout à fait possible de désactiver le module LDAP avec le paramètre `WITHLDAP` dans `settings.py`. Il faudra de plus commenter les parties de code qui intègre le module. Il ne sera pas nécessaire d'installer la dernière ligne de requirements.txt qui correspond à une customisation du packet django-ldapdb pour le rézal et django-4. 
+
+Une fois les commandes lancées avec succès, il est possible se connecter sur http://ipdelamachine:8000. 
+Arrivé sur la page d'accueil, créer un utilisateur via le formulaire d'inscription. Se connecter ensuite avec le compte admin créé au dessus et configurer le nouveau compte pour être superuser et staff. Il ne faudra plus se connecter avec le compte admin par la suite. En effet, le compte admin n'est que instance du modèle User et pas du modèle Utilisateur dérivé.
 
 ### Développer avec VSCode
 
