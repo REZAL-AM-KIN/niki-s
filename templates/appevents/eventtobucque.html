@@ -9,7 +9,7 @@
 {% endblock %}
 {% block content %}
 <div class="ui center aligned container">
-    <form class="ui large fluid form" action ="{% url "eventtobucque" event %}" method="POST">
+    <form class="ui large fluid form" action ="{% url "eventtobucque" {{ event }} %}" method="POST">
 		{% csrf_token %}
 		<div class="ui stacked segment">
 		{% for field in form %}
