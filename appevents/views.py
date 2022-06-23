@@ -116,7 +116,7 @@ def eventtobucque(request, event):
     
 def manageparticipationfile(file,event):
     error=0
-    file_data = file.read().decode("utf-8")
+    file_data = file.read()
     rows = file_data.split("\n")
     for row in rows: #pour chaque ligne du fichier
         if row[0] != 'ID Participation': #on saute la première ligne de headers
