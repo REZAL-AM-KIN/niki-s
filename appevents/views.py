@@ -111,7 +111,7 @@ def exportparticipationinxls(request,event):
 
     # Sheet body, remaining rows
     font_style = xlwt.XFStyle()
-    query_to_export=Participation_event.objects.filter(product_participation__parent_event=event).values_list('pk', 'cible_participation.consommateur.username', 'cible_participation.consommateur.last_name', 'cible_participation.consommateur.first_name','product_participation.pk', 'product_participation.nom', 'number', 'participation_ok', 'participation_bucquee')
+    query_to_export=Participation_event.objects.filter(product_participation__parent_event=event).values_list('pk', 'cible_participation__consommateur__username', 'cible_participation__consommateur__last_name', 'cible_participation__consommateur__first_name','product_participation__pk', 'product_participation__nom', 'number', 'participation_ok', 'participation_bucquee')
     for row in query_to_export:
         row_num += 1
         for col_num in range(len(row)):
