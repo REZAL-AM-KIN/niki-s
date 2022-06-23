@@ -116,8 +116,9 @@ def eventtobucque(request, event):
     
 def manageparticipationfile(file,event):
     error=0
-    reader = csv.reader(file)
-    for row in reader: #pour chaque ligne du fichier
+    file_data = file.read().decode("utf-8")
+    rows = file_data.split("\n")
+    for row in rows: #pour chaque ligne du fichier
         if row[0] != 'ID Participation': #on saute la première ligne de headers
             if Participation_event.objects.filter(pk=row[0]).count()==1: #si la participation existe
                 targetparticipation=Participation_event.objects.get(pk=row[0])
