@@ -159,7 +159,7 @@ def manageparticipationfile(file,event):
         participation_bucquee=sheet.cell(cur_row,8).value
         if Participation_event.objects.filter(pk=id_participation).count()==1: #si la participation existe
             targetparticipation=Participation_event.objects.get(pk=id_participation)
-            if participation_ok.lower()=="true" and participation_bucquee.lower()=="false": #si la participation est validée et non bucquée
+            if participation_ok==1 and participation_bucquee==0: #si la participation est validée et non bucquée
                 if id_produit == targetparticipation.product_event.pk: #si le produit renseigné dans le fichier est le même que celui enregistré en base
                     if username == targetparticipation.cible_participation.username: #si le consommateur renseigné dans le fichier est le même que celui enregistré en base
                         targetparticipation.participation_ok=True #passage à True dans l'instance du modèle
@@ -179,6 +179,10 @@ def manageparticipationfile(file,event):
             if Product_event.objects.filter(pk=id_produit).count()==1:
                 product_participation=Product_event.objects.get(pk=id_produit)
                 if product_participation.parent_event==event:
+                    if participation_ok==1:
+                        participation_ok=True
+                    else:
+                        participation_ok=False
                     Participation_event.objects.get_or_create(cible_participation=cible_participation,product_participation=product_participation,number=quantity,participation_ok=participation_ok)
                 else:
                     error=+1
