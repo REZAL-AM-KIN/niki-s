@@ -120,9 +120,10 @@ def manageparticipationfile(file,event):
     file_data = file.read().decode("utf-8-sig")
     rows = file_data.split("\r\n")
     for line in rows: #pour chaque ligne du fichier
+        line=line.lstrip("('").rstrip("')")
         row=line.split(";")
         if row != ['']:
-            if row[0] != 'ID Participation': #on saute la première ligne de headers
+            if row[0] != "'ID Participation": #on saute la première ligne de headers
                 if Participation_event.objects.filter(pk=row[0]).count()==1: #si la participation existe
                     targetparticipation=Participation_event.objects.get(pk=row[0])
                     if row[7].lower()=="true" and row[8].lower()=="false": #si la participation est validée et non bucquée
