@@ -161,7 +161,7 @@ def manageparticipationfile(file,event):
             targetparticipation=Participation_event.objects.get(pk=id_participation)
             if participation_ok==1 and participation_bucquee==0: #si la participation est validée et non bucquée
                 if id_produit == targetparticipation.product_participation.pk: #si le produit renseigné dans le fichier est le même que celui enregistré en base
-                    if username == targetparticipation.cible_participation.username: #si le consommateur renseigné dans le fichier est le même que celui enregistré en base
+                    if username == targetparticipation.cible_participation.consommateur.username: #si le consommateur renseigné dans le fichier est le même que celui enregistré en base
                         targetparticipation.participation_ok=True #passage à True dans l'instance du modèle
                         targetparticipation.number=quantity #application de la bonne quantité
                         targetparticipation.save() #sauvegarde et bucquage via la méthode du modèle
