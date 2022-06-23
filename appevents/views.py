@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from copyreg import dispatch_table
 from django.http import HttpResponse
 from django.shortcuts import render
 from appevents.models import Event, Product_event, Participation_event
@@ -157,14 +158,17 @@ def manageparticipationfile(file,event):
         quantity=sheet.cell(cur_row,6).value
         participation_ok=sheet.cell(cur_row,7).value
         participation_bucquee=sheet.cell(cur_row,8).value
-        if Participation_event.objects.filter(pk=id_participation).count()==1: #si la participation existe
-            targetparticipation=Participation_event.objects.get(pk=id_participation)
-            if participation_ok==1 and participation_bucquee==0: #si la participation est validée et non bucquée
-                if id_produit == targetparticipation.product_participation.pk: #si le produit renseigné dans le fichier est le même que celui enregistré en base
-                    if username == targetparticipation.cible_participation.consommateur.username: #si le consommateur renseigné dans le fichier est le même que celui enregistré en base
-                        targetparticipation.participation_ok=True #passage à True dans l'instance du modèle
-                        targetparticipation.number=quantity #application de la bonne quantité
-                        targetparticipation.save() #sauvegarde et bucquage via la méthode du modèle
+        if id_participation != '':
+            if Participation_event.objects.filter(pk=id_participation).count()==1: #si la participation existe
+                targetparticipation=Participation_event.objects.get(pk=id_participation)
+                if participation_ok==1 and participation_bucquee==0: #si la participation est validée et non bucquée
+                    if id_produit == targetparticipation.product_participation.pk: #si le produit renseigné dans le fichier est le même que celui enregistré en base
+                        if username == targetparticipation.cible_participation.consommateur.username: #si le consommateur renseigné dans le fichier est le même que celui enregistré en base
+                            targetparticipation.participation_ok=True #passage à True dans l'instance du modèle
+                            targetparticipation.number=quantity #application de la bonne quantité
+                            targetparticipation.save() #sauvegarde et bucquage via la méthode du modèle
+                        else:
+                            error=+1
                     else:
                         error=+1
                 else:
