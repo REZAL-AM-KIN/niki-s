@@ -118,10 +118,9 @@ def eventtobucque(request, event):
 def manageparticipationfile(file,event):
     error=0
     file_data = file.read().decode("utf-8-sig")
-    rows = file_data.split("'")
+    rows = file_data.split("\r\n")
     for row in rows: #pour chaque ligne du fichier
-        row2=row.split(";")
-        row2.patate
+        row=row.split(";")
         if row[0] != 'ID Participation': #on saute la première ligne de headers
             if Participation_event.objects.filter(pk=row[0]).count()==1: #si la participation existe
                 targetparticipation=Participation_event.objects.get(pk=row[0])
