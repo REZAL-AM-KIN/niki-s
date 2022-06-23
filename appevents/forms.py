@@ -10,4 +10,4 @@ class ParticipationEventForm(forms.ModelForm):
         fields = ["number"]
 
 class BucqueEventForm(forms.Form):
-    file=forms.FileField(attrs={'enctype':"multipart/form-data"})
+    file=forms.FileField()
