@@ -125,7 +125,7 @@ def manageparticipationfile(file,event):
             if row[0] != 'ID Participation': #on saute la première ligne de headers
                 if Participation_event.objects.filter(pk=row[0]).count()==1: #si la participation existe
                     targetparticipation=Participation_event.objects.get(pk=row[0])
-                    if row[7]==True and row[8]==False: #si la participation est validée et non bucquée
+                    if row[7].lower()=="true" and row[8].lower()=="false": #si la participation est validée et non bucquée
                         if row[4] == targetparticipation.product_event.pk: #si le produit renseigné dans le fichier est le même que celui enregistré en base
                             if row[1] == targetparticipation.cible_participation.username: #si le consommateur renseigné dans le fichier est le même que celui enregistré en base
                                 targetparticipation.participation_ok=True #passage à True dans l'instance du modèle
