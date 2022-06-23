@@ -8,5 +8,23 @@
 </a>
 {% endblock %}
 {% block content %}
-{{ form }}
+<div class="ui center aligned container">
+    <form class="ui large fluid form" action ="{% url "eventtobucque" event %}" method="POST">
+		{% csrf_token %}
+		<div class="ui stacked segment">
+		{% for field in form %}
+			{% if field.errors %}
+				<div class = "error field">
+			{% else %}
+ 				<div class = "inline field">
+			{% endif %}
+					{{ field.label_tag }}
+					{{ field }}
+				</div>
+		{% endfor %}
+			<button class = "ui right labeled icon button blue" type = "submit" value = "Submit"><i class="right arrow icon"></i>Suivant</button>				
+		</div>
+	</form>
+</div>
+
 {% endblock %}
