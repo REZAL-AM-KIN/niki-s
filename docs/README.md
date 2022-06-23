@@ -218,6 +218,14 @@ l'utilisateur: `appkefet | recharge | can add recharge`
 
 ### En dev
 
+Pour tester l'intégralité des fonctionnalités de l'application, à savoir le ldap, il est recommandé de la faire fonctionner sous linux.
+
+`sudo apt-get install git gpg python3 python3-pip ssh python3.10-venv libsasl2-dev libldap2-dev libssl-dev ldap-utils`
+
+En effet, la librairie python permettant d'intéragir avec le LDAP ne fonctionne que sous Linux.
+
+Dans le cas où vous n'avez pas de machine linux sous la main, il est tout à fait possible de désactiver le module LDAP avec le paramètre `WITHLDAP` dans `settings.py`. Il faudra de plus commenter les parties de code qui intègre le module. Il ne sera pas nécessaire d'installer la dernière ligne de requirements.txt qui correspond à une customisation du packet django-ldapdb pour le rézal. 
+
 ### Développer avec VSCode
 
 ### En prod
