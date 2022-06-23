@@ -177,7 +177,7 @@ def manageparticipationfile(file,event):
                 error=+1
         else: #si la participation n'existe pas (la première case est vide)
             if Consommateur.objects.filter(consommateur__username=username).count()==1:
-                cible_participation=Consommateur.objects.get(username=username)
+                cible_participation=Consommateur.objects.get(consommateur__username=username)
             else:
                 error=+1
             if Product_event.objects.filter(pk=id_produit).count()==1:
