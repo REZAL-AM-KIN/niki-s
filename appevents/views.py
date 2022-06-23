@@ -121,32 +121,33 @@ def manageparticipationfile(file,event):
     rows = file_data.split("\r\n")
     for line in rows: #pour chaque ligne du fichier
         row=line.split(";")
-        if row[0] != 'ID Participation': #on saute la première ligne de headers
-            if Participation_event.objects.filter(pk=row[0]).count()==1: #si la participation existe
-                targetparticipation=Participation_event.objects.get(pk=row[0])
-                if row[7]==True and row[8]==False: #si la participation est validée et non bucquée
-                    if row[4] == targetparticipation.product_event.pk: #si le produit renseigné dans le fichier est le même que celui enregistré en base
-                        if row[1] == targetparticipation.cible_participation.username: #si le consommateur renseigné dans le fichier est le même que celui enregistré en base
-                            targetparticipation.participation_ok=True #passage à True dans l'instance du modèle
-                            targetparticipation.number=row[5] #application de la bonne quantité
-                            targetparticipation.save() #sauvegarde et bucquage via la méthode du modèle
+        if row != ['']:
+            if row[0] != 'ID Participation': #on saute la première ligne de headers
+                if Participation_event.objects.filter(pk=row[0]).count()==1: #si la participation existe
+                    targetparticipation=Participation_event.objects.get(pk=row[0])
+                    if row[7]==True and row[8]==False: #si la participation est validée et non bucquée
+                        if row[4] == targetparticipation.product_event.pk: #si le produit renseigné dans le fichier est le même que celui enregistré en base
+                            if row[1] == targetparticipation.cible_participation.username: #si le consommateur renseigné dans le fichier est le même que celui enregistré en base
+                                targetparticipation.participation_ok=True #passage à True dans l'instance du modèle
+                                targetparticipation.number=row[5] #application de la bonne quantité
+                                targetparticipation.save() #sauvegarde et bucquage via la méthode du modèle
+                            else:
+                                error=+1
                         else:
                             error=+1
                     else:
                         error=+1
-                else:
-                    error=+1
-            else: #si la participation n'existe pas (la première case est vide)
-                if Consommateur.objects.filter(username=row[1]).count()==1:
-                    cible_participation=Consommateur.objects.get(username=row[1])
-                else:
-                    error=+1
-                if Product_event.objects.filter(pk=row[4]).count()==1:
-                    product_participation=Product_event.objects.get(pk=row[4])
-                    if product_participation.parent_event==event:
-                        Participation_event.objects.get_or_create(cible_participation=cible_participation,product_participation=product_participation,number=row[5],participation_ok=row[7])
+                else: #si la participation n'existe pas (la première case est vide)
+                    if Consommateur.objects.filter(username=row[1]).count()==1:
+                        cible_participation=Consommateur.objects.get(username=row[1])
                     else:
                         error=+1
-                else:
-                    error=+1
+                    if Product_event.objects.filter(pk=row[4]).count()==1:
+                        product_participation=Product_event.objects.get(pk=row[4])
+                        if product_participation.parent_event==event:
+                            Participation_event.objects.get_or_create(cible_participation=cible_participation,product_participation=product_participation,number=row[5],participation_ok=row[7])
+                        else:
+                            error=+1
+                    else:
+                        error=+1
     return error
