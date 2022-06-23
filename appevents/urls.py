@@ -10,5 +10,5 @@ urlpatterns = [
     path("subproductevent/<step>/<product_to_sub>", views.subproductevent, name="subproductevent"),
     path("exportparticipation/<event>", views.exportparticipation, name="exportparticipation"),
     path("listeventstobucque", views.listeventstobucque, name="listeventstobucque"),
-    path("eventtobucque", views.eventtobucque, name="eventtobucque")
+    path("eventtobucque/<event>", views.eventtobucque, name="eventtobucque")
 ]
