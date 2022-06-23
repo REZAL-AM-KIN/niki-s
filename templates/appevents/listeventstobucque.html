@@ -32,8 +32,8 @@
                         <td class = "center aligned single line">{{ event.titre }}</td>
                         <td class = "center aligned single line">{{ event.created_by }}</td>
                         <td class = "center aligned single line">{{ event.date_event }}</td>
-                        <td class = "center aligned single line"><a class = "ui blue button" href="{% url "exportparticipationinxls" event.pk %}">Accepter</a></td>
-                        <td class = "center aligned single line"><a class = "ui blue button" href="{% url "eventtobucque" event.pk %}">Bucquer</a></td>
+                        <td class = "center aligned single line"><a class = "ui left labeled icon button blue" href="{% url "exportparticipationinxls" event.pk %}"><i class="download icon"></i>Participants</a></td>
+                        <td class = "center aligned single line"><a class = "ui left labeled icon button blue" href="{% url "eventtobucque" event.pk %}"><i class="calendar check icon"></i>Bucquer</a></td>
                     </tr>
                 {% endfor %}
             </table>
