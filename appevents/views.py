@@ -108,7 +108,7 @@ def eventtobucque(request, event):
             if error == 0:
                 messages.success(request, u"Bucquage réalisé sans erreur, téléchargez le rapport ici")
             else:
-                messages.warning(request, u"Bucquage réalisé avec " erreur " erreur(s), téléchargez le rapport ici")
+                messages.warning(request, u"Bucquage réalisé avec erreur(s), téléchargez le rapport ici")
             return redirect(listeventstobucque)
     else:
         form=BucqueEventForm()
