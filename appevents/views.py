@@ -151,12 +151,12 @@ def manageparticipationfile(file,event):
     row_count = sheet.nrows
     col_count = sheet.ncols
     for cur_row in range(1, row_count):
-        id_participation=sheet.cell(cur_row,0)
-        username=sheet.cell(cur_row,1)
-        id_produit=sheet.cell(cur_row,4)
-        quantity=sheet.cell(cur_row,6)
-        participation_ok=sheet.cell(cur_row,7)
-        participation_bucquee=sheet.cell(cur_row,8)
+        id_participation=sheet.cell(cur_row,0).value
+        username=sheet.cell(cur_row,1).value
+        id_produit=sheet.cell(cur_row,4).value
+        quantity=sheet.cell(cur_row,6).value
+        participation_ok=sheet.cell(cur_row,7).value
+        participation_bucquee=sheet.cell(cur_row,8).value
         if Participation_event.objects.filter(pk=id_participation).count()==1: #si la participation existe
             targetparticipation=Participation_event.objects.get(pk=id_participation)
             if participation_ok.lower()=="true" and participation_bucquee.lower()=="false": #si la participation est validée et non bucquée
