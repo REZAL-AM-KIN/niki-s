@@ -12,6 +12,7 @@ from django.contrib import messages
 from appkfet.models import Consommateur
 import csv
 import xlwt
+import xlrd
 
 # Create your views here.
 
@@ -143,37 +144,82 @@ def eventtobucque(request, event):
     
 def manageparticipationfile(file,event):
     error=0
-    file_data = file.read().decode("utf-8-sig")
-    rows = file_data.split("\r\n")
-    for line in rows: #pour chaque ligne du fichier
-        row=line.split(";")
-        if row != ['']:
-            if row[0] != "'ID Participation": #on saute la première ligne de headers
-                if Participation_event.objects.filter(pk=row[0]).count()==1: #si la participation existe
-                    targetparticipation=Participation_event.objects.get(pk=row[0])
-                    if row[7].lower()=="true" and row[8].lower()=="false": #si la participation est validée et non bucquée
-                        if row[4] == targetparticipation.product_event.pk: #si le produit renseigné dans le fichier est le même que celui enregistré en base
-                            if row[1] == targetparticipation.cible_participation.username: #si le consommateur renseigné dans le fichier est le même que celui enregistré en base
-                                targetparticipation.participation_ok=True #passage à True dans l'instance du modèle
-                                targetparticipation.number=row[5] #application de la bonne quantité
-                                targetparticipation.save() #sauvegarde et bucquage via la méthode du modèle
-                            else:
-                                error=+1
-                        else:
-                            error=+1
+    #file_data = file.read().decode("utf-8")
+    #book = xlrd.open_workbook(file_contents=file_data.read())
+    book = xlrd.open_workbook(file_contents = file.read(), encoding_override = 'utf-8')
+    sheet = book.sheet_by_name("Event")
+    row_count = sheet.nrows
+    col_count = sheet.ncols
+    for cur_row in range(1, row_count):
+        id_participation=sheet.cell(cur_row,0)
+        username=sheet.cell(cur_row,1)
+        id_produit=sheet.cell(cur_row,4)
+        quantity=sheet.cell(cur_row,6)
+        participation_ok=sheet.cell(cur_row,7)
+        participation_bucquee=sheet.cell(cur_row,8)
+        if Participation_event.objects.filter(pk=id_participation).count()==1: #si la participation existe
+            targetparticipation=Participation_event.objects.get(pk=id_participation)
+            if participation_ok.lower()=="true" and participation_bucquee.lower()=="false": #si la participation est validée et non bucquée
+                if id_produit == targetparticipation.product_event.pk: #si le produit renseigné dans le fichier est le même que celui enregistré en base
+                    if username == targetparticipation.cible_participation.username: #si le consommateur renseigné dans le fichier est le même que celui enregistré en base
+                        targetparticipation.participation_ok=True #passage à True dans l'instance du modèle
+                        targetparticipation.number=quantity #application de la bonne quantité
+                        targetparticipation.save() #sauvegarde et bucquage via la méthode du modèle
                     else:
                         error=+1
-                else: #si la participation n'existe pas (la première case est vide)
-                    if Consommateur.objects.filter(username=row[1]).count()==1:
-                        cible_participation=Consommateur.objects.get(username=row[1])
-                    else:
-                        error=+1
-                    if Product_event.objects.filter(pk=row[4]).count()==1:
-                        product_participation=Product_event.objects.get(pk=row[4])
-                        if product_participation.parent_event==event:
-                            Participation_event.objects.get_or_create(cible_participation=cible_participation,product_participation=product_participation,number=row[5],participation_ok=row[7])
-                        else:
-                            error=+1
-                    else:
-                        error=+1
+                else:
+                    error=+1
+            else:
+                error=+1
+        else: #si la participation n'existe pas (la première case est vide)
+            if Consommateur.objects.filter(username=username).count()==1:
+                cible_participation=Consommateur.objects.get(username=username)
+            else:
+                error=+1
+            if Product_event.objects.filter(pk=id_produit).count()==1:
+                product_participation=Product_event.objects.get(pk=id_produit)
+                if product_participation.parent_event==event:
+                    Participation_event.objects.get_or_create(cible_participation=cible_participation,product_participation=product_participation,number=quantity,participation_ok=participation_ok)
+                else:
+                    error=+1
+            else:
+                error=+1
     return error
+
+#csv file fail
+# def manageparticipationfile(file,event):
+#     error=0
+#     file_data = file.read().decode("utf-8-sig")
+#     rows = file_data.split("\r\n")
+#     for line in rows: #pour chaque ligne du fichier
+#         row=line.split(";")
+#         if row != ['']:
+#             if row[0] != "'ID Participation": #on saute la première ligne de headers
+#                 if Participation_event.objects.filter(pk=row[0]).count()==1: #si la participation existe
+#                     targetparticipation=Participation_event.objects.get(pk=row[0])
+#                     if row[7].lower()=="true" and row[8].lower()=="false": #si la participation est validée et non bucquée
+#                         if row[4] == targetparticipation.product_event.pk: #si le produit renseigné dans le fichier est le même que celui enregistré en base
+#                             if row[1] == targetparticipation.cible_participation.username: #si le consommateur renseigné dans le fichier est le même que celui enregistré en base
+#                                 targetparticipation.participation_ok=True #passage à True dans l'instance du modèle
+#                                 targetparticipation.number=row[5] #application de la bonne quantité
+#                                 targetparticipation.save() #sauvegarde et bucquage via la méthode du modèle
+#                             else:
+#                                 error=+1
+#                         else:
+#                             error=+1
+#                     else:
+#                         error=+1
+#                 else: #si la participation n'existe pas (la première case est vide)
+#                     if Consommateur.objects.filter(username=row[1]).count()==1:
+#                         cible_participation=Consommateur.objects.get(username=row[1])
+#                     else:
+#                         error=+1
+#                     if Product_event.objects.filter(pk=row[4]).count()==1:
+#                         product_participation=Product_event.objects.get(pk=row[4])
+#                         if product_participation.parent_event==event:
+#                             Participation_event.objects.get_or_create(cible_participation=cible_participation,product_participation=product_participation,number=row[5],participation_ok=row[7])
+#                         else:
+#                             error=+1
+#                     else:
+#                         error=+1
+#     return error
