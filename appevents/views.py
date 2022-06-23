@@ -120,7 +120,6 @@ def manageparticipationfile(file,event):
     file_data = file.read().decode("utf-8-sig")
     rows = file_data.split("\r\n")
     for line in rows: #pour chaque ligne du fichier
-        line=line[2:]
         row=line.split(";")
         if row != ['']:
             if row[0] != "'ID Participation": #on saute la première ligne de headers
