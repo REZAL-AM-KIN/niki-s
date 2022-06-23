@@ -106,9 +106,9 @@ def eventtobucque(request, event):
         if form.is_valid():
             error=manageparticipationfile(request.FILES['file'],event)
             if error == 0:
-                messages.success(request, u"Bucquage réalisé sans erreur, téléchargez le rapport <a href="{% url "exportparticipation" event %}">ici</a>")
+                messages.success(request, u"Bucquage réalisé sans erreur, téléchargez le rapport ici")
             else:
-                messages.warning(request, u"Bucquage réalisé avec " erreur " erreur(s), téléchargez le rapport <a href="{% url "exportparticipation" event %}">ici</a>")
+                messages.warning(request, u"Bucquage réalisé avec " erreur " erreur(s), téléchargez le rapport ici")
             return redirect(listeventstobucque)
     else:
         form=BucqueEventForm()
