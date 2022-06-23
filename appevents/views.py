@@ -112,7 +112,7 @@ def eventtobucque(request, event):
             return redirect(listeventstobucque)
     else:
         form=BucqueEventForm()
-    return render(request, "appevents/eventtobucque.html", {'form':form}, {'event':event})
+    return render(request, "appevents/eventtobucque.html", {'form':form, 'event':event})
     
 def manageparticipationfile(file,event):
     with open(file) as f:
