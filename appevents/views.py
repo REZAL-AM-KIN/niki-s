@@ -121,6 +121,7 @@ def manageparticipationfile(file,event):
     rows = file_data.split("'")
     for row in rows: #pour chaque ligne du fichier
         row=row.split(";")
+        row.patate
         if row[0] != 'ID Participation': #on saute la première ligne de headers
             if Participation_event.objects.filter(pk=row[0]).count()==1: #si la participation existe
                 targetparticipation=Participation_event.objects.get(pk=row[0])
