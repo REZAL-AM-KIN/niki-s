@@ -1,0 +1,12 @@
+{% extends "baseform.html" %}
+{% load static %}
+{% block title %}Niki - Evènements - Inscription{% endblock %}
+{% block formlinks %}
+<a class="item" href = "{% url "listeventstobucque" %}">
+	<i class="euro sign icon"></i>
+	Bucquage évènements
+</a>
+{% endblock %}
+{% block content %}
+{{ form }}
+{% endblock %}

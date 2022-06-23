@@ -87,9 +87,9 @@ def exportparticipation(request, event):
     response.write(u'\ufeff'.encode('utf8'))
     writer=csv.writer(response)
     query_to_export=Participation_event.objects.filter(product_participation__parent_event=event)
-    writer.writerow(['ID Participation','Username','Nom','Prénom','Produit','Quantité','Participation OK','Participation bucquée'])
+    writer.writerow(['ID Participation','Username','Nom','Prénom','ID Produit','Produit','Quantité','Participation OK','Participation bucquée'])
     for line in query_to_export:
-        output.append([line.pk, line.cible_participation.consommateur.username, line.cible_participation.consommateur.last_name, line.cible_participation.consommateur.first_name, line.product_participation.nom, line.number, line.participation_ok, line.participation_bucquee])
+        output.append([line.pk, line.cible_participation.consommateur.username, line.cible_participation.consommateur.last_name, line.cible_participation.consommateur.first_name, line.product_participation.pk, line.product_participation.nom, line.number, line.participation_ok, line.participation_bucquee])
     writer.writerows(output)
     return response
 
@@ -102,9 +102,49 @@ def listeventstobucque(request):
 @login_required
 def eventtobucque(request, event):
     if request.method=="POST":
-        form=BucqueEventForm(request.POST)
-
+        form=BucqueEventForm(request.POST, request.FILES)
+        if form.is_valid():
+            error=manageparticipationfile(request.FILES['file'],event)
+            if error == 0:
+                messages.success(request, u"Bucquage réalisé sans erreur, téléchargez le rapport <a href="{% url "exportparticipation" event %}">ici</a>")
+            else:
+                messages.warning(request, u"Bucquage réalisé avec " erreur " erreur(s), téléchargez le rapport <a href="{% url "exportparticipation" event %}">ici</a>")
+            return redirect(listeventstobucque)
     else:
         form=BucqueEventForm()
-    return render(request, "appevent/eventtobucque.html", {'form':form})
+    return render(request, "appevent/eventtobucque.html", {'form':form}, {'event':event})
     
+def manageparticipationfile(file,event):
+    with open(file) as f:
+        error=0
+        reader = csv.reader(f)
+        for row in reader: #pour chaque ligne du fichier
+            if row[0] != 'ID Participation': #on saute la première ligne de headers
+                if Participation_event.objects.filter(pk=row[0]).count()==1: #si la participation existe
+                    targetparticipation=Participation_event.objects.get(pk=row[0])
+                    if row[7]==True and row[8]==False: #si la participation est validée et non bucquée
+                        if row[4] == targetparticipation.product_event.pk: #si le produit renseigné dans le fichier est le même que celui enregistré en base
+                            if row[1] == targetparticipation.cible_participation.username: #si le consommateur renseigné dans le fichier est le même que celui enregistré en base
+                                targetparticipation.participation_ok=True #passage à True dans l'instance du modèle
+                                targetparticipation.number=row[5] #application de la bonne quantité
+                                targetparticipation.save() #sauvegarde et bucquage via la méthode du modèle
+                            else:
+                                error=+1
+                        else:
+                            error=+1
+                    else:
+                        error=+1
+                else: #si la participation n'existe pas (la première case est vide)
+                    if Consommateur.objects.filter(username=row[1]).count()==1:
+                        cible_participation=Consommateur.objects.get(username=row[1])
+                    else:
+                        error=+1
+                    if Product_event.objects.filter(pk=row[4]).count()==1:
+                        product_participation=Product_event.objects.get(pk=row[4])
+                        if product_participation.parent_event==event:
+                            Participation_event.objects.get_or_create(cible_participation=cible_participation,product_participation=product_participation,number=row[5],participation_ok=row[7])
+                        else:
+                            error=+1
+                    else:
+                        error=+1
+        return error

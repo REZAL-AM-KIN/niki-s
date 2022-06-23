@@ -2,6 +2,12 @@
 {% load static %}
 {% load project_tags %}
 {% block title %}Niki - Evènements{% endblock %}
+{% block formlinks %}
+<a class="item" href = "{% url "listevents" %}">
+	<i class="bars icon"></i>
+	Evènements
+</a>
+{% endblock %}
 {% block content %}
 <div class="ui center aligned container">
 	<h2 class="ui blue center aligned header">
@@ -27,7 +33,7 @@
                         <td class = "center aligned single line">{{ event.created_by }}</td>
                         <td class = "center aligned single line">{{ event.date_event }}</td>
                         <td class = "center aligned single line"><a class = "ui blue button" href="{% url "exportparticipation" event.pk %}">Accepter</a></td>
-                        <td class = "center aligned single line">BUCQUAGE</td>
+                        <td class = "center aligned single line"><a class = "ui blue button" href="{% url "eventtobucque" event.pk %}">Bucquer</a></td>
                     </tr>
                 {% endfor %}
             </table>

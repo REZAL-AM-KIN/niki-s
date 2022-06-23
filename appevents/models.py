@@ -39,9 +39,10 @@ class Participation_event(models.Model):
         return self.pk
 
     def save(self, *args, **kwargs):
-        if self.participation_ok==True:
+        if self.participation_ok==True and self.participation_bucquee==False:
             prix_total=self.number * self.product_participation.prix
             if Consommateur.testdebit(self.cible_participation, prix_total):
+                self.participation_bucquee=True
                 super(Participation_event, self).save(*args, **kwargs)
                 Consommateur.debit(self.cible_participation, prix_total)
                 History.objects.update_or_create(
