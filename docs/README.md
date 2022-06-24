@@ -4,18 +4,19 @@
     - [Views](#views)
     - [Models](#models)
     - [Fonctions pertinentes](#fonctions-pertinentes)
+    - [Admin](#admin)
   - [Appmacgest](#appmacgest)
     - [Views](#views-1)
     - [Models](#models-1)
   - [Appkfet](#appkfet)
     - [Models](#models-2)
     - [Fonctions pertinentes](#fonctions-pertinentes-1)
-    - [Admin](#admin)
+    - [Admin](#admin-1)
   - [Appevents](#appevents)
     - [Views](#views-2)
     - [Models](#models-3)
     - [Fonctions pertinentes](#fonctions-pertinentes-2)
-    - [Admin](#admin-1)
+    - [Admin](#admin-2)
 - [API](#api)
   - [Installation](#installation)
   - [Conception de l'API](#conception-de-lapi)
@@ -59,8 +60,11 @@ L'utilisateur s'inscrit, les attributs ont les statuts suivants par défaut :
   distinguer les peks notamment)
 - `has_cotiz`: `false` (défini si l'utilisateur a payé sa cotiz)
 - `date_expiration`: Vide par défaut. Prend la valeur de la date du jour où `has_cotiz` est passé à `true` + 365 jours **A REVOIR**
+- `ldap_password`: correspond au mot de passe hashé envoyé au ldap
 
 Un script doit tourner pour passer `has_cotiz` à false lorsque la date du jour dépasse `date_expiration`. **A REVOIR**
+
+Rappel : un utilisateur ne doit pas être supprimé directement. Il doit être désactivé, conservé un certain temps (1 an) après sa désactivation pour des soucis d'Hadopi, puis il pourra être supprimé. Dans le cas où l'utilisateur était supprimé directement sans être passé par `is_active=False`, il ne sera pas retiré du LDAP. Il serait pertinent de surcharger la méthode delete du modèle user pour y rajouter la suppression de l'entrée LDAP.
 
 ### Views
 
@@ -79,21 +83,26 @@ Un script doit tourner pour passer `has_cotiz` à false lorsque la date du jour 
 - MdpOublie (standard) **A REVOIR**
   - Accessible : tout le monde
   - Utilisation des vues [Django standards](https://docs.djangoproject.com/fr/3.1/topics/auth/default/#using-the-views) en ajoutant dans le fichier url de l'application les lignes correspondantes. Il sera possible d'ajouter un template
-spécifique pour personnaliser ces vues.
-
-L'utilisation de cette fonctionnalité nécessite le paramétrage des mails dans Django.
+spécifique pour personnaliser ces vues. L'utilisation de cette fonctionnalité nécessite le paramétrage des mails dans Django.
 - Fonctionnalités supplémentaires à implémenter non démarrées :
-  - Prévoir un accueil de l'utilisateur en fonction de son statut, type "tutoriel" lors de la première connexion, idéalement en overlay.
+  - Prévoir un accueil de l'utilisateur en fonction de son statut, type "tutoriel" lors de la première connexion, idéalement en overlay. Une ébauche de cette fonctionnalité a été développée dans une des versions précédentes de l'intra. **A REVOIR**
 
 ### Models
 
 - Utilisateur (dérivé du modèle standard User)
   - La fonction save a été surchargée pour gérer la date d'expiration. **A REVOIR**
+  - La fonction save a été surchargée pour gérer le ldap et créer, mettre à jour ou supprimer l'entrée côté LDAP. Si l'utilisateur est passé en `is_active=False`, l'entrée est immédiatement supprimée côté LDAP
+  - La fonction set_password permet de hasher le mot de passe rentré par l'utilisateur selon l'algorithme utilisé par le LDAP (SSHA). Ce mot de passe hashé est stocké dans l'attribut `ldap_password`
 
 ### Fonctions pertinentes
 
 - has_cotiz : renvoie `True` si l'utilisateur a sa cotiz payée
 - is_superuser : renvoie `True` si l'utilisateur est superuser
+
+### Admin
+
+La table User a été unregister de l'interface. Elle ne doit jamais être utilisée puisque ce modèle est surchargé par Utilisateur. 
+Pour supprimer le premier utilisateur créé lors de l'installation de l'application (qui est un User et non un Utilisateur), il est possible de décommenter cette ligne, se connecter avec le superutilisateur et supprimer ce compte.
 
 ## Appmacgest
 
@@ -127,8 +136,7 @@ Un routeur de base de données `Authrouter.py` est utilisé pour communiquer ave
 ## Appkfet
 
 Le modèle `Consommateur` est directement lié à un utilisateur du Rezal (modèle `User`). Il dispose de deux
-fonctions `credit` et `debit`, permettant de créditer et débiter le compte de l'utilisateur. Le débit ne fonctionne **
-QUE** si l'utilisateur a un solde supérieur ou égal à la valeur débitée.
+fonctions `credit` et `debit`, permettant de créditer et débiter le compte de l'utilisateur. Le débit ne fonctionne **QUE** si l'utilisateur a un solde supérieur ou égal à la valeur débitée.
 
 Il existe un champ permettant de visualiser le cumulé de sa consommation.
 
@@ -136,18 +144,25 @@ L'entité d'un produit dépend des groupes existants dans la solution.
 
 De base, 4 méthodes sont disponibles pour le rechargement: CB, Espèces, Chèque, Lydia.
 
-Chaque bucquage, recharge ou évènement crée une ligne dans la base historique. C'est celle-ci qui sera utilisée par l'API pour retourner l'historique d'un utilisateur.
+Chaque bucquage ou recharge crée une ligne dans la base historique. C'est celle-ci qui sera utilisée par l'API pour retourner l'historique d'un utilisateur.
 
 Fonctionnellement :
 - les consommateurs et produits sont créés via l'interface admin Django. Des droits fins seront à mettre en place 
-- les recharges, bucquages sont faits uniquement via l'API
+- les recharges, bucquages, visualisation de l'historique sont faits uniquement via l'API qui devra être appelée par un front
 
 ### Models
 
 - Consommateurs
+  - Trois fonctions rattachées à ce modèle : 
+    - credit qui ajoute de l'argent sur le solde du consommateur
+    - debit qui retire de l'argent sur le solde du consommateur. Ne teste pas si le solde est positif à la suite du débit !
+    - testdebit qui permet de savoir si le solde sera positif après le débit.
 - Produits
 - Bucquage
+  - La méthode save est surchargée pour mettre à jour le solde du consommateur. Si la fonction testdebit renvoie True, alors la fonction debit est appelée et la ligne d'History rajoutée. 
 - Recharge
+  - Quatre méthodes de recharge écrites en dur dans le modèle. C'est ici qu'il faudra toucher si besoin et cela se répartira dans les autres applis
+  - La méthode save est surchargée pour mettre à jour le solde du consommateur (en appelant la fonction credit). Une ligne est également ajoutée dans la table History
 - History
 
 ### Fonctions pertinentes
@@ -156,25 +171,81 @@ Fonctionnellement :
 
 ### Admin
 
+Comme vu précédemment, les consommateurs et produits sont créés via l'interface admin Django. Pour que le fonctionnel corresponde à nos besoins, certaines fonctions ont été surchargées dans `admin.py`. Hors superuser (qui peut tout faire !), les règles sont les suivantes : 
+- Il n'est possible de modifier un produit que si l'utilisateur dispose de la permission change_produit ET qu'il fait parti de l'entité du produit créé. Ce test est fait en surchargeant la méthode "has_change_permission"
+- Il est possible de créer un produit relié à une entité UNIQUEMENT si on y appartient. Ce test est fait à la surcharge de la méthode save. 
+
+**A REVOIR** Il serait pertinent de modifier la dropdown de choix d'entité lors de la création d'un produit pour n'afficher que les entités où j'ai les droits. De la même manière, la création d'un consommateur ne doit proposer dans la liste déroulante que des utilisateurs qui n'ont pas déjà de consommateur associé et qui sont `is_active==True` **A REVOIR**
+
+Les tables Bucquage, Recharge, History ne sont pas disponibles dans l'interface admin (admin.site.register est commenté) car il serait trop facile de tricher ou de faire une erreur !
+
 ## Appevents
 
-Blabla
+Cette application a pour but de gérer les évènements organisés à KIN et surtout les fin's. L'objectif est de créer des évènements (Event), composés de produits (Product_Event) obligatoires ou non et que les utilisateurs (Consommateur) puissent s'y inscrire (Participation_Event). Un évènement peut être ouvert à l'inscription ou pas, terminé ou pas.
+La liste des évènements peut être consultable sur l'interface de la solution. Il sera aussi possible de générer le lien d'inscription, de le poster sur un groupe Facebook pour que les gens puissent s'inscrire directement.
+La solution proposera ensuite une interface permettant d'exporter les participations. Cet export permettra de valider les présents, d'en rajouter ou d'en supprimer. Le fichier modifié sera réimporté dans la solution qui validera ou non les bucquages.
+
+Fonctionnellement :
+- la création des évènements et des produits de ces évènements est faite via l'interface admin de django. Lorsqu'un évènement est terminé il est passé à "ended"=False par son créateur ou un administrateur. Cette partie n'est accessible qu'au groupe "Event Manager" (par exemple) qui dispose des permissions create_event, change_event, create_product_event, change_product_event, delete_product_event
+- l'inscription et le bucquage sont faits via la solution.
 
 ### Views
 
-Blabla
+- listevents
+  - Accessible : tous les utilisateurs connectés ayant un Consommateur associé
+  - Permet de lister l'ensemble des évènements encore ouverts à l'inscription. La liste des évènements auxquels l'utilisateur est déjà inscrit est également transmise afin de gérer l'affichage (si inscrit : pas d'affichage du bouton inscrire, si pas inscrit : affichage)
+- subevent
+  - Accessible : tous les utilisateurs connectés ayant un Consommateur associé
+  - Vue de redirection vers les formulaires d'inscription de chaque produit de l'évènement. C'est l'URL de cette page, avec la step à 0 qui pourra être partagée sur Facebook.
+  - Fonctionnalité supplémentaire à implémenter : 
+    - Peut-on vouloir autoriser le bucquage uniquement si le solde du consommateur est supérieur ou égal au coût de l'évènement ?
+    - Il serait pertinent de rajouter un contrôle ici pour s'assurer que l'utilisateur ne se réinscrit pas. Le bouton d'inscription ne sera certes pas disponible mais un petit malin pourrait taper directement l'URL.
+- subproductevent
+  - Accessible : tous les utilisateurs connectés ayant un Consommateur associé.
+  - Vue présentant un formulaire pour chaque produit de l'évènement
+  - Fonctionnalité supplémentaire à implémenter : il serait pertinent de rajouter un contrôle ici pour s'assurer que l'utilisateur ne se réinscrit pas. Le bouton d'inscription ne sera certes pas disponible mais un petit malin pourrait taper directement l'URL.
+- Fonctionnalité supplémentaire à implémenter : la modification ou l'annulation de l'inscription à l'évènement pour un utilisateur
+- exportparticipationincsv (deprecated - on utilise xls car c'est plus simple !)
+  - Accessible : tous les utilisateurs connectés
+- exportparticipationinxls
+  - Accessible : tous les utilisateurs connectés
+  - Utilisation de la librairie xlwt (Excel writer)
+- listeventstobucque
+  - Accessible : tous les utilisateurs ayant la permission "can_add_bucquage". A voir si besoin d'affiner
+  - Affiche tous les évènements qui sont en "ended=False".
+- eventtobucque
+  - Accessible : tous les utilisateurs ayant la permission "can_add_bucquage". A voir si besoin d'affiner
+  - Permet de charger le fichier exporté et modifié avec les participations
+  - Fonctionnalités supplémentaires à implémenter : 
+    - Vérifier qu'on upload bien un fichier xls et pas un film...
+    - Faire apparaitre le nombre d'erreur dans le message passé à la suite de la validation de l'import
+    - Sortir un rapport à la suite de l'import. Dans la solution actuelle, il suffit de réexporter les participations de l'évènement et de regarder ce qui a marché ou pas (en cherchant...)! Une solution temporaire pourrait être de rajouter dans l'export une colonne commentaire qui décrirait ce qui s'est bien passé (ou pas) sur chaque ligne. 
 
 ### Models
 
-Blabla
+- Event
+- Product_event
+- Participation_event
+  - Surcharge de la méthode save. C'est ici que le débit du solde du consommateur est effectué (après testdebit). Une ligne est rajoutée dans la table History.
 
 ### Fonctions pertinentes
 
-Blabla
+manageparticipationfile : permet de lire le fichier importé avec les participations et de réaliser les modifications dans la base de données. 
+**A REVOIR** il manque peut être quelques contrôles mais le gros du fonctionnement est OK
 
 ### Admin
 
-Blabla
+Pour cette application, les objets Event et Product Event sont créés directement dans l'interface d'administration. Pour que le fonctionnel corresponde à nos besoins, certaines fonctions ont été surchargées dans `admin.py`. Hors superuser (qui peut tout faire !), les règles sont les suivantes : 
+- il est nécessaire d'avoir le groupe Event manager qui contient les bonnes permissions (cité plus haut)
+- Evènement :
+  - Lors de la création d'un Event, le champ "created_by" est rempli avec la FK de l'utilisateur. La distinction création/modification est automatiquement détectée par django admin avec la variable change
+  - Je peux voir/changer uniquement les évènements que j'ai créé
+  - Il n'est pas possible de supprimer un évènement
+- Produit Evènement :
+  - Je ne peux créer/voir/changer que des produits sur les évènements que j'ai créé
+  - Il n'est pas possible de suppriemr un produit
+  - Fonctionnalité supplémentaire à développer : dans la dropdown de création de produit, ne proposer que les évènements que j'ai créé qui sont à ended=False (et pas tous comme aujourd'hui)
+- Participation Evènement : non accessible dans l'interface d'admin. Il serait trop facile de tricher ou de faire une erreur !
 
 # API
 
@@ -259,7 +330,42 @@ extra_filters
 
 ## Templates
 
-Blabla
+Le dossier des templates est stocké à la racine de l'application. Il est nécessaire qu'il soit rangé :
+- templates
+  - templates généraux utilisés par toutes les applications
+  - myapp/
+    - templates de chaque applications
+
+Dans la solution, nous avons deux types d'architectures : la page d'accueil et les bases d'interfaces et de formulaires. On a donc :
+
+- base.html : contient les appels CSS/js et les liens footers
+  - block title : contient le titre écrit dans l'onglet
+  - navbar.html
+    - Le menu fixe en haut : 
+      - mainlinks.html
+        - Liens communs
+        - Si l'utilisateur a un consommateur activé : lien vers les évènements
+      - Si l'utilisateur est gadz : navbar_gadz.html
+      - Si l'utilisateur conscrit : navbar_conscrit.html
+      - Si l'utilisateur est staff : navbar_staff.html
+      - Le bouton de déconnexion
+    - Le menu responsive pour le mode mobile (réduit à gauche)
+      - mainlinks.html
+        - Liens communs
+        - Si l'utilisateur a un consommateur activé : lien vers les évènements
+      - Si l'utilisateur est gadz : navbar_gadz.html
+      - Si l'utilisateur conscrit : navbar_conscrit.html
+      - Si l'utilisateur est staff : navbar_staff.html
+      - Le bouton de déconnexion
+  - block content : contient le corps de la page
+    - Pour la page d'index, le menu "descendant" est de nouveau répété dans ce block.
+- baseform.html : contient les appels CSS/js et messages envoyés par les vues
+  - block title
+  - block navform
+    - Lien vers l'accueil
+    - block formlinks
+  - Messages
+  - block content
 
 ## LDAP
 

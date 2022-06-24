@@ -17,8 +17,6 @@ import xlrd
 
 # Create your views here.
 
-#Permet de lister l'ensemble des évènements encore ouverts à l'inscription. Si l'utilisateur est déjà inscrit à l'évènement alors, la page d'inscription n'est pas disponible
-#Pour accéder à cette page il est nécessaire d'avoir un compte kfet (Consommateur)
 @login_required
 @user_passes_test(has_consommateur)
 def listevents(request):
@@ -32,9 +30,6 @@ def listevents(request):
         list_of_event_subscribed.append(event_subscribed)   
     return render(request, "appevents/listevents.html", {"list": list_to_display, "subscribed":list_of_event_subscribed})
 
-#Il s'agit uniquement d'une page de redirection vers les formulaires d'inscription de chaque produit de l'évènement
-#Ces URLs pourront apparaitre directement sur Facebook
-#Pour accéder à cette page il est nécessaire d'avoir un compte kfet (Consommateur)
 #Params désigne l'ID de l'évènement auquel on souhaite s'inscrire
 #Step est initialisé à 0. Sa valeur maximale est égale au nombre de produits présents dans l'évènement
 @login_required
@@ -52,7 +47,6 @@ def subevent(request, params, step):
     messages.success(request, u"Inscription finalisée")
     return redirect(listevents)
 
-#Pour accéder à cette page il est nécessaire d'avoir un compte kfet (Consommateur)
 #Step est passé ici pour être renvoyé ensuite à la page de redirection en l'incrémentant
 #Product_to_sub est l'ID du produit de l'évènement sur lequel s'inscrire
 #Un contrôle est fait sur la valeur de la quantité qui doit être positive ou nulle
@@ -123,12 +117,13 @@ def exportparticipationinxls(request,event):
     return response
 
 @login_required
-@user_passes_test(lambda u: u.has_perm('appkfet.can_add_event'))
+@user_passes_test(lambda u: u.has_perm('appkfet.can_add_bucquage'))
 def listeventstobucque(request):
     list_of_event_to_bucque=Event.objects.filter(ended=False)
     return render(request, "appevents/listeventstobucque.html", {'list':list_of_event_to_bucque})
 
 @login_required
+@user_passes_test(lambda u: u.has_perm('appkfet.can_add_bucquage'))
 def eventtobucque(request, event):
     if request.method=="POST":
         form=BucqueEventForm(request.POST, request.FILES)
@@ -145,8 +140,6 @@ def eventtobucque(request, event):
     
 def manageparticipationfile(file,event):
     error=0
-    #file_data = file.read().decode("utf-8")
-    #book = xlrd.open_workbook(file_contents=file_data.read())
     book = xlrd.open_workbook(file_contents = file.read(), encoding_override = 'utf-8')
     sheet = book.sheet_by_name("Event")
     row_count = sheet.nrows
@@ -193,41 +186,3 @@ def manageparticipationfile(file,event):
             else:
                 error=+1
     return error
-
-#csv file fail
-# def manageparticipationfile(file,event):
-#     error=0
-#     file_data = file.read().decode("utf-8-sig")
-#     rows = file_data.split("\r\n")
-#     for line in rows: #pour chaque ligne du fichier
-#         row=line.split(";")
-#         if row != ['']:
-#             if row[0] != "'ID Participation": #on saute la première ligne de headers
-#                 if Participation_event.objects.filter(pk=row[0]).count()==1: #si la participation existe
-#                     targetparticipation=Participation_event.objects.get(pk=row[0])
-#                     if row[7].lower()=="true" and row[8].lower()=="false": #si la participation est validée et non bucquée
-#                         if row[4] == targetparticipation.product_event.pk: #si le produit renseigné dans le fichier est le même que celui enregistré en base
-#                             if row[1] == targetparticipation.cible_participation.username: #si le consommateur renseigné dans le fichier est le même que celui enregistré en base
-#                                 targetparticipation.participation_ok=True #passage à True dans l'instance du modèle
-#                                 targetparticipation.number=row[5] #application de la bonne quantité
-#                                 targetparticipation.save() #sauvegarde et bucquage via la méthode du modèle
-#                             else:
-#                                 error=+1
-#                         else:
-#                             error=+1
-#                     else:
-#                         error=+1
-#                 else: #si la participation n'existe pas (la première case est vide)
-#                     if Consommateur.objects.filter(username=row[1]).count()==1:
-#                         cible_participation=Consommateur.objects.get(username=row[1])
-#                     else:
-#                         error=+1
-#                     if Product_event.objects.filter(pk=row[4]).count()==1:
-#                         product_participation=Product_event.objects.get(pk=row[4])
-#                         if product_participation.parent_event==event:
-#                             Participation_event.objects.get_or_create(cible_participation=cible_participation,product_participation=product_participation,number=row[5],participation_ok=row[7])
-#                         else:
-#                             error=+1
-#                     else:
-#                         error=+1
-#     return error

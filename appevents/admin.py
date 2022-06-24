@@ -88,4 +88,4 @@ class AdminParticipationEvents(admin.ModelAdmin):
 
 admin.site.register(Event, AdminEvent)
 admin.site.register(Product_event, AdminProductEvent)
-admin.site.register(Participation_event, AdminParticipationEvents)
+#admin.site.register(Participation_event, AdminParticipationEvents)
