@@ -162,7 +162,7 @@ STATIC_URL = "/static/"
 STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 
 # Niki specific parameters
-
+CAPTCHA_FONT_SIZE=36
 LOGIN_URL = "login"
 LOGOUT_REDIRECT_URL = "index"
 

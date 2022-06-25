@@ -28,6 +28,7 @@
   - [Installation](#installation-1)
     - [En dev](#en-dev)
     - [Développer avec VSCode](#développer-avec-vscode)
+    - [Reset migrations](#reset-migrations)
     - [En prod](#en-prod)
   - [Decorators](#decorators)
   - [Template tags](#template-tags)
@@ -293,7 +294,7 @@ Pour tester l'intégralité des fonctionnalités de l'application, à savoir le 
 
 Paquets à installer sur la machine :
 
-`sudo apt-get install git gpg python3 python3-pip ssh python3.10-venv libsasl2-dev libldap2-dev libssl-dev ldap-utils`
+`sudo apt-get install git gpg python3 python3-pip ssh python3.10-venv libsasl2-dev libldap2-dev libssl-dev ldap-utils libz-dev libjpeg-dev libfreetype6-dev python-dev`
 
 Lancement de l'application : 
 
@@ -313,6 +314,10 @@ Une fois les commandes lancées avec succès, il est possible se connecter sur h
 Arrivé sur la page d'accueil, créer un utilisateur via le formulaire d'inscription. Se connecter ensuite avec le compte admin créé au dessus et configurer le nouveau compte pour être superuser et staff. Il ne faudra plus se connecter avec le compte admin par la suite. En effet, le compte admin n'est que instance du modèle User et pas du modèle Utilisateur dérivé.
 
 ### Développer avec VSCode
+
+### Reset migrations
+find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
+find . -path "*/migrations/*.pyc"  -delete
 
 ### En prod
 
