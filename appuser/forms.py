@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from django import forms
-from captcha.fields import CaptchaField
+from captcha.fields import CaptchaField, CaptchaTextInput
 from .models import Utilisateur
 
 
@@ -21,7 +21,7 @@ class inscriptionform(forms.ModelForm):
     )
     captcha = CaptchaField(
         required=True,
-        widget=forms.CaptchaTextInput(
+        widget=CaptchaTextInput(
             attrs={"placeholder": "Captcha"}
         ),
     )
