@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from django import forms
-
+from captcha.fields import CaptchaField
 from .models import Utilisateur
 
 
@@ -19,7 +19,7 @@ class inscriptionform(forms.ModelForm):
             attrs={"placeholder": "Confirmation du mot de passe"}
         ),
     )
-
+    captcha = CaptchaField()
     class Meta:
         model = Utilisateur
         fields = [

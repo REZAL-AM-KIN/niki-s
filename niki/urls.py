@@ -29,4 +29,5 @@ urlpatterns = [
     path("api/", include("api.urls"), name="api"),
     path("api/api-auth", include("rest_framework.urls", namespace="rest_framework")),
     path('api-docs', schema_view, name='openapi-schema'),
+    path('captcha/', include('captcha.urls')),
 ]
