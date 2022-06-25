@@ -21,7 +21,7 @@ class inscriptionform(forms.ModelForm):
     )
     captcha = CaptchaField(
         required=True,
-        widget=forms.TextInput(
+        widget=forms.CustomCaptchaTextInput(
             attrs={"placeholder": "Captcha"}
         ),
     )
