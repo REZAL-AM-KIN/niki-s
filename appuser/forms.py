@@ -19,7 +19,12 @@ class inscriptionform(forms.ModelForm):
             attrs={"placeholder": "Confirmation du mot de passe"}
         ),
     )
-    captcha = CaptchaField()
+    captcha = CaptchaField(
+        required=True,
+        widget=forms.TextInput(
+            attrs={"placeholder": "Captcha"}
+        ),
+    )
     class Meta:
         model = Utilisateur
         fields = [
