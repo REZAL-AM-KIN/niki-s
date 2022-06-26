@@ -219,7 +219,6 @@ Fonctionnellement :
   - Accessible : tous les utilisateurs ayant la permission "can_add_bucquage". A voir si besoin d'affiner
   - Permet de charger le fichier exporté et modifié avec les participations
   - Fonctionnalités supplémentaires à implémenter : 
-    - Vérifier qu'on upload bien un fichier xls et pas un film...
     - Faire apparaitre le nombre d'erreur dans le message passé à la suite de la validation de l'import
     - Sortir un rapport à la suite de l'import. Dans la solution actuelle, il suffit de réexporter les participations de l'évènement et de regarder ce qui a marché ou pas (en cherchant...)! Une solution temporaire pourrait être de rajouter dans l'export une colonne commentaire qui décrirait ce qui s'est bien passé (ou pas) sur chaque ligne. 
 
