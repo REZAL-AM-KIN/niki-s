@@ -11,4 +11,4 @@ class ParticipationEventForm(forms.ModelForm):
         fields = ["number"]
 
 class BucqueEventForm(forms.Form):
-    file=forms.FileField(validators=validators.FileExtensionValidator(['xls']))
+    file=forms.FileField(validators=[validators.FileExtensionValidator(['xls'])])
