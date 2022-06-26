@@ -257,6 +257,8 @@ documentation automatiquement
 
 ## Conception de l'API
 
+- Pagination : utilisation du modèle de pagination standard [Limitoffsetpagination]https://www.django-rest-framework.org/api-guide/pagination/#limitoffsetpagination. Ajout d'un paramètre dans settings.py. Les pages font 25 occurences.
+
 ### Consommateur
 
 - `GET`: Récupérer tous les consommateurs
