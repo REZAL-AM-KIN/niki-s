@@ -75,6 +75,7 @@ Rappel : un utilisateur ne doit pas être supprimé directement. Il doit être d
   - Accessible : tout utilisateur authentifié
 - Inscription : page d'inscription
   - Accessible : tout le monde
+  - Un Captcha est utilisé - utilisation de l'app standard django simple captcha
 - LoginPage : page de login
   - Accessible : tout le monde
 - GestionCompte : permet de gérer la chambre, le téléphone de contact et si l'utilisateur est gadz, la bucque
