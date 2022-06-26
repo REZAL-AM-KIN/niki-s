@@ -252,8 +252,9 @@ Pour cette application, les objets Event et Product Event sont créés directeme
 
 ## Installation
 
-Utilisation de [Django REST Framework](https://www.django-rest-framework.org/). Utilisation de PyYaml pour générer la
-documentation automatiquement
+- Utilisation de [Django REST Framework](https://www.django-rest-framework.org/). 
+- Utilisation de PyYaml et uritemplates pour générer la documentation automatiquement, accessible sur api-docs
+- Utilisation de [Django Rest Framework Simple JWT](https://simpleisbetterthancomplex.com/tutorial/2018/12/19/how-to-use-jwt-authentication-with-django-rest-framework.html) pour authentifier les endpoints en production. L'authentification "SessionAuthentication" est conservée pour pouvoir utiliser la browsable API proposée par Django
 
 ## Conception de l'API
 
@@ -318,6 +319,9 @@ Arrivé sur la page d'accueil, créer un utilisateur via le formulaire d'inscrip
 ### Développer avec VSCode
 
 ### Reset migrations
+
+git reset --hard origin/main
+rm -rf db.sqlite3
 find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
 find . -path "*/migrations/*.pyc"  -delete
 

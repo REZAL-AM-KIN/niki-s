@@ -12,7 +12,7 @@ class Event(models.Model):
     cansubscribe=models.BooleanField(default=True, verbose_name="Ouvert à l'inscription")
     date_event=models.DateTimeField()
     created_by=models.ForeignKey(User, on_delete=CASCADE, editable=False, verbose_name="Créé par")
-    ended=models.BooleanField(default=False)
+    ended=models.BooleanField(default=False, verbose_name="Evènement terminé")
 
     def __str__(self):
        return self.titre + " - " + str(self.date_event)
