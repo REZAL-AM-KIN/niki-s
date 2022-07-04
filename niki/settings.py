@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import os
 from pathlib import Path
 from datetime import timedelta
-import ldap
+
 
 from django.conf.global_settings import LOGOUT_REDIRECT_URL
 
@@ -30,6 +30,9 @@ SECRET_KEY = "!k#$kliodbhcw1wfardw9ua5241c+-_csaao&sv_x2)70*xxf&"
 DEBUG = True
 LOCALDB = True
 WITHLDAP = True
+
+if WITHLDAP: 
+    import ldap
 
 ALLOWED_HOSTS = ['*']
 

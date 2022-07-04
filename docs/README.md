@@ -320,10 +320,13 @@ Arrivé sur la page d'accueil, créer un utilisateur via le formulaire d'inscrip
 
 ### Reset migrations
 
-git reset --hard origin/main
-rm -rf db.sqlite3
-find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
-find . -path "*/migrations/*.pyc"  -delete
+`git reset --hard origin/main` : supprime tous ses changements locaux et de récupérer la branche distante
+
+`rm -rf db.sqlite3` : supprime la base de donnée locale
+
+`find . -path "*/migrations/*.py" -not -name "__init__.py" -delete` : supprime les fichiers de migrations
+
+`find . -path "*/migrations/*.pyc"  -delete` : supprime les fichiers de migrations
 
 ### En prod
 
@@ -380,8 +383,14 @@ Dans la solution, nous avons deux types d'architectures : la page d'accueil et l
 
 ## LDAP
 
-Blabla
-
+Il est possible d'installer un serveur LDAP sur sa propre machine de test. Pour cela :
+- Définir l'host de sa machine en 
+  - éditant le fichier /etc/hosts et en ajoutant la ligne : `172.20.0.171 ldap.example.com`
+  - exécutant cette commande : `sudo hostnamectl set-hostname ldap.example.com --static`
+- Installer le paquet correspondant au serveur LDAP : `slapd`
+- Définir un mot de passe administrateur pour le serveur
+- Définir le schéma et le premier utilisateur : `sudo ldapadd -x -D cn=admin,dc=example,dc=com -W -f basedn.ldif`. Le fichier basedn.ldif est disponible dans le répertoire docs de ce repository
+  
 ## Mails
 
 **A REVOIR**
