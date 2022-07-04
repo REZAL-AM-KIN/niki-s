@@ -102,25 +102,3 @@ class HistoryViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         serializer = self.get_serializer(self.get_queryset(), many=True)
         return Response(data=serializer.data)
-
-# class TransactionViewSet(viewsets.ModelViewSet):
-#     http_method_names = ["get","post","delete","put","options"]
-#     permission_classes = (permissions.DjangoModelPermissions,)
-#     serializer_class = TransactionSerializer
-#     lookup_field="debiteur"
-    
-#     def get_queryset(self):
-#         if "debiteur" in self.kwargs:
-#             user_id = self.kwargs["debiteur"]
-#             consommateur = Consommateur.objects.filter(pk=user_id)
-#             if consommateur.count()==1:
-#                 queryset = Transaction.objects.filter()
-#             else:
-#                 queryset=Transaction.objects.none()
-#         else:
-#             queryset=Transaction.objects.none()
-#         return queryset
-
-#     def retrieve(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(self.get_queryset(), many=True)
-#         return Response(data=serializer.data)

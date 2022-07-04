@@ -83,9 +83,3 @@ class HistorySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = History
         fields = ("cible_evenement","nom_evenement","prix_evenement","entite_evenement","date_evenement")
-
-# class TransactionSerializer(serializers.HyperlinkedModelSerializer):
-
-#     class Meta:
-#         model = Transaction
-#         fields = ("crediteur","debiteur","date","montant","description","accepted")
