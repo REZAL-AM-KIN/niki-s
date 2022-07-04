@@ -10,7 +10,6 @@ router.register(r"produits", views.ProduitViewSet)
 router.register(r"consommateurs", views.ConsommateurViewSet)
 router.register(r"recharges", views.RechargeViewSet, basename="recharges")
 router.register(r"bucquages", views.BucquageViewSet, basename="bucquages")
-# router.register(r"transactions",views.TransactionViewSet, basename="transaction")
 router.register(r"history", views.HistoryViewSet, basename="history")
 
 urlpatterns = [
