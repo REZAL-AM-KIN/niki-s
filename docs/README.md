@@ -258,7 +258,7 @@ Pour cette application, les objets Event et Product Event sont créés directeme
 
 ## Conception de l'API
 
-- Pagination : utilisation du modèle de pagination standard [Limitoffsetpagination]https://www.django-rest-framework.org/api-guide/pagination/#limitoffsetpagination. Ajout d'un paramètre dans settings.py. Les pages font 25 occurences.
+- Pagination : utilisation du modèle de pagination standard [Limitoffsetpagination](https://www.django-rest-framework.org/api-guide/pagination/#limitoffsetpagination). Ajout d'un paramètre dans settings.py. Les pages font 25 occurences.
 
 ### Consommateur
 
@@ -297,7 +297,11 @@ Pour tester l'intégralité des fonctionnalités de l'application, à savoir le 
 
 Paquets à installer sur la machine :
 
-`sudo apt-get install git gpg python3 python3-pip ssh python3.10-venv libsasl2-dev libldap2-dev libssl-dev ldap-utils libz-dev libjpeg-dev libfreetype6-dev python-dev`
+`sudo apt-get install git gpg python3 python3-pip ssh libsasl2-dev libldap2-dev libssl-dev ldap-utils libz-dev libjpeg-dev libfreetype6-dev python-dev`
+
+Si vous souhaitez installer le LDAP en local, c'est à ce moment. Voir section LDAP plus bas.
+
+Téléchargement de l'application via le github en ayant préalablement enregistré sa [clé SSH](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) : `git clone git@github.com:lenwe171175/niki-s.git`
 
 Lancement de l'application : 
 
@@ -312,6 +316,8 @@ Lancement de l'application :
 `python3 manage.py runserver 0.0.0.0:8000`
 
 Dans le cas où vous n'avez pas de machine linux sous la main, il est tout à fait possible de désactiver le module LDAP avec le paramètre `WITHLDAP` dans `settings.py`. Il faudra de plus commenter les parties de code qui intègre le module. Il ne sera pas nécessaire d'installer la dernière ligne de requirements.txt qui correspond à une customisation du packet django-ldapdb pour le rézal et django-4. 
+
+Il est nécessaire de vérifier que les login du serveur LDAP local sont corrects (dans `niki/settings.py`).
 
 Une fois les commandes lancées avec succès, il est possible se connecter sur http://ipdelamachine:8000. 
 Arrivé sur la page d'accueil, créer un utilisateur via le formulaire d'inscription. Se connecter ensuite avec le compte admin créé au dessus et configurer le nouveau compte pour être superuser et staff. Il ne faudra plus se connecter avec le compte admin par la suite. En effet, le compte admin n'est que instance du modèle User et pas du modèle Utilisateur dérivé.
