@@ -301,11 +301,20 @@ Paquets à installer sur la machine :
 
 Si vous souhaitez installer le LDAP en local, c'est à ce moment. Voir section LDAP plus bas.
 
-Téléchargement de l'application via le github en ayant préalablement enregistré sa [clé SSH](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) : `git clone git@github.com:lenwe171175/niki-s.git`
+Téléchargement de l'application via le github en ayant préalablement enregistré sa [clé SSH](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
+
+Création d'un fichier .env à la racine du projet en duplicant le fichier .env-template. Ce fichier .env permet de rentrer les informations suivantes :
+- SECRET_KEY=!k#$kliodbhcw1wfardw9ua5241c+-_csaao&sv_x2)70*xxf& - à changer pour la production
+- DEBUG=True - à mettre à False en production
+- LOCALDB=True - permet de définir si on utilise la base de données interne sqlite. Si le paramètre n'est pas à True, il est nécessaire de remplir les informations de connexion à la base de données externe
+- RADIUS=False - permet de définir si on doit se connecter à Radius. Si le paramètre n'est pas à False, il est nécessaire de remplir les informations de connexion à la base Radius
+- Connexion à la base de données externe : DB_NAME, DB_USERNAME, DB_PASSWORD, DB_ADDR
+- Connexion au LDAP : LDAP_ADDR, LDAP_USER, LDAP_PASSWORD
+- Connexion à Radius : RADIUS_USERNAME, RADIUS_PASSWORD, RADIUS_ADDR
 
 Lancement de l'application : 
 
-`pip install -r requirements.txt`
+`pip install -r requirements.txt` - si vous choisissez d'installer l'application sans LDAP, utiliser `pip install -r requirements-noldap.txt`
 
 `python3 manage.py makemigrations`
 
@@ -315,7 +324,6 @@ Lancement de l'application :
 
 `python3 manage.py runserver 0.0.0.0:8000`
 
-Dans le cas où vous n'avez pas de machine linux sous la main, il est tout à fait possible de désactiver le module LDAP avec le paramètre `WITHLDAP` dans `settings.py`. Il faudra de plus commenter les parties de code qui intègre le module. Il ne sera pas nécessaire d'installer la dernière ligne de requirements.txt qui correspond à une customisation du packet django-ldapdb pour le rézal et django-4. 
 
 Il est nécessaire de vérifier que les login du serveur LDAP local sont corrects (dans `niki/settings.py`).
 

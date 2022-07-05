@@ -13,9 +13,18 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import os
 from pathlib import Path
 from datetime import timedelta
-
-
+from os import environ, getenv
+from dotenv import load_dotenv
 from django.conf.global_settings import LOGOUT_REDIRECT_URL
+
+WITHLDAP=False
+try:
+    import ldap
+    WITHLDAP=True
+except:
+    pass
+
+load_dotenv(".env")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,15 +33,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "!k#$kliodbhcw1wfardw9ua5241c+-_csaao&sv_x2)70*xxf&"
+SECRET_KEY = environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-LOCALDB = True
-WITHLDAP = True
+DEBUG = getenv("DEBUG","False") == "True"
 
-if WITHLDAP: 
-    import ldap
+RADIUS = getenv("RADIUS", "False") == "True"
 
 ALLOWED_HOSTS = ['*']
 
@@ -51,9 +57,11 @@ INSTALLED_APPS = [
     "appevents",
     "rest_framework",
     "api",
-    "ldapdb",
     "captcha",
 ]
+
+if WITHLDAP:
+    INSTALLED_APPS.append("ldapdb")
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -95,37 +103,20 @@ WSGI_APPLICATION = "niki.wsgi.application"
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
 DATABASES = {
-    "ldap": {
-        'ENGINE': 'ldapdb.backends.ldap',
-        'NAME': 'ldap://localhost',
-        'USER': 'cn=admin,dc=rezal,dc=fr',
-        'PASSWORD': 'lenwe',
-        # 'TLS': True,
-        'CONNECTION_OPTIONS': {
-            ldap.OPT_X_TLS_DEMAND: True,
-        }
-    },
-#    "default": {
-#        'NAME': 'niki',
-#        'ENGINE': 'django.db.backends.mysql',
-#        'USER': 'username',
-#        'PASSWORD': 'password',
-#        'HOST':'addr',
-#    },
-#    "radcheck": {
-#        'NAME': 'radius',
-#        'ENGINE': 'django.db.backends.mysql',
-#        'USER': 'username',
-#        'PASSWORD': 'password',
-#        'HOST':'addr',
-#    },
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+    "default": __import__("db").DB_SETTINGS, 
     }
-}
 
-DATABASE_ROUTERS = ["niki.dbrouter.dbrouter","ldapdb.router.Router"]
+if WITHLDAP:
+    DATABASES["ldap"]=__import__("db").LDAP_SETTINGS
+
+if RADIUS:
+    DATABASES["radius"]=__import__("db").RADIUS_SETTINGS
+
+
+DATABASE_ROUTERS = ["niki.dbrouter.dbrouter"]
+
+if WITHLDAP:
+    DATABASE_ROUTERS.append("ldapdb.router.Router")
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
@@ -184,10 +175,10 @@ CAPTCHA_FONT_SIZE=36
 LOGIN_URL = "login"
 LOGOUT_REDIRECT_URL = "index"
 
-EMAIL_HOST = ""
-EMAIL_HOST_USER = ""
-EMAIL_HOST_PASSWORD = ""
-EMAIL_PORT = ""
-EMAIL_USE_TLS = ""
-DEFAULT_FROM_EMAIL = ""
-SERVER_EMAIL = ""
+EMAIL_HOST = getenv("EMAIL_HOST", "")
+EMAIL_HOST_USER = getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_PORT = getenv("EMAIL_PORT", "")
+EMAIL_USE_TLS = getenv("EMAIL_USE_TLS", "")
+DEFAULT_FROM_EMAIL = getenv("DEFAULT_FROM_EMAIL", "")
+SERVER_EMAIL = getenv("SERVER_EMAIL", "")

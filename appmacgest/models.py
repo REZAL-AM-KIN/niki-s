@@ -8,7 +8,7 @@ from django.db.models.signals import post_save
 from django.dispatch.dispatcher import receiver
 
 from appuser.models import Utilisateur
-from niki import settings
+from niki.settings import RADIUS
 
 
 # Create your models here.
@@ -51,7 +51,7 @@ class Device(models.Model):
     def save(self, *args, **kwargs):
         super(Device, self).save(*args, **kwargs)
         device_user = Utilisateur.objects.get(pk=self.proprietaire.pk)
-        if not settings.LOCALDB:
+        if RADIUS:
             if (
                 device_user.has_cotiz
                 and self.accepted == True
@@ -63,7 +63,7 @@ class Device(models.Model):
 
     def delete(self, *args, **kwargs):
         super(Device, self).delete(*args, **kwargs)
-        if not settings.LOCALDB:
+        if RADIUS:
             delete_in_radcheck(self)
 
 

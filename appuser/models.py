@@ -7,10 +7,13 @@ import base64
 
 from django.contrib.auth.models import User
 from django.db import models
-from niki.settings import WITHLDAP
-if WITHLDAP:
+from db import WITHLDAP
+
+try:
     import ldapdb.models
     from ldapdb.models.fields import (PasswordField, CharField, DateTimeField)  
+except:
+    pass
 
 
 # Create your models here.
@@ -59,24 +62,25 @@ class Utilisateur(User):
             self.date_expiration = date.today
         super(Utilisateur, self).save(*args, **kwargs)
 
-class LdapUser(ldapdb.models.Model):
-    """
-    Class for representing an LDAP user entry.
-    """
-    # LDAP meta-data
-    base_dn = "ou=users,dc=rezal,dc=fr"
-    object_classes = ['inetOrgPerson']
-    last_modified = DateTimeField(db_column='modifyTimestamp', editable=False)
+if WITHLDAP:
+    class LdapUser(ldapdb.models.Model):
+        """
+        Class for representing an LDAP user entry.
+        """
+        # LDAP meta-data
+        base_dn = "ou=users,dc=rezal,dc=fr"
+        object_classes = ['inetOrgPerson']
+        last_modified = DateTimeField(db_column='modifyTimestamp', editable=False)
 
-    # inetOrgPerson
-    first_name = CharField(db_column='givenName', verbose_name="Prime name")
-    last_name = CharField("Final name", db_column='sn')
-    full_name = CharField(db_column='cn', primary_key=True)
-    email = CharField(db_column='mail')
-    password = PasswordField(db_column='userPassword')
+        # inetOrgPerson
+        first_name = CharField(db_column='givenName', verbose_name="Prime name")
+        last_name = CharField("Final name", db_column='sn')
+        full_name = CharField(db_column='cn', primary_key=True)
+        email = CharField(db_column='mail')
+        password = PasswordField(db_column='userPassword')
 
-    def __str__(self):
-        return self.first_name
+        def __str__(self):
+            return self.first_name
 
-    def __unicode__(self):
-        return self.full_name
+        def __unicode__(self):
+            return self.full_name
