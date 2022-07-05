@@ -110,7 +110,7 @@ if WITHLDAP:
     DATABASES["ldap"]=__import__("db").LDAP_SETTINGS
 
 if RADIUS:
-    DATABASES["radius"]=__import__("db").RADIUS_SETTINGS
+    DATABASES["radcheck"]=__import__("db").RADIUS_SETTINGS
 
 
 DATABASE_ROUTERS = ["niki.dbrouter.dbrouter"]
