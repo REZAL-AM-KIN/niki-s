@@ -4,13 +4,15 @@ from niki.settings import BASE_DIR
 from niki.settings import RADIUS
 
 LOCALDB = getenv("LOCALDB","True") == "True"
+LDAP = getenv("LDAP","False") == "True"
 
 WITHLDAP=False
-try:
-    import ldap
-    WITHLDAP=True
-except:
-    pass
+if LDAP:    
+    try:
+        import ldap
+        WITHLDAP=True
+    except:
+        pass
 
 if LOCALDB:
     DB_SETTINGS = {

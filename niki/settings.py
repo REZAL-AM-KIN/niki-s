@@ -17,12 +17,15 @@ from os import environ, getenv
 from dotenv import load_dotenv
 from django.conf.global_settings import LOGOUT_REDIRECT_URL
 
+LDAP = getenv("LDAP","False") == "True"
+
 WITHLDAP=False
-try:
-    import ldap
-    WITHLDAP=True
-except:
-    pass
+if LDAP:
+    try:
+        import ldap
+        WITHLDAP=True
+    except:
+        pass
 
 load_dotenv(".env")
 
