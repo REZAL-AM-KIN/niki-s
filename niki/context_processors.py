@@ -9,7 +9,7 @@ from appuser.models import Utilisateur
 def getUtilisateur(request):
     try:
         utilisateur = Utilisateur.objects.get(pk=request.user.pk)
-    except (AttributeError, exceptions.ObjectDoesNotExist):
+    except:
         utilisateur = None
     return {"utilisateur": utilisateur}
 
@@ -17,7 +17,7 @@ def getConsommateur(request):
     if request.user.is_authenticated:
         try:
             consommateur = Consommateur.objects.get(consommateur=request.user)
-        except (AttributeError, exceptions.ObjectDoesNotExist):
+        except:
             consommateur = None
         return {"consommateur": consommateur}
     return {}
