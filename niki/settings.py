@@ -40,6 +40,7 @@ SECRET_KEY = environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = getenv("DEBUG","False") == "True"
+PROD = getenv("PROD","False") == "True"
 
 RADIUS = getenv("RADIUS", "False") == "True"
 
@@ -171,10 +172,10 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 
-if DEBUG:
-    STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
-else:
+if PROD:
     STATIC_ROOT = BASE_DIR / 'static'
+else:
+    STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 
 
 # Niki specific parameters
