@@ -25,6 +25,9 @@ class inscriptionform(forms.ModelForm):
             attrs={"placeholder": "Captcha"}
         ),
     )
+    cgu =forms.BooleanField(
+        required=True,
+    )
     class Meta:
         model = Utilisateur
         fields = [

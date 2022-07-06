@@ -25,7 +25,12 @@
 	        	{% if field.errors %}
 				<div class = "error field">
 				{% else %}
-				<div class = "field">
+					{% if field.name == "cgu" %}
+						<div class = "inline field">
+						<label>J'accepte les <a href = "{% static 'pdf/CGU.pdf' %}">conditions générales d'utilisation</a></label>
+					{% else %}
+						<div class = "field">
+					{% endif %}
 				{% endif %}
 				{{ field }}
 				{% if field.errors %}
