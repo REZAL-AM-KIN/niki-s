@@ -310,7 +310,7 @@ Téléchargement de l'application via le github en ayant préalablement enregist
 Création d'un fichier .env à la racine du projet en duplicant le fichier .env-template. Ce fichier .env permet de rentrer les informations suivantes :
 - SECRET_KEY=!k#$kliodbhcw1wfardw9ua5241c+-_csaao&sv_x2)70*xxf& - à changer pour la production
 - DEBUG=True - à mettre à False en production
-- LOCALDB=True - permet de définir si on utilise la base de données interne sqlite. Si le paramètre n'est pas à True, il est nécessaire de remplir les informations de connexion à la base de données externe
+- DB_TYPE=sqlite - permet de définir le type de base de données à utiliser. Par défaut, on utilise SQLite (base de donnée local dans un fichier). Les choix possibles sont `sqlite`, `postgres`, `mysql`. Il est recommandé d'utiliser SQLite en dev, et PostgreSQL en production.
 - RADIUS=False - permet de définir si on doit se connecter à Radius. Si le paramètre n'est pas à False, il est nécessaire de remplir les informations de connexion à la base Radius
 - Connexion à la base de données externe : DB_NAME, DB_USERNAME, DB_PASSWORD, DB_ADDR
 - Connexion au LDAP : LDAP_ADDR, LDAP_USER, LDAP_PASSWORD

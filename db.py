@@ -3,7 +3,7 @@ from os import environ, getenv
 from niki.settings import BASE_DIR
 from niki.settings import RADIUS
 
-LOCALDB = getenv("LOCALDB", "True") == "True"
+DB_TYPE = getenv("DB_TYPE", "sqlite").lower()
 LDAP = getenv("LDAP", "False") == "True"
 
 WITHLDAP = False
@@ -15,18 +15,26 @@ if LDAP:
     except:
         pass
 
-if LOCALDB:
+if DB_TYPE == "postgres":
     DB_SETTINGS = {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": str(BASE_DIR / "db.sqlite3"),
+        "NAME": environ["DB_NAME"],
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "USER": environ["DB_USERNAME"],
+        "PASSWORD": environ["DB_PASSWORD"],
+        "HOST": environ["DB_ADDR"],
     }
-else:
+elif DB_TYPE == "mysql":
     DB_SETTINGS = {
         "NAME": environ["DB_NAME"],
         "ENGINE": "django.db.backends.mysql",
         "USER": environ["DB_USERNAME"],
         "PASSWORD": environ["DB_PASSWORD"],
         "HOST": environ["DB_ADDR"],
+    }
+else:
+    DB_SETTINGS = {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": str(BASE_DIR / "db.sqlite3"),
     }
 
 if WITHLDAP:
