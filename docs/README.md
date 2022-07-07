@@ -73,6 +73,8 @@ Rappel : un utilisateur ne doit pas être supprimé directement. Il doit être d
   - Accessible : tout utilisateur authentifié
 - About : page "À propos" **A REVOIR**
   - Accessible : tout utilisateur authentifié
+- Nous contacter : **A REVOIR**
+  - Accessible : tout utilisateur authentifié
 - Inscription : page d'inscription
   - Accessible : tout le monde
   - Un Captcha est utilisé - utilisation de l'app standard django simple captcha
@@ -82,10 +84,12 @@ Rappel : un utilisateur ne doit pas être supprimé directement. Il doit être d
   - Accessible : tout utilisateur authentifié
 - Administration : permet d'accéder aux différents outils d'administrateur
   - Accessible : utilisateur authentifié ayant le statut équipe
-- MdpOublie (standard) **A REVOIR**
+- MdpOublie (standard) 
   - Accessible : tout le monde
-  - Utilisation des vues [Django standards](https://docs.djangoproject.com/fr/3.1/topics/auth/default/#using-the-views) en ajoutant dans le fichier url de l'application les lignes correspondantes. Il sera possible d'ajouter un template
-spécifique pour personnaliser ces vues. L'utilisation de cette fonctionnalité nécessite le paramétrage des mails dans Django.
+  - Utilisation des vues [Django standards](https://docs.djangoproject.com/fr/3.1/topics/auth/default/#using-the-views) en ajoutant dans le fichier url de l'application les lignes correspondantes. 
+  - Des templates personnalisés ont été rédigés pour ces vues standards. Ils sont disponibles dans templates/registration
+  - Le formulaire password_reset a été surchargé pour ajouter un captcha 
+  - L'utilisation de cette fonctionnalité nécessite le paramétrage des mails dans Django.
 - Fonctionnalités supplémentaires à implémenter non démarrées :
   - Prévoir un accueil de l'utilisateur en fonction de son statut, type "tutoriel" lors de la première connexion, idéalement en overlay. Une ébauche de cette fonctionnalité a été développée dans une des versions précédentes de l'intra. **A REVOIR**
 
@@ -407,4 +411,12 @@ Il est possible d'installer un serveur LDAP sur sa propre machine de test. Pour 
   
 ## Mails
 
-**A REVOIR**
+La configuration des mails se fait :
+- via le fichier settings.py qui permet de définir le port du serveur mail et le protocole (TLS)
+- via les variables d'environnement EMAIL_HOST, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD, DEFAULT_FROM_EMAIL, SERVER_EMAIL
+
+Une fois ces informations remplies, il est possible d'envoyer un mail à partir de n'importe quelle page en utilisant : 
+```
+from django.core.mail import send_mail
+send_mail( 'Subject here', 'Here is the message.', 'from@from.fr', ['to@to.fr'])
+```
