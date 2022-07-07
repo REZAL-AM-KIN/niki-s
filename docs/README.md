@@ -318,7 +318,7 @@ Création d'un fichier .env à la racine du projet en duplicant le fichier .env-
 
 Lancement de l'application : 
 
-`pip install -r requirements.txt` - si vous choisissez d'installer l'application sans LDAP, utiliser `pip install -r requirements-noldap.txt`
+`pip install -r requirements.txt` - si vous choisissez d'installer l'application sans LDAP, sinon `pip install -r requirements-ldap.txt`
 
 `python3 manage.py makemigrations`
 

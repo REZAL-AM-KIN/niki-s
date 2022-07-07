@@ -3,14 +3,15 @@ from os import environ, getenv
 from niki.settings import BASE_DIR
 from niki.settings import RADIUS
 
-LOCALDB = getenv("LOCALDB","True") == "True"
-LDAP = getenv("LDAP","False") == "True"
+LOCALDB = getenv("LOCALDB", "True") == "True"
+LDAP = getenv("LDAP", "False") == "True"
 
-WITHLDAP=False
-if LDAP:    
+WITHLDAP = False
+if LDAP:
     try:
         import ldap
-        WITHLDAP=True
+
+        WITHLDAP = True
     except:
         pass
 
@@ -26,7 +27,7 @@ else:
         "USER": environ["DB_USERNAME"],
         "PASSWORD": environ["DB_PASSWORD"],
         "HOST": environ["DB_ADDR"],
-    }    
+    }
 
 if WITHLDAP:
     LDAP_SETTINGS = {
