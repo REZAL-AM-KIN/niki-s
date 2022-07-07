@@ -1,0 +1,46 @@
+{% extends "baseform.html" %}
+{% load static %}
+{% block title %}Niki - En savoir plus{% endblock %}
+{% block content %}
+<div class = "ui center aligned container">
+    <div class = "ui left aligned segment">
+        <div class = "ui center aligned header"> Ce programme d'intra a été fraternellement développé par : </div>
+        <div class="ui list">
+            <div class="item">
+                <img class="ui avatar image" src="{% static "images/sylvestre-carre.jpg" %}">
+                <div class="content">
+                    <a class="header">Lenwë 171-175 KIN214</a>
+                    <div class="description">dit Robin Sylvestre</div>
+                </div>
+            </div>
+            <div class="item">
+                <img class="ui avatar image" src="{% static "images/square-image.png" %}">
+                <div class="content">
+                    <a class="header">Tag 166tt KIN215</a>
+                    <div class="description">dit Yash Thevalil</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class = "ui left aligned segment">
+        <div class = "ui center aligned header">Il repose sur les outils suivants : </div>
+        <div class="ui list">
+            <div class="item">
+                <img class="ui avatar image" src="{% static "images/dj.png" %}">
+                <div class="content">
+                    <a class="header">Django</a>
+                    <div class="description">Un framework web basé sur Python</div>
+                </div>
+            </div>
+            <div class="item">
+                <img class="ui avatar image" src="{% static "images/drf.png" %}">
+                <div class="content">
+                    <a class="header">Django Rest Framework</a>
+                    <div class="description">Un outil de développement pour les API</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
