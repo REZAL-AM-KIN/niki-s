@@ -110,3 +110,6 @@ def is_superuser(user):
 @staff_member_required
 def administration(request):
     return render(request, "appuser/administration.html")
+
+def page_not_found_view(request, exception):
+    return render(request, "404.html", status=404)

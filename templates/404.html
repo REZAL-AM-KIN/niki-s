@@ -1,0 +1,26 @@
+{% extends "baseform.html" %}
+{% load static %}
+{% block title %}404{% endblock %}
+{% block navform %}{% endblock %}
+{% block content %}
+
+<style type="text/css">
+		body > .grid {
+		height: 100%;
+	  	}
+</style>
+
+<div class="ui middle aligned center aligned grid">
+	<div class="column">
+    	<h2 class="ui blue image header">
+      		<img src="{% static "images/logocarre.png" %}" class="image">
+      		<div class="content">
+            Cette page n'existe pas !
+      		</div>
+    	</h2>
+	<div class = "ui message">
+		Retour à l'<a href="{% url "index" %}">accueil</a>
+	</div>
+  	</div>
+</div>
+{% endblock %}
