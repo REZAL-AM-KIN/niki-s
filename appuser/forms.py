@@ -3,6 +3,7 @@
 from django import forms
 from captcha.fields import CaptchaField, CaptchaTextInput
 from .models import Utilisateur
+from django.contrib.auth.forms import PasswordResetForm
 
 
 class loginform(forms.Form):
@@ -79,3 +80,17 @@ class gestioncomptegadzform(forms.ModelForm):
             super(gestioncomptegadzform, self).__init__(*args, **kwargs)
             self.field["chambre"].required = True
             self.field["phone"].required = True
+
+class CustomPasswordResetForm(PasswordResetForm):
+    
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={'placeholder': 'Adresse email'})
+    )
+
+    captcha = CaptchaField(
+        required=True,
+        widget=CaptchaTextInput(
+            attrs={"placeholder": "Captcha"}
+        )
+    )
