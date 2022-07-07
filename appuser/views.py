@@ -7,7 +7,6 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 
 from appuser.forms import (
-    loginform,
     inscriptionform,
     gestioncomptegadzform,
     gestioncompteform,
@@ -23,27 +22,6 @@ def index(request):
 
 def about(request):
     return render(request, "appuser/about.html")
-
-
-def loginview(request):
-    if request.method == "POST":
-        form = loginform(request.POST)
-        if form.is_valid():
-            user = form.cleaned_data["user"]
-            password = form.cleaned_data["password"]
-            user = authenticate(username=user, password=password)
-            if user is not None:
-                login(request, user)
-                return redirect(index)
-            else:
-                logout(request)
-                messages.error(
-                    request, u"Une erreur est survenue - compte inconnu ou désactivé"
-                )
-                return redirect(login)
-    else:
-        form = loginform()
-    return render(request, "login.html", {"form": form})
 
 
 def inscription(request):

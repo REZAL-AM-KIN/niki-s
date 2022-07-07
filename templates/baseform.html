@@ -84,6 +84,18 @@
 	</div>
 </div>	
 {% endif %}
+{% if form.non_field_errors %}
+<div class="ui basic segment">
+	<div class="ui container">
+	{% for error in form.non_field_errors %}
+	<div class = "ui floating message error">
+		<i class = "close icon"></i>
+		{{ error }}
+	</div>
+	{% endfor %}
+	</div>
+</div>	
+{% endif %}
 {% block content %}
 {% endblock %}
 </body>

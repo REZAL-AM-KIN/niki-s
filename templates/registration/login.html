@@ -18,13 +18,13 @@
         	Connexion à Niki
       		</div>
     	</h2>
-    <form class="ui large form" action ="{% url "login" %}" method="POST">
+    <form class="ui large form" method="POST">
 		{% csrf_token %}
       	<div class="ui stacked segment">
         	<div class="field">
           		<div class="ui left icon input">
             		<i class="user icon"></i>
-					{{ form.user }}
+					{{ form.username }}
           		</div>
         	</div>
         	<div class="field">

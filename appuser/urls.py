@@ -2,12 +2,12 @@
 
 from django.contrib.auth import views as auth_views
 from django.urls import path
-from .forms import CustomPasswordResetForm
+from .forms import CustomLoginForm, CustomPasswordResetForm
 
 from . import views
 
 urlpatterns = [
-    path("login/", views.loginview, name="login"),
+    path("login/", auth_views.LoginView.as_view(template_name="registration/login.html", form_class=CustomLoginForm), name="login"),
     path("", views.index, name="index"),
     path("gestioncompte/", views.gestioncompte, name="gestioncompte"),
     path("inscription/", views.inscription, name="inscription"),

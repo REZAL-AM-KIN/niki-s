@@ -3,15 +3,11 @@
 from django import forms
 from captcha.fields import CaptchaField, CaptchaTextInput
 from .models import Utilisateur
-from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
 
-
-class loginform(forms.Form):
-    user = forms.CharField(widget=forms.TextInput(attrs={"placeholder": "Login"}))
-    password = forms.CharField(
-        widget=forms.PasswordInput(attrs={"placeholder": "Mot de passe"})
-    )
-
+class CustomLoginForm(AuthenticationForm):
+    username = forms.CharField(widget=forms.TextInput(attrs={'class':'validate','placeholder': 'Username'}))
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'placeholder':'Mot de passe'}))
 
 class inscriptionform(forms.ModelForm):
     password_validation = forms.CharField(
@@ -82,12 +78,10 @@ class gestioncomptegadzform(forms.ModelForm):
             self.field["phone"].required = True
 
 class CustomPasswordResetForm(PasswordResetForm):
-    
     email = forms.EmailField(
         required=True,
         widget=forms.EmailInput(attrs={'placeholder': 'Adresse email'})
     )
-
     captcha = CaptchaField(
         required=True,
         widget=CaptchaTextInput(
