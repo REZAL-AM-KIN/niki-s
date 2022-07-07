@@ -12,6 +12,7 @@ from appuser.forms import (
     gestioncompteform,
 )
 from .models import Utilisateur
+from niki.settings import LOGIN_URL
 
 
 # Create your views here.
@@ -40,7 +41,7 @@ def inscription(request):
             user.save()
             messages.success(request, u"Création du compte réussie")
             # ajouter une commande pour envoyer un mail automatique pour signaler que l'inscription est réussie
-            return redirect(loginview)
+            return redirect(LOGIN_URL)
         else:
             messages.error(
                 request, u"Une erreur est survenue lors de la création du compte"
