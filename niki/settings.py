@@ -11,19 +11,21 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 import os
-from pathlib import Path
 from datetime import timedelta
 from os import environ, getenv
-from dotenv import load_dotenv
+from pathlib import Path
+
 from django.conf.global_settings import LOGOUT_REDIRECT_URL
+from dotenv import load_dotenv
 
-LDAP = getenv("LDAP","False") == "True"
+LDAP = getenv("LDAP", "False") == "True"
 
-WITHLDAP=False
+WITHLDAP = False
 if LDAP:
     try:
         import ldap
-        WITHLDAP=True
+
+        WITHLDAP = True
     except:
         pass
 
@@ -32,6 +34,8 @@ load_dotenv(".env")
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
@@ -39,8 +43,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = getenv("DEBUG","False") == "True"
-PROD = getenv("PROD","False") == "True"
+DEBUG = getenv("DEBUG", "False") == "True"
+PROD = getenv("PROD", "False") == "True"
 
 RADIUS = getenv("RADIUS", "False") == "True"
 
@@ -98,7 +102,7 @@ TEMPLATES = [
                 "admin.urls": "django.contrib.admin.templatetags.admin_urls",
             },
         }
-        },
+    },
 ]
 
 WSGI_APPLICATION = "niki.wsgi.application"
@@ -107,15 +111,14 @@ WSGI_APPLICATION = "niki.wsgi.application"
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
 DATABASES = {
-    "default": __import__("db").DB_SETTINGS, 
-    }
+    "default": __import__("db").DB_SETTINGS,
+}
 
 if WITHLDAP:
-    DATABASES["ldap"]=__import__("db").LDAP_SETTINGS
+    DATABASES["ldap"] = __import__("db").LDAP_SETTINGS
 
 if RADIUS:
-    DATABASES["radcheck"]=__import__("db").RADIUS_SETTINGS
-
+    DATABASES["radcheck"] = __import__("db").RADIUS_SETTINGS
 
 DATABASE_ROUTERS = ["niki.dbrouter.dbrouter"]
 
@@ -177,9 +180,8 @@ if PROD:
 else:
     STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 
-
 # Niki specific parameters
-CAPTCHA_FONT_SIZE=36
+CAPTCHA_FONT_SIZE = 36
 LOGIN_URL = "login"
 LOGOUT_REDIRECT_URL = "index"
 
