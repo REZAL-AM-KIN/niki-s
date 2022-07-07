@@ -6,7 +6,7 @@ from niki.settings import RADIUS
 LOCALDB = getenv("LOCALDB", "True") == "True"
 LDAP = getenv("LDAP", "False") == "True"
 
-WITHLDAP = False
+WITHLDAP =False
 if LDAP:
     try:
         import ldap
