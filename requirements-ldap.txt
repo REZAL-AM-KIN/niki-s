@@ -1,0 +1,2 @@
+-r requirements.txt
+-e git+https://github.com/REZAL-AM-KIN/django-ldapdb-rezal.git@fdbb6cbb2907328b12389a5d2e858a5c21d17ad5#egg=django_ldapdb
