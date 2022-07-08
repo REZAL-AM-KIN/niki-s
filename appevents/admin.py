@@ -1,8 +1,7 @@
 from django.contrib import admin
-from django.contrib import messages
 
 # Register your models here.
-from .models import Event, Participation_event, Product_event
+from .models import Event, Product_event
 
 class AdminEvent(admin.ModelAdmin):
     list_display = ("titre","date_event", "cansubscribe", "ended","created_by")
@@ -52,20 +51,6 @@ class AdminProductEvent(admin.ModelAdmin):
             kwargs["queryset"] = qs
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
-    
-    def message_user(self, *args):
-        pass
-    
-#Surcharge de la méthode de sauvegarde des objets Product_Event (uniquement dans la Console d'admin) afin de ne pouvoir ajouter un produit que sur un évènement que j'ai créé
-#Obligation de redéfinir la méthode message_user ci-dessus pour ne pas afficher le message de création par défaut
-    def save_model(self, request, obj, form, change):
-        if not request.user.is_superuser:
-            if obj.parent_event.created_by != request.user:
-                messages.error(request, "You cannot create a product for this event")
-                return None
-        messages.success(request, "The product has been created")
-        obj.save()
-
 #Surcharge de la méthode qui fait la requête pour afficher le tableau de tous les Product_Events. On affiche uniquement les Product_Event appartenant aux events dont je suis le créateur
     def get_queryset(self, request):
         qs = super(AdminProductEvent, self).get_queryset(request)
@@ -98,4 +83,3 @@ class AdminParticipationEvents(admin.ModelAdmin):
 
 admin.site.register(Event, AdminEvent)
 admin.site.register(Product_event, AdminProductEvent)
-#admin.site.register(Participation_event, AdminParticipationEvents)
