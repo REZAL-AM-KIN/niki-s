@@ -43,6 +43,16 @@ class AdminEvent(admin.ModelAdmin):
 class AdminProductEvent(admin.ModelAdmin):
     list_display = ("parent_event", "nom", "prix")
 
+#ajout d'un filtre sur la page de création/édition d'un product_event permettant d'afficher dans la dropdown uniquement les events non terminés et que j'ai créé
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "parent_event":
+            qs=Event.objects.filter(ended=False)
+            if not request.user.is_superuser:
+                qs=qs.filter(created_by=request.user)
+            kwargs["queryset"] = qs
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    
     def message_user(self, *args):
         pass
     
