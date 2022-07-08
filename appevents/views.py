@@ -134,11 +134,12 @@ def eventtobucque(request, event):
         form=BucqueEventForm(request.POST, request.FILES)
         if form.is_valid():
             error=manageparticipationfile(request.FILES['file'],event)
+            url = reverse("downloadreport", args=event)
             if error == 0:
-                messages.success(request, u"Bucquage réalisé sans erreur")
+                msg = """Le bucquage a été réalisé sans erreur, le rapport est disponible <a href='{url}'>ici</a>"""   
+                messages.success(request, mark_safe(msg.format(url=url)))
             else:
-                msg = """Le bucquage a été réalisé avec des erreurs, le rapport est disponible <a href='{url}'>ici</a>"""
-                url = reverse("downloadreport", args=event)
+                msg = """Le bucquage a été réalisé avec des erreurs, le rapport est disponible <a href='{url}'>ici</a>"""   
                 messages.warning(request, mark_safe(msg.format(url=url)))
             return redirect(listeventstobucque)
     else:
@@ -152,7 +153,7 @@ def manageparticipationfile(file,event):
     sheet = book.sheet_by_name("Event")
     row_count = sheet.nrows
     col_count = sheet.ncols
-    #définition du fichier de sortie (rapport)
+    #définition du fichier de sortie (rapport). On fait une copie du fichier importé et on rajoute une colonne commentaire
     outbook=copy(book)
     outsheet=outbook.get_sheet(0)
     comment_col=9
@@ -169,32 +170,35 @@ def manageparticipationfile(file,event):
         if id_participation != '': #si l'ID participation n'est pas vide alors
             if Participation_event.objects.filter(pk=id_participation).count()==1: #si l'ID participation correspond à une participation qui existe
                 targetparticipation=Participation_event.objects.get(pk=id_participation) #récupération de l'objet participation
-                if targetparticipation.participation_bucquee==False: #si la participation en base n'est pas déjà bucquée
-                    if participation_ok==1: #si la participation est validée sur le fichier, vérification de la cohérence de la ligne par rapport aux informations en base
-                        if id_produit == targetparticipation.product_participation.pk: #si le produit renseigné dans le fichier est le même que celui enregistré en base
-                            if username == targetparticipation.cible_participation.consommateur.username: #si le consommateur renseigné dans le fichier est le même que celui enregistré en base
-                                targetparticipation.participation_ok=True #passage à True dans l'objet participation en base
-                                targetparticipation.number=quantity #application de la bonne quantité dans l'objet participation en base
-                                prixtotal=Decimal(quantity)*targetparticipation.product_participation.prix #vérification que le consommateur a assez d'argent sur son compte pour cette participation
-                                if targetparticipation.cible_participation.testdebit(prixtotal):
-                                    outsheet.write(cur_row, 8, "TRUE", font_style)
-                                    targetparticipation.save() #sauvegarde et bucquage via la méthode du modèle
+                if str(targetparticipation.product_participation.parent_event.pk)==event: #si la participation correspond à l'évènement en cours de bucquage
+                    if targetparticipation.participation_bucquee==False: #si la participation en base n'est pas déjà bucquée
+                        if participation_ok==1: #si la participation est validée sur le fichier, vérification de la cohérence de la ligne par rapport aux informations en base
+                            if id_produit == targetparticipation.product_participation.pk: #si le produit renseigné dans le fichier est le même que celui enregistré en base
+                                if username == targetparticipation.cible_participation.consommateur.username: #si le consommateur renseigné dans le fichier est le même que celui enregistré en base
+                                    targetparticipation.participation_ok=True #passage à True dans l'objet participation en base
+                                    targetparticipation.number=quantity #application de la bonne quantité dans l'objet participation en base
+                                    prixtotal=Decimal(quantity)*targetparticipation.product_participation.prix #vérification que le consommateur a assez d'argent sur son compte pour cette participation
+                                    if targetparticipation.cible_participation.testdebit(prixtotal):
+                                        outsheet.write(cur_row, 8, "TRUE", font_style)
+                                        targetparticipation.save() #sauvegarde et bucquage via la méthode du modèle
+                                        outsheet.write(cur_row, comment_col, "La participation a été bucquée", font_style)
+                                    else:
+                                        outsheet.write(cur_row, comment_col, "Le consommateur n'a pas assez d'argent sur son compte", font_style)
+                                        error=+1
                                 else:
-                                    outsheet.write(cur_row, comment_col, "Le consommateur n'a pas assez d'argent sur son compte", font_style)
+                                    outsheet.write(cur_row, comment_col, "Le consommateur renseigné dans le fichier n'est pas le même que celui enregistré en base", font_style)
                                     error=+1
                             else:
-                                outsheet.write(cur_row, comment_col, "Le consommateur renseigné dans le fichier n'est pas le même que celui enregistré en base", font_style)
+                                outsheet.write(cur_row, comment_col, "Le produit renseigné dans le fichier n'est pas le même que celui enregistré en base", font_style)
                                 error=+1
                         else:
-                            outsheet.write(cur_row, comment_col, "Le produit renseigné dans le fichier n'est pas le même que celui enregistré en base", font_style)
-                            error=+1
+                            outsheet.write(cur_row, comment_col, "La participation n'est pas validée", font_style)
                     else:
-                        outsheet.write(cur_row, comment_col, "La participation n'est pas validée", font_style)
-                        error=+1
+                        outsheet.write(cur_row, 8, "TRUE", font_style)
+                        outsheet.write(cur_row, comment_col, "La participation est déjà bucquée", font_style)
                 else:
+                    outsheet.write(cur_row, comment_col, "L'ID de cette participation ne correspond à l'évènement en cours de bucquage", font_style)
                     error=+1
-                    outsheet.write(cur_row, 8, "TRUE", font_style)
-                    outsheet.write(cur_row, comment_col, "La participation est déjà bucquée", font_style)
             else:
                 outsheet.write(cur_row, comment_col, "L'ID de cette participation n'existe pas", font_style)
                 error=+1
@@ -206,12 +210,15 @@ def manageparticipationfile(file,event):
                 outsheet.write(cur_row, comment_col, "Le nom d'utilisateur n'existe pas", font_style)
             if Product_event.objects.filter(pk=id_produit).count()==1: #si le produit existe
                 product_participation=Product_event.objects.get(pk=id_produit)
-                if product_participation.parent_event.pk==event:
+                if str(product_participation.parent_event.pk)==event: #si le produit appartient à l'event que je suis en train de bucquer
                     if participation_ok==1:
                         participation_ok=True
                     else:
                         participation_ok=False
+                    #création de la participation en base
                     Participation_event.objects.get_or_create(cible_participation=cible_participation,product_participation=product_participation,number=quantity,participation_ok=participation_ok)
+                    outsheet.write(cur_row, 8, "TRUE", font_style)
+                    outsheet.write(cur_row, comment_col, "La participation a été bucquée", font_style)
                 else:
                     error=+1
                     outsheet.write(cur_row, comment_col, "Ce produit n'appartient pas à cet évènement", font_style)
@@ -220,7 +227,7 @@ def manageparticipationfile(file,event):
                 error=+1
     #écriture du fichier de rapport dans un dossier du serveur
     filename="report-event-"+str(event)+".xls"
-    filepath=os.path.join(MEDIA_ROOT, "report", filename)
+    filepath=os.path.join(MEDIA_ROOT, "report", filename) #utilisation du dossier MEDIA_ROOT, sous dossier report
     outbook.save(filepath)
     #liaison du rapport avec l'évènement
     event=Event.objects.get(pk=event)

@@ -53,6 +53,7 @@ class Participation_event(models.Model):
                     prix_evenement=prix_total,
                     entite_evenement="Evènement",
                     date_evenement=self.product_participation.parent_event.date_event)
-            super(Participation_event, self).save(*args, **kwargs)
+            else:
+                super(Participation_event, self).save(*args, **kwargs)
         else:
             super(Participation_event, self).save(*args,**kwargs)

@@ -5,7 +5,7 @@ from django.contrib import messages
 from .models import Event, Participation_event, Product_event
 
 class AdminEvent(admin.ModelAdmin):
-    list_display = ("titre","date_event", "cansubscribe", "created_by")
+    list_display = ("titre","date_event", "cansubscribe", "ended","created_by")
 
 #Surcharge de la méthode de sauvegarde des objets Event (uniquement dans la Console d'admin) afin d'ajouter l'utilisateur qui a créé l'évènement
     def save_model(self, request, obj, form, change):
