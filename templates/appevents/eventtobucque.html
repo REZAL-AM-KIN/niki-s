@@ -27,7 +27,50 @@
 	</form>
 	<div class="ui left aligned segment">
 		<div class = "ui center aligned header">Comment fonctionne le système de bucquage d'évènement ?</div>
-        Comme ça
+        <div class="ui relaxed divided list">
+			<div class="item">
+				<div class="content">
+					<a class="header">Etape 1</a>
+					<div class="description">Clôturer l'inscription à l'évènement (si ce n'est pas déjà fait)</div>
+				</div>
+			</div>
+			
+			<div class="item">
+				<div class="content">
+					<a class="header">Etape 2</a>
+					<div class="description">Télécharger les participants à l'évènement sur la page précédent ou <a href="{% url "exportparticipationinxls" event %}">ici</a></div>
+				</div>
+			</div>
+			
+			<div class="item">
+				<div class="content">
+					<a class="header">Etape 3</a>
+					<div class="description">
+						<p>Editer le fichier téléchargé.</p>
+						<p>Sur chaque ligne, modifier la colonne "Participation OK" avec TRUE si la personne a consommé le produit. Il est aussi possible de modifier la quantité. Toute autre modification sera refusée par le système.</p>
+						<p>Si une nouvelle personne souhaite s'inscrire "en direct" sans passer par le site, il est possible de rajouter une ligne au fichier. Dans ce cas, remplir uniquement les colonnes Username, ID Produit, Quantité, Participation OK. Le bucquage sera créé automatiquement dans le système</p>
+						<p>Si une personne consomme un autre produit sur lequel elle ne s'est pas inscrit, rajouter une ligne de la même manière qu'au dessus.</p>
+					</div>
+				</div>
+			</div>
+
+			<div class="item">
+				<div class="content">
+					<a class="header">Etape 4</a>
+					<div class="description">
+						<p>Importer le fichier sur cette page et valider. Un rapport des bucquages et des erreurs peut être téléchargé dans le message qui apparait. Si le rapport n'a pas pu être téléchargé, demandez à un administrateur.</p>
+						<p>Si il y a des erreurs, contacter les PGs concernés ou modifier les fichiers en cas d'erreur de syntaxe. Le rapport peut être réimporté à l'étape 3 directement sans repasser par le fichier d'export initial.</p>
+						</div>
+				</div>
+			</div>
+
+			<div class="item">
+				<div class="content">
+					<a class="header">Etape 5</a>
+					<div class="description">Lorsqu'un évènement a été complétement débucqué, cocher "Evènement terminé" dans l'interface d'administration pour le clôturer.</div>
+				</div>
+			</div>
+		</div>
     </div>
 </div>
 
