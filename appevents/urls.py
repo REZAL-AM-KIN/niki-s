@@ -11,5 +11,6 @@ urlpatterns = [
     path("exportparticipationincsv/<event>", views.exportparticipationincsv, name="exportparticipationincsv"),
     path("exportparticipationinxls/<event>", views.exportparticipationinxls, name="exportparticipationinxls"),
     path("listeventstobucque", views.listeventstobucque, name="listeventstobucque"),
-    path("eventtobucque/<event>", views.eventtobucque, name="eventtobucque")
+    path("eventtobucque/<event>", views.eventtobucque, name="eventtobucque"),
+    path("downloadreport/<event>", views.downloadreport, name="downloadreport"),
 ]

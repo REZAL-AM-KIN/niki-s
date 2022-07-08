@@ -180,9 +180,13 @@ if PROD:
 else:
     STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 
+MEDIA_ROOT  = os.path.join(BASE_DIR, "media")
+MEDIA_URL = "/media/"
+
 # Niki specific parameters
 CAPTCHA_FONT_SIZE = 36
 LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "index"
 LOGOUT_REDIRECT_URL = "index"
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
