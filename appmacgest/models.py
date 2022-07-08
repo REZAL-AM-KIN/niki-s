@@ -66,6 +66,12 @@ class Device(models.Model):
         if RADIUS:
             delete_in_radcheck(self)
 
+    def disable(self,*args,**kwargs):
+        self.has_rezal=False
+        super(Device, self).save(*args, **kwargs)
+        if RADIUS:
+            delete_in_radcheck(self)
+
 
 @receiver(post_save, sender=Utilisateur)
 def update_device(sender, instance, **kwargs):
