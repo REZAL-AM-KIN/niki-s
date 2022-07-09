@@ -8,15 +8,16 @@
   - [Appmacgest](#appmacgest)
     - [Views](#views-1)
     - [Models](#models-1)
+    - [Admin](#admin-1)
   - [Appkfet](#appkfet)
     - [Models](#models-2)
     - [Fonctions pertinentes](#fonctions-pertinentes-1)
-    - [Admin](#admin-1)
+    - [Admin](#admin-2)
   - [Appevents](#appevents)
     - [Views](#views-2)
     - [Models](#models-3)
     - [Fonctions pertinentes](#fonctions-pertinentes-2)
-    - [Admin](#admin-2)
+    - [Admin](#admin-3)
 - [API](#api)
   - [Installation](#installation)
   - [Conception de l'API](#conception-de-lapi)
@@ -38,11 +39,10 @@
 
 # Objectifs
 
-- Une seule base de donnée intrakin
-- Un front web ([accueil.rezal.fr](http://accueil.rezal.fr)) décrit dans les applications Django comme aujourd'hui en s'appuyant au maximum sur le standard Django
+- Une seule base de donnée
+- Un front web ([niki.rezal.fr](http://niki.rezal.fr)) décrit dans les applications Django comme aujourd'hui en s'appuyant au maximum sur le standard Django
 - Un front mobile (KinApp) qui vient taper aec les API Django REST dans les modèles existants
-- Un front web ([kfet.rezal.fr](http://kfet.rezal.fr)) avec un design bien approprié (séparé donc de l'intra) qui vient
-  taper avec les API Django REST dans les modèles qu'il faut
+- Un front web ([kfet.rezal.fr](http://kfet.rezal.fr)) avec un design bien approprié (séparé donc de l'intra) qui vient taper avec les API Django REST dans les modèles qu'il faut
 
 # Description de la structure de l'application
 
@@ -69,12 +69,10 @@ Rappel : un utilisateur ne doit pas être supprimé directement. Il doit être d
 
 ### Views
 
-- Index : page d'acceuil
+- Index : page d'accueil
   - Accessible : tout utilisateur authentifié
-- About : page "À propos" **A REVOIR**
-  - Accessible : tout utilisateur authentifié
-- Nous contacter : **A REVOIR**
-  - Accessible : tout utilisateur authentifié
+- About : page "À propos"
+  - Accessible : tout le monde
 - Inscription : page d'inscription
   - Accessible : tout le monde
   - Un Captcha est utilisé - utilisation de l'app standard django simple captcha
@@ -90,8 +88,13 @@ Rappel : un utilisateur ne doit pas être supprimé directement. Il doit être d
   - Des templates personnalisés ont été rédigés pour ces vues standards. Ils sont disponibles dans templates/registration
   - Le formulaire password_reset a été surchargé pour ajouter un captcha 
   - L'utilisation de cette fonctionnalité nécessite le paramétrage des mails dans Django.
-- Fonctionnalités supplémentaires à implémenter non démarrées :
-  - Prévoir un accueil de l'utilisateur en fonction de son statut, type "tutoriel" lors de la première connexion, idéalement en overlay. Une ébauche de cette fonctionnalité a été développée dans une des versions précédentes de l'intra. **A REVOIR**
+- Changement de Mdp (standard)
+  - Accessible : tout utilisateur authentifié
+  - Utilisation des vues Django standards
+  - Des templates personnalisés ont été rédigés pour ces vues standards. Ils sont disponibles dans templates/registration
+- Fonctionnalités supplémentaires à développer :
+  - Formulaire de contact "Nous contacter"
+  - Prévoir un accueil de l'utilisateur en fonction de son statut, type "tutoriel" lors de la première connexion, idéalement en overlay. Une ébauche de cette fonctionnalité a été développée dans une des versions précédentes de l'intra.
 
 ### Models
 
@@ -125,7 +128,7 @@ Un routeur de base de données `Authrouter.py` est utilisé pour communiquer ave
 
 - GestionConnexion : permet de visualiser l'ensembe de ses appareils avec leur statut (activé ou désactivé)
   - Accessible : utilisateur authentifié ayant sa cotiz à jour
-  - Fonctionnalité supplémentaire à implémenter : possibilité de rajouter un bouton `Supprimer` de la même manière que sur la page `GestionDemandeMac`
+  - Fonctionnalité supplémentaire à développer : possibilité de rajouter un bouton `Supprimer` de la même manière que sur la page `GestionDemandeMac`
 - AjoutMac : permet d'ajouter un appareil supplémentaire
   - Accessible : utilisateur authentifié ayant sa cotiz à jour
 - GestionDemandeMac : permet de gérer les demandes d'adresses mac
@@ -138,6 +141,11 @@ Un routeur de base de données `Authrouter.py` est utilisé pour communiquer ave
   - La fonction save a été surchargée pour interagir avec Radius
   - La fonction delete a été surchargée pour interagir avec Radius
   - Présence d'une REGEX pour vérifier les adresses MAC
+
+### Admin
+
+- Interdiction de supprimer un objet device qui a déjà été activé, même pour un super administrateur (protection Hadopi)
+- Création d'un action d'administration personnalisée permettant de désactiver des appareils en masse
 
 ## Appkfet
 
@@ -179,9 +187,9 @@ Fonctionnellement :
 
 Comme vu précédemment, les consommateurs et produits sont créés via l'interface admin Django. Pour que le fonctionnel corresponde à nos besoins, certaines fonctions ont été surchargées dans `admin.py`. Hors superuser (qui peut tout faire !), les règles sont les suivantes : 
 - Il n'est possible de modifier un produit que si l'utilisateur dispose de la permission change_produit ET qu'il fait parti de l'entité du produit créé. Ce test est fait en surchargeant la méthode "has_change_permission"
-- Il est possible de créer un produit relié à une entité UNIQUEMENT si on y appartient. Ce test est fait à la surcharge de la méthode save. 
+- sur la page de création d'un produit, la dropdown ne propose que les valeurs pour lesquelles l'utilisateur peut créer un produit (uniquement ses groupes d'entité). Cette initialisation est faite en surchargeant la méthode formfield_for_foreignkey
 
-**A REVOIR** Il serait pertinent de modifier la dropdown de choix d'entité lors de la création d'un produit pour n'afficher que les entités où j'ai les droits. De la même manière, la création d'un consommateur ne doit proposer dans la liste déroulante que des utilisateurs qui n'ont pas déjà de consommateur associé et qui sont `is_active==True` **A REVOIR**
+Fonctionnalité supplémentaire à développer : de la même manière, la création d'un consommateur ne devrait proposer dans la liste déroulante que des utilisateurs qui n'ont pas déjà de consommateur associé et qui sont `is_active==True` 
 
 Les tables Bucquage, Recharge, History ne sont pas disponibles dans l'interface admin (admin.site.register est commenté) car il serait trop facile de tricher ou de faire une erreur !
 
@@ -203,14 +211,13 @@ Fonctionnellement :
 - subevent
   - Accessible : tous les utilisateurs connectés ayant un Consommateur associé
   - Vue de redirection vers les formulaires d'inscription de chaque produit de l'évènement. C'est l'URL de cette page, avec la step à 0 qui pourra être partagée sur Facebook.
-  - Fonctionnalité supplémentaire à implémenter : 
-    - Peut-on vouloir autoriser le bucquage uniquement si le solde du consommateur est supérieur ou égal au coût de l'évènement ?
+  - Fonctionnalité supplémentaire à développer : 
     - Il serait pertinent de rajouter un contrôle ici pour s'assurer que l'utilisateur ne se réinscrit pas. Le bouton d'inscription ne sera certes pas disponible mais un petit malin pourrait taper directement l'URL.
 - subproductevent
   - Accessible : tous les utilisateurs connectés ayant un Consommateur associé.
   - Vue présentant un formulaire pour chaque produit de l'évènement
   - Fonctionnalité supplémentaire à implémenter : il serait pertinent de rajouter un contrôle ici pour s'assurer que l'utilisateur ne se réinscrit pas. Le bouton d'inscription ne sera certes pas disponible mais un petit malin pourrait taper directement l'URL.
-- Fonctionnalité supplémentaire à implémenter : la modification ou l'annulation de l'inscription à l'évènement pour un utilisateur
+- Fonctionnalité supplémentaire à développer : la modification ou l'annulation de l'inscription à l'évènement pour un utilisateur
 - exportparticipationincsv (deprecated - on utilise xls car c'est plus simple !)
   - Accessible : tous les utilisateurs connectés
 - exportparticipationinxls
@@ -222,9 +229,10 @@ Fonctionnellement :
 - eventtobucque
   - Accessible : tous les utilisateurs ayant la permission "can_add_bucquage". A voir si besoin d'affiner
   - Permet de charger le fichier exporté et modifié avec les participations
-  - Fonctionnalités supplémentaires à implémenter : 
-    - Faire apparaitre le nombre d'erreur dans le message passé à la suite de la validation de l'import
-    - Sortir un rapport à la suite de l'import. Dans la solution actuelle, il suffit de réexporter les participations de l'évènement et de regarder ce qui a marché ou pas (en cherchant...)! Une solution temporaire pourrait être de rajouter dans l'export une colonne commentaire qui décrirait ce qui s'est bien passé (ou pas) sur chaque ligne. 
+  - Enregistre un rapport de bucquage par évènement (le dernier). Il est ensuite possible de télécharger ce rapport
+- downloadreport
+  - Accessible : tous les utilisateurs ayant la permission "can_add_bucquage". A voir si besoin d'affiner
+  - Permet de télécharger le rapport pour un évènement donné 
 
 ### Models
 
@@ -248,9 +256,9 @@ Pour cette application, les objets Event et Product Event sont créés directeme
   - Il n'est pas possible de supprimer un évènement
 - Produit Evènement :
   - Je ne peux créer/voir/changer que des produits sur les évènements que j'ai créé
-  - Il n'est pas possible de suppriemr un produit
-  - Fonctionnalité supplémentaire à développer : dans la dropdown de création de produit, ne proposer que les évènements que j'ai créé qui sont à ended=False (et pas tous comme aujourd'hui)
+  - Il n'est pas possible de supprimer un produit
 - Participation Evènement : non accessible dans l'interface d'admin. Il serait trop facile de tricher ou de faire une erreur !
+- Fonctionnalité supplémentaire à développer : afficher dans le tableau récapitulatif des évènements le lien d'inscription à cet évènement pour qu'il puisse être copié directement dans un post facebook
 
 # API
 
