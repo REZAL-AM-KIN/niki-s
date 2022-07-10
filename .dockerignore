@@ -1,0 +1,9 @@
+Dockerfile
+docker-compose.yml
+Procfile
+venv
+.venv
+*.env
+.gitignore
+*.md
+*.sqlite3

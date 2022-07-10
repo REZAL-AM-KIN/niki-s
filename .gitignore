@@ -134,3 +134,4 @@ media/report/*
 
 #migrations
 */migrations/*
+ldap_data/*

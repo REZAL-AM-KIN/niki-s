@@ -1,0 +1,40 @@
+services:
+  niki:
+    container_name: "niki"
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3005:8000"
+    links:
+      - openldap
+    networks:
+      - external
+      - niki-internal
+    env_file:
+      - .env
+  
+  openldap:
+    container_name: "niki-ldap"
+    image: osixia/openldap
+    restart: unless-stopped 
+    command: --copy-service
+    networks:
+      - niki-internal
+    environment:
+      - LDAP_DOMAIN=${LDAP_DOMAIN}
+      - LDAP_BASE_DN=${LDAP_BASE_DN}
+      - LDAP_ADMIN_PASSWORD=${LDAP_ADMIN_PASSWORD}
+    volumes:
+      - ./ldap_data/ldap/:/var/lib/ldap
+      - ./ldap_data/sldap.d/:/etc/ldap/slapd.d
+      - ./docs/basedn.ldif:/container/service/slapd/assets/config/bootstrap/ldif/basedn.ldif
+    ports:
+      - "389:389"
+    hostname: ${LDAP_ADDR}
+
+networks:
+  niki-internal:
+    driver: bridge
+    internal: true
+  external:
+    driver: bridge

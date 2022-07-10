@@ -39,10 +39,10 @@ else:
 
 if WITHLDAP:
     LDAP_SETTINGS = {
-        "NAME": environ["LDAP_ADDR"],
+        "NAME": "ldap://"+environ["LDAP_ADDR"],
         "ENGINE": "ldapdb.backends.ldap",
-        "USER": environ["LDAP_USER"],
-        "PASSWORD": environ["LDAP_PASSWORD"],
+        "USER": "cn=admin,"+environ["LDAP_BASE_DN"],
+        "PASSWORD": environ["LDAP_ADMIN_PASSWORD"],
         # 'TLS': True,
         'CONNECTION_OPTIONS': {
             ldap.OPT_X_TLS_DEMAND: True,
