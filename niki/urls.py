@@ -23,6 +23,7 @@ admin.site.site_header = "Niki admin"
 
 urlpatterns = [
     path("admin/", admin.site.urls, name="admin"),
+    path("status/", include("health_check.urls")),
     path("", include("appuser.urls")),
     path("", include("appmacgest.urls")),
     # path("", include("appkfet.urls")),
