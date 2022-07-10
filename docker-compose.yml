@@ -7,6 +7,9 @@ services:
       - "3005:8000"
     links:
       - openldap
+    depends_on:
+      openldap:
+        condition: service_healthy
     networks:
       - external
       - niki-internal
@@ -31,6 +34,12 @@ services:
     ports:
       - "389:389"
     hostname: ${LDAP_ADDR}
+    healthcheck:
+      test: ["CMD-SHELL", "ldapsearch -x -H ldap://localhost:389 -b $LDAP_BASE_DN cn || test $$? -eq 32 || exit 1"]
+      start_period: 10s
+      interval: 30s
+      timeout: 5s
+      retries: 5
 
 networks:
   niki-internal:
