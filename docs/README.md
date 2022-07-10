@@ -404,32 +404,35 @@ Lancement de base :
 pip install -r requirements.txt
 ```
 
-Lancement avec LDAP:
+Lancement avec le support LDAP :
 
 ```bash
 pip install -r requirements-ldap.txt
 ```
 
-Lancement avec MySQL:
+Lancement avec support pour MySQL:
 
 ```bash
 pip install -r requirments-mysql.txt
 ```
 
-Lancement avec PostgreSQL:
+Lancement avec support pour PostgreSQL :
 
 ```bash
 pip install -r requirement-postgres.txt
 ```
 
-Il est possible de combiner les différentes options ci-dessus comme suit:
+Il est possible de combiner les différentes options ci-dessus comme suit :
 
 ```bash
 pip install -r requirement-ldap.txt
 pip install -r requirements-postgres.txt
 ```
 
-Chacun des fichiers étend les dépendances de bases décrites dans `requirements.txt`.
+Chacun des fichiers étend les dépendances de bases décrites dans `requirements.txt` car celles-ci sont le minimum
+nécessaire permettant de démarrer niki. Pour développer en local, seulement les dépendances de base sont nécessaires
+pour développer des nouvelles features Django. Cependant, pour une utilisation plus avancée telles que le débug du LDAP
+ou RADIUS, il sera nécessaire d'installer les dépendances supplémentaires.
 
 Lancement de Django:
 
@@ -460,7 +463,7 @@ application et qui pourra être déployée comme voulue. Cette image est aussi u
 fichier [docker compose](/docker-compose.yml) permettant de définir une stack : une liste de services (containers) qui
 seront déployés ensemble.
 
-Le plus simple sera d'utiliser une stack pour déployer toute l'application en une seule fois:
+Le plus simple sera d'utiliser une stack pour déployer toute l'application en une seule fois :
 
 ```bash
 docker compose up -d --build
@@ -468,6 +471,13 @@ docker compose up -d --build
 
 Cette commande va automatiquement déployer tous les services définis dans l'ordre décrit par les dépendances. On voudra
 par exemple attendre que postgres soit prêt à accepter des connexions avant de démarrer Niki.
+
+Une fois le container démarrer et affichant un statut `healthy`, il faut se rendre sur http://ipdelamachinehote:3005.
+
+Pour vérifier l'état des containers, il suffit de taper la commande suivante:
+```bash
+docker ps
+```
 
 ### Développer avec VSCode
 
