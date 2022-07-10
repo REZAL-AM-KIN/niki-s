@@ -1,13 +1,10 @@
-# -*- coding: utf-8 -*-
-
 from django.contrib import admin
 from django.contrib.auth.models import User
+
 from .models import Utilisateur
 
 
-# Register your models here.
-
-
+@admin.register(Utilisateur)
 class AdminUtilisateur(admin.ModelAdmin):
     list_display = (
         "username",
@@ -25,5 +22,4 @@ class AdminUtilisateur(admin.ModelAdmin):
     )
 
 
-admin.site.register(Utilisateur, AdminUtilisateur)
 admin.site.unregister(User)

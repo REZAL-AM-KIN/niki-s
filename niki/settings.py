@@ -26,7 +26,7 @@ if LDAP:
         import ldap
 
         WITHLDAP = True
-    except:
+    except ImportError:
         pass
 
 load_dotenv(".env")
@@ -48,7 +48,7 @@ PROD = getenv("PROD", "False") == "True"
 
 RADIUS = getenv("RADIUS", "False") == "True"
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["*"]
 
 # Application definition
 
@@ -94,14 +94,14 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "niki.context_processors.getUtilisateur",
-                "niki.context_processors.getConsommateur",
+                "niki.context_processors.get_utilisateur",
+                "niki.context_processors.get_consommateur",
             ],
             "libraries": {
                 "project_tags": "templatetags.extra_filters",
                 "admin.urls": "django.contrib.admin.templatetags.admin_urls",
             },
-        }
+        },
     },
 ]
 
@@ -120,7 +120,7 @@ if WITHLDAP:
 if RADIUS:
     DATABASES["radcheck"] = __import__("db").RADIUS_SETTINGS
 
-DATABASE_ROUTERS = ["niki.dbrouter.dbrouter"]
+DATABASE_ROUTERS = ["niki.dbrouter.DBRouter"]
 
 if WITHLDAP:
     DATABASE_ROUTERS.append("ldapdb.router.Router")
@@ -144,11 +144,11 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 25,
 }
 
@@ -176,11 +176,11 @@ USE_TZ = True
 STATIC_URL = "/static/"
 
 if PROD:
-    STATIC_ROOT = BASE_DIR / 'static'
+    STATIC_ROOT = BASE_DIR / "static"
 else:
     STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 
-MEDIA_ROOT  = os.path.join(BASE_DIR, "media")
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = "/media/"
 
 # Niki specific parameters

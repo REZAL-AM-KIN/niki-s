@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-from unicodedata import decimal
 from django.contrib.auth.models import Group
 from django.db import models
 from django.db.models.deletion import CASCADE
@@ -8,14 +5,15 @@ from django.db.models.deletion import CASCADE
 from appuser.models import Utilisateur
 
 
-# Create your models here.
-
-
 class Consommateur(models.Model):
     consommateur = models.ForeignKey("appuser.Utilisateur", on_delete=CASCADE)
-    solde = models.DecimalField(max_digits=5, decimal_places=2, default=0, editable=False)
-    totaldep = models.DecimalField(max_digits=5, decimal_places=2, default=0, editable=False)
-    activated=models.BooleanField(default=True)
+    solde = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0, editable=False
+    )
+    totaldep = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0, editable=False
+    )
+    activated = models.BooleanField(default=True)
 
     def __str__(self):
         utilisateur = Utilisateur.objects.get(pk=self.consommateur)
@@ -68,12 +66,11 @@ class Recharge(models.Model):
         Consommateur.credit(self.cible_recharge, self.montant)
         History.objects.update_or_create(
             cible_evenement=self.cible_recharge,
-            nom_evenement="Recharge "+self.methode,
+            nom_evenement="Recharge " + self.methode,
             prix_evenement=self.montant,
             entite_evenement="Recharge",
-            date_evenement=self.date
-            )
-
+            date_evenement=self.date,
+        )
 
     def __unicode__(self):
         return self.pk
@@ -95,7 +92,7 @@ class Bucquage(models.Model):
                 nom_evenement=self.nom_produit,
                 prix_evenement=self.prix_produit,
                 entite_evenement=self.entite_produit,
-                date_evenement=self.date
+                date_evenement=self.date,
             )
 
     def __unicode__(self):
@@ -103,11 +100,11 @@ class Bucquage(models.Model):
 
 
 class History(models.Model):
-    cible_evenement=models.ForeignKey("Consommateur", on_delete=CASCADE)
-    nom_evenement=models.CharField(max_length=200)
-    prix_evenement=models.DecimalField(max_digits=5, decimal_places=2)
-    entite_evenement=models.CharField(max_length=200)
-    date_evenement=models.DateTimeField()
+    cible_evenement = models.ForeignKey("Consommateur", on_delete=CASCADE)
+    nom_evenement = models.CharField(max_length=200)
+    prix_evenement = models.DecimalField(max_digits=5, decimal_places=2)
+    entite_evenement = models.CharField(max_length=200)
+    date_evenement = models.DateTimeField()
 
     def __unicode__(self):
         return self.pk

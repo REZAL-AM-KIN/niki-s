@@ -1,15 +1,20 @@
-# -*- coding: utf-8 -*-
-
-from django import forms
 from captcha.fields import CaptchaField, CaptchaTextInput
-from .models import Utilisateur
+from django import forms
 from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
 
-class CustomLoginForm(AuthenticationForm):
-    username = forms.CharField(widget=forms.TextInput(attrs={'class':'validate','placeholder': 'Username'}))
-    password = forms.CharField(widget=forms.PasswordInput(attrs={'placeholder':'Mot de passe'}))
+from .models import Utilisateur
 
-class inscriptionform(forms.ModelForm):
+
+class CustomLoginForm(AuthenticationForm):
+    username = forms.CharField(
+        widget=forms.TextInput(attrs={"class": "validate", "placeholder": "Username"})
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={"placeholder": "Mot de passe"})
+    )
+
+
+class InscriptionForm(forms.ModelForm):
     password_validation = forms.CharField(
         required=True,
         widget=forms.PasswordInput(
@@ -18,13 +23,21 @@ class inscriptionform(forms.ModelForm):
     )
     captcha = CaptchaField(
         required=True,
-        widget=CaptchaTextInput(
-            attrs={"placeholder": "Captcha"}
-        ),
+        widget=CaptchaTextInput(attrs={"placeholder": "Captcha"}),
     )
-    cgu =forms.BooleanField(
+    cgu = forms.BooleanField(
         required=True,
     )
+
+    def __init__(self, *args, **kwargs):
+        super(InscriptionForm, self).__init__(*args, **kwargs)
+        self.fields["username"].required = True
+        self.fields["first_name"].required = True
+        self.fields["last_name"].required = True
+        self.fields["chambre"].required = True
+        self.fields["phone"].required = True
+        self.fields["email"].required = True
+
     class Meta:
         model = Utilisateur
         fields = [
@@ -46,45 +59,33 @@ class inscriptionform(forms.ModelForm):
             "password": forms.PasswordInput(attrs={"placeholder": "Mot de passe"}),
         }
 
-        def __init__(self, *args, **kwargs):
-            super(inscriptionform, self).__init__(*args, **kwargs)
-            self.field["username"].required = True
-            self.field["first_name"].required = True
-            self.field["last_name"].required = True
-            self.field["chambre"].required = True
-            self.field["phone"].required = True
-            self.field["email"].required = True
 
+class GestionCompteForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(GestionCompteForm, self).__init__(*args, **kwargs)
+        self.fields["chambre"].required = True
+        self.fields["phone"].required = True
 
-class gestioncompteform(forms.ModelForm):
     class Meta:
         model = Utilisateur
         fields = ["chambre", "phone"]
 
-        def __init__(self, *args, **kwargs):
-            super(gestioncompteform, self).__init__(*args, **kwargs)
-            self.field["chambre"].required = True
-            self.field["phone"].required = True
 
+class GestionCompteGadzForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(GestionCompteGadzForm, self).__init__(*args, **kwargs)
+        self.fields["chambre"].required = True
+        self.fields["phone"].required = True
 
-class gestioncomptegadzform(forms.ModelForm):
     class Meta:
         model = Utilisateur
         fields = ["chambre", "phone", "bucque", "fams", "proms"]
 
-        def __init__(self, *args, **kwargs):
-            super(gestioncomptegadzform, self).__init__(*args, **kwargs)
-            self.field["chambre"].required = True
-            self.field["phone"].required = True
 
 class CustomPasswordResetForm(PasswordResetForm):
     email = forms.EmailField(
-        required=True,
-        widget=forms.EmailInput(attrs={'placeholder': 'Adresse email'})
+        required=True, widget=forms.EmailInput(attrs={"placeholder": "Adresse email"})
     )
     captcha = CaptchaField(
-        required=True,
-        widget=CaptchaTextInput(
-            attrs={"placeholder": "Captcha"}
-        )
+        required=True, widget=CaptchaTextInput(attrs={"placeholder": "Captcha"})
     )

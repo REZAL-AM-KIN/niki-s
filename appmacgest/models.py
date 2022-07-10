@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from django.core import exceptions
 from django.core.validators import RegexValidator
 from django.db import models
@@ -11,10 +9,7 @@ from appuser.models import Utilisateur
 from niki.settings import RADIUS
 
 
-# Create your models here.
-
-
-class radcheck(models.Model):
+class Radcheck(models.Model):
     username = models.CharField(max_length=17)
     attribute = models.CharField(max_length=64, default="ClearText-Password")
     op = models.CharField(max_length=2, default=":=")
@@ -25,14 +20,14 @@ class radcheck(models.Model):
 
 
 def save_in_radcheck(new_device):
-    radcheck.objects.get_or_create(
+    Radcheck.objects.get_or_create(
         username=new_device.mac, attribute="ClearText-Password", op=":=", value="authok"
     )
 
 
 def delete_in_radcheck(new_device):
     try:
-        tmp = radcheck.objects.filter(username=new_device.mac)
+        tmp = Radcheck.objects.filter(username=new_device.mac)
         tmp.all().delete()
     except (exceptions.ObjectDoesNotExist, exceptions.MultipleObjectsReturned):
         return
@@ -54,8 +49,8 @@ class Device(models.Model):
         if RADIUS:
             if (
                 device_user.has_cotiz
-                and self.accepted == True
-                and self.has_rezal == True
+                and self.accepted is True
+                and self.has_rezal is True
             ):
                 save_in_radcheck(self)
             else:
@@ -66,8 +61,8 @@ class Device(models.Model):
         if RADIUS:
             delete_in_radcheck(self)
 
-    def disable(self,*args,**kwargs):
-        self.has_rezal=False
+    def disable(self, *args, **kwargs):
+        self.has_rezal = False
         super(Device, self).save(*args, **kwargs)
         if RADIUS:
             delete_in_radcheck(self)
@@ -76,11 +71,11 @@ class Device(models.Model):
 @receiver(post_save, sender=Utilisateur)
 def update_device(sender, instance, **kwargs):
     associated_devices = Device.objects.filter(proprietaire=instance.pk)
-    if associated_devices != [] and instance.has_cotiz == False:
+    if associated_devices != [] and instance.has_cotiz is False:
         for device in associated_devices:
             device.has_rezal = False
             device.save()
-    if associated_devices != [] and instance.has_cotiz == True:
+    if associated_devices != [] and instance.has_cotiz is True:
         for device in associated_devices:
             if device.accepted:
                 device.has_rezal = True
