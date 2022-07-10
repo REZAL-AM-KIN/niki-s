@@ -7,8 +7,11 @@ services:
       - "3005:8000"
     links:
       - openldap
+      - postgres
     depends_on:
       openldap:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     networks:
       - external
@@ -37,6 +40,29 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "ldapsearch -x -H ldap://localhost:389 -b $LDAP_BASE_DN cn || test $$? -eq 32 || exit 1"]
       start_period: 10s
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    container_name: "niki-db"
+    image: bitnami/postgresql:14
+    restart: unless-stopped
+    networks:
+      - niki-internal
+    environment:
+      - POSTGRESQL_USERNAME=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRESQL_DATABASE=${DB_NAME}
+      - POSTGRESQL_POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ./pg_data/:/bitnami/postgresql
+    expose:
+      - 5432
+    hostname: ${DB_ADDR}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      start_period: 5s
       interval: 30s
       timeout: 5s
       retries: 5

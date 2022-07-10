@@ -1,43 +1,30 @@
 from os import environ, getenv
 
 from niki.settings import BASE_DIR
-from niki.settings import RADIUS
+from niki.settings import RADIUS, WITHLDAP
 
 DB_TYPE = getenv("DB_TYPE", "sqlite").lower()
-LDAP = getenv("LDAP", "False") == "True"
-
-WITHLDAP = False
-if LDAP:
-    try:
-        import ldap
-
-        WITHLDAP = True
-    except:
-        pass
 
 if DB_TYPE == "postgres":
-    DB_SETTINGS = {
-        "NAME": environ["DB_NAME"],
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "USER": environ["DB_USERNAME"],
-        "PASSWORD": environ["DB_PASSWORD"],
-        "HOST": environ["DB_ADDR"],
-    }
+    DB_ENGINE = "django.db.backends.postgresql_psycopg2"
+    DB_NAME = environ["DB_NAME"]
 elif DB_TYPE == "mysql":
-    DB_SETTINGS = {
-        "NAME": environ["DB_NAME"],
-        "ENGINE": "django.db.backends.mysql",
-        "USER": environ["DB_USERNAME"],
-        "PASSWORD": environ["DB_PASSWORD"],
-        "HOST": environ["DB_ADDR"],
-    }
+    DB_ENGINE = "django.db.backends.mysql"
+    DB_NAME = environ["DB_NAME"]
 else:
-    DB_SETTINGS = {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": str(BASE_DIR / "db.sqlite3"),
-    }
+    DB_ENGINE = "django.db.backends.sqlite3"
+    DB_NAME = str(BASE_DIR / "db.sqlite3")
+
+DB_SETTINGS = {
+    "NAME": DB_NAME,
+    "ENGINE": DB_ENGINE,
+    "USER": getenv("DB_USERNAME", ""),
+    "PASSWORD": getenv("DB_PASSWORD", ""),
+    "HOST": getenv("DB_ADDR", ""),
+}
 
 if WITHLDAP:
+    import ldap
     LDAP_SETTINGS = {
         "NAME": "ldap://"+environ["LDAP_ADDR"],
         "ENGINE": "ldapdb.backends.ldap",

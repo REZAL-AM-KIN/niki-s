@@ -1,9 +1,11 @@
-FROM python:3
+FROM python:3.10-alpine
 WORKDIR /niki
 
-COPY requirements-ldap.txt ./
-COPY requirements.txt ./
-RUN apt-get update && apt-get install -y gpg python3 python3-pip libsasl2-dev libldap2-dev libssl-dev ldap-utils libz-dev libjpeg-dev libfreetype6-dev python-dev default-libmysqlclient-dev build-essential
-RUN pip install --no-cache-dir -r requirements-ldap.txt
+COPY requirements.txt .
+COPY requirements-ldap.txt .
+COPY requirements-mysql.txt .
+COPY requirements-postgres.txt .
+RUN apk add --no-cache gcc libressl-dev musl-dev libffi-dev build-base openldap-dev mariadb-dev git
+RUN pip install --no-cache-dir -r requirements-ldap.txt && pip install --no-cache-dir -r requirements-postgres.txt # && pip install --no-cache-dir -r requirements-mysql.txt
 COPY . .
 CMD ["sh", "entrypoint.sh"]
