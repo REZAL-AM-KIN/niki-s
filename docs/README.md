@@ -309,7 +309,7 @@ Pour tester l'intégralité des fonctionnalités de l'application, à savoir le 
 
 Paquets à installer sur la machine :
 
-`sudo apt-get install git gpg python3 python3-pip ssh libsasl2-dev libldap2-dev libssl-dev ldap-utils libz-dev libjpeg-dev libfreetype6-dev python-dev`
+`sudo apt-get install git gpg python3 python3-pip ssh libsasl2-dev libldap2-dev libssl-dev ldap-utils libz-dev libjpeg-dev libfreetype6-dev python-dev default-libmysqlclient-dev build-essential`
 
 Si vous souhaitez installer le LDAP en local, c'est à ce moment. Voir section LDAP plus bas.
 
