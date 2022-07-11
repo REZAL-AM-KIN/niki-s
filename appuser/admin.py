@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from django.contrib import admin
-from django.contrib.auth.models import User
-from .models import Utilisateur
+from django.contrib.auth.models import User, Group
+from .models import Utilisateur, Groupe
 
 
 # Register your models here.
@@ -24,6 +24,13 @@ class AdminUtilisateur(admin.ModelAdmin):
         "is_superuser",
     )
 
+class AdminGroupe(admin.ModelAdmin):
+    list_display = (
+        "name",
+    )
+
 
 admin.site.register(Utilisateur, AdminUtilisateur)
+admin.site.register(Groupe, AdminGroupe)
 admin.site.unregister(User)
+admin.site.unregister(Group)
