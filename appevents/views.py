@@ -24,7 +24,7 @@ from .forms import BucqueEventForm, ParticipationEventForm
 @user_passes_test(has_consommateur)
 def list_events(request):
     list_of_event_subscribed = []
-    list_to_display = Event.objects.filter(Q(cansubscribe=True) & Q(ended=False))
+    list_to_display = Event.objects.filter(Q(can_subscribe=True) & Q(ended=False))
     consommateur = Consommateur.objects.get(consommateur=request.user)
     participation_event_subscribed_list = ParticipationEvent.objects.filter(
         cible_participation=consommateur
