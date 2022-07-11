@@ -18,21 +18,26 @@ from django.urls import path, include
 from rest_framework.schemas import get_schema_view
 from rest_framework_simplejwt import views as jwt_views
 
-schema_view=get_schema_view(title='KIN API')
-admin.site.site_header = 'Niki admin'
+schema_view = get_schema_view(title="KIN API")
+admin.site.site_header = "Niki admin"
 
 urlpatterns = [
     path("admin/", admin.site.urls, name="admin"),
+    path("status/", include("health_check.urls")),
     path("", include("appuser.urls")),
     path("", include("appmacgest.urls")),
-#    path("", include("appkfet.urls")),
+    # path("", include("appkfet.urls")),
     path("", include("appevents.urls")),
     path("api/", include("api.urls"), name="api"),
     path("api/api-auth", include("rest_framework.urls", namespace="rest_framework")),
-    path('api-docs', schema_view, name='openapi-schema'),
-    path('captcha/', include('captcha.urls')),
-    path('api/token/', jwt_views.TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
+    path("api-docs", schema_view, name="openapi-schema"),
+    path("captcha/", include("captcha.urls")),
+    path(
+        "api/token/", jwt_views.TokenObtainPairView.as_view(), name="token_obtain_pair"
+    ),
+    path(
+        "api/token/refresh/", jwt_views.TokenRefreshView.as_view(), name="token_refresh"
+    ),
 ]
 
 handler404 = "appuser.views.page_not_found_view"

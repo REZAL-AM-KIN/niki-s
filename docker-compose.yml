@@ -34,8 +34,8 @@ services:
       - ./ldap_data/ldap/:/var/lib/ldap
       - ./ldap_data/sldap.d/:/etc/ldap/slapd.d
       - ./docs/basedn.ldif:/container/service/slapd/assets/config/bootstrap/ldif/basedn.ldif
-    ports:
-      - "389:389"
+    expose:
+      - 389
     hostname: ${LDAP_ADDR}
     healthcheck:
       test: ["CMD-SHELL", "ldapsearch -x -H ldap://localhost:389 -b $LDAP_BASE_DN cn || test $$? -eq 32 || exit 1"]

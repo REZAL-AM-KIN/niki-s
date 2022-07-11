@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-
-from rest_framework import routers
 from django.urls import path, include
+from rest_framework import routers
 
 from . import views
 
@@ -13,5 +11,5 @@ router.register(r"bucquages", views.BucquageViewSet, basename="bucquages")
 router.register(r"history", views.HistoryViewSet, basename="history")
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 ]

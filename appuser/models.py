@@ -3,6 +3,9 @@
 import os
 import hashlib
 import base64
+import hashlib
+import os
+from datetime import date
 
 from django.contrib.auth.models import User, Group
 from django.db import models
@@ -36,9 +39,9 @@ class Utilisateur(User):
     def set_password(self, password):
         super(Utilisateur, self).set_password(password)
         salt = os.urandom(4)
-        h = hashlib.sha1(password.encode('utf-8'))
+        h = hashlib.sha1(password.encode("utf-8"))
         h.update(salt)
-        self.ldap_password = base64.b64encode(h.digest() + salt).strip().decode('utf-8')
+        self.ldap_password = base64.b64encode(h.digest() + salt).strip().decode("utf-8")
 
     def __unicode__(self):
         return self.username
@@ -55,10 +58,11 @@ if WITHLDAP:
         """
         Class for representing an LDAP user entry.
         """
+
         # LDAP meta-data
         base_dn = "ou=users,dc=rezal,dc=fr"
-        object_classes = ['inetOrgPerson']
-        last_modified = DateTimeField(db_column='modifyTimestamp', editable=False)
+        object_classes = ["inetOrgPerson"]
+        last_modified = DateTimeField(db_column="modifyTimestamp", editable=False)
 
         # inetOrgPerson
         first_name = CharField(db_column='givenName', verbose_name="Prime name")

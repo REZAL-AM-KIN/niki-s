@@ -1,59 +1,66 @@
 from decimal import Decimal
-from django.db import models
-from appkfet.models import Consommateur, History
+
 from django.contrib.auth.models import User
+from django.db import models
 from django.db.models.deletion import CASCADE
 
-# Create your models here.
+from appkfet.models import Consommateur, History
+
 
 class Event(models.Model):
-    titre=models.CharField(max_length=100)
-    description=models.CharField(max_length=200)
-    cansubscribe=models.BooleanField(default=True, verbose_name="Ouvert à l'inscription")
-    date_event=models.DateTimeField()
-    created_by=models.ForeignKey(User, on_delete=CASCADE, editable=False, verbose_name="Créé par")
-    ended=models.BooleanField(default=False, verbose_name="Evènement terminé")
-    report=models.FileField(blank=True, upload_to='report/', editable=False)
+    titre = models.CharField(max_length=100)
+    description = models.CharField(max_length=200)
+    can_subscribe = models.BooleanField(
+        default=True, verbose_name="Ouvert à l'inscription"
+    )
+    date_event = models.DateTimeField()
+    created_by = models.ForeignKey(
+        User, on_delete=CASCADE, editable=False, verbose_name="Créé par"
+    )
+    ended = models.BooleanField(default=False, verbose_name="Evènement terminé")
+    report = models.FileField(blank=True, upload_to="report/", editable=False)
 
     def __str__(self):
-       return self.titre + " - " + str(self.date_event)
+        return self.titre + " - " + str(self.date_event)
 
 
-class Product_event(models.Model):
-    parent_event=models.ForeignKey("Event", on_delete=CASCADE)
-    nom=models.CharField(max_length=50)
-    description=models.CharField(max_length=200)
-    prix=models.DecimalField(max_digits=5, decimal_places=2)
-    obligatoire=models.BooleanField(default=False)
+class ProductEvent(models.Model):
+    parent_event = models.ForeignKey("Event", on_delete=CASCADE)
+    nom = models.CharField(max_length=50)
+    description = models.CharField(max_length=200)
+    prix = models.DecimalField(max_digits=5, decimal_places=2)
+    obligatoire = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.parent_event) + " - " + self.nom
 
 
-class Participation_event(models.Model):
-    cible_participation=models.ForeignKey("appkfet.Consommateur", on_delete=CASCADE)
-    product_participation=models.ForeignKey("Product_event", on_delete=CASCADE)
-    number=models.IntegerField(default=1, verbose_name="Quantité")
-    participation_ok=models.BooleanField(default=False)
-    participation_bucquee=models.BooleanField(default=False)
+class ParticipationEvent(models.Model):
+    cible_participation = models.ForeignKey(Consommateur, on_delete=CASCADE)
+    product_participation = models.ForeignKey(ProductEvent, on_delete=CASCADE)
+    number = models.IntegerField(default=1, verbose_name="Quantité")
+    participation_ok = models.BooleanField(default=False)
+    participation_bucquee = models.BooleanField(default=False)
 
     def __unicode__(self):
         return self.pk
 
     def save(self, *args, **kwargs):
-        if self.participation_ok==True and self.participation_bucquee==False:
-            prix_total=Decimal(self.number) * self.product_participation.prix
+        if self.participation_ok is True and self.participation_bucquee is False:
+            prix_total = Decimal(self.number) * self.product_participation.prix
             if Consommateur.testdebit(self.cible_participation, prix_total):
-                self.participation_bucquee=True
-                super(Participation_event, self).save(*args, **kwargs)
+                self.participation_bucquee = True
+                super(ParticipationEvent, self).save(*args, **kwargs)
                 Consommateur.debit(self.cible_participation, prix_total)
                 History.objects.update_or_create(
                     cible_evenement=self.cible_participation,
-                    nom_evenement=str(self.number) + "x " + self.product_participation.parent_event.titre + " - " + self.product_participation.nom,
+                    nom_evenement=f"{self.number}x {self.product_participation.parent_event.titre} - "
+                    f"{self.product_participation.nom}",
                     prix_evenement=prix_total,
                     entite_evenement="Evènement",
-                    date_evenement=self.product_participation.parent_event.date_event)
+                    date_evenement=self.product_participation.parent_event.date_event,
+                )
             else:
-                super(Participation_event, self).save(*args, **kwargs)
+                super(ParticipationEvent, self).save(*args, **kwargs)
         else:
-            super(Participation_event, self).save(*args,**kwargs)
+            super(ParticipationEvent, self).save(*args, **kwargs)

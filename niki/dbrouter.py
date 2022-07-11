@@ -1,4 +1,4 @@
-class dbrouter(object):
+class DBRouter(object):
     def db_for_read(self, model, **hints):
         if model._meta.model_name == "radcheck":
             return "radcheck"

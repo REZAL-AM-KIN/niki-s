@@ -1,23 +1,21 @@
-# -*- coding: utf-8 -*-
-
-from django.core import exceptions
 from appkfet.models import Consommateur
 
 from appuser.models import Utilisateur
 
 
-def getUtilisateur(request):
+def get_utilisateur(request):
     try:
         utilisateur = Utilisateur.objects.get(pk=request.user.pk)
-    except:
+    except Utilisateur.DoesNotExist:
         utilisateur = None
     return {"utilisateur": utilisateur}
 
-def getConsommateur(request):
+
+def get_consommateur(request):
     if request.user.is_authenticated:
         try:
             consommateur = Consommateur.objects.get(consommateur=request.user)
-        except:
+        except Consommateur.DoesNotExist:
             consommateur = None
         return {"consommateur": consommateur}
     return {}
