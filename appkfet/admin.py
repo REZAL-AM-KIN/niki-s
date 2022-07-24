@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.contrib.auth.models import Group
+from appuser.models import Groupe
 
 from .models import Consommateur, Produit
 
@@ -32,9 +32,9 @@ class AdminProduit(admin.ModelAdmin):
     # récupérer uniquement les groupes qui sont des entités, c'est à dire ceux qui ne commencent pas par un "_"
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "entite":
-            qs = Group.objects.exclude(name__startswith="_")
+            qs = Groupe.objects.exclude(is_entity=False)
             if not request.user.is_superuser:
-                qs = request.user.groups.exclude(name__startswith="_")
+                qs = request.user.groups.exclude(groupe__is_entity=False)
             kwargs["queryset"] = qs
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
