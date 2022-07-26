@@ -50,7 +50,6 @@ class Recharge(models.Model):
         ("CB", "Carte bleue"),
         ("Espèces", "Espèces"),
         ("Chèque", "Chèque"),
-        ("Lydia", "Lydia"),
     ]
     cible_recharge = models.ForeignKey("Consommateur", on_delete=CASCADE)
     date = models.DateTimeField()
