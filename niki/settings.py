@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "api",
     "captcha",
+    "lydia",
 ]
 
 if WITHLDAP:
@@ -202,3 +203,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = getenv("DEFAULT_FROM_EMAIL", "")
 SERVER_EMAIL = getenv("SERVER_EMAIL", "")
+
+LYDIA_URL=getenv("LYDIA_URL","")
+VENDOR_TOKEN=getenv("LYDIA_VENDOR_TOKEN","")
+CASHIER_PHONE=getenv("LYDIA_CASHIER_PHONE","")

@@ -1,8 +1,17 @@
 from datetime import datetime
+from random import randint
 
 from rest_framework import serializers
 
 from appkfet.models import *
+from lydia.models import *
+
+# Assume that you have installed requests: pip install requests
+import requests
+import json
+import uuid
+
+from niki.settings import CASHIER_PHONE, LYDIA_URL, VENDOR_TOKEN
 
 
 ########################
@@ -106,3 +115,60 @@ class HistorySerializer(serializers.HyperlinkedModelSerializer):
             "entite_evenement",
             "date_evenement",
         )
+
+#########################
+#         LYDIA         #
+#########################
+
+class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
+    cible_id = serializers.CharField(source="cible_recharge.id")
+    date = serializers.DateTimeField(read_only=True)
+    transaction_lydia=serializers.CharField(read_only=True)
+    internal_uuid=serializers.CharField(read_only=True)
+
+    class Meta:
+        model = RechargeLydia
+        fields = ("cible_id", "montant", "qrcode", "date","transaction_lydia", "internal_uuid")
+
+    def create(self, validated_data):
+        #récupération du consommateur
+        try:
+            consommateur = Consommateur.objects.get(
+                pk=validated_data["cible_recharge"]["id"]
+            )
+        except Consommateur.DoesNotExist:
+            raise serializers.ValidationError("Cannot resolve cible id")
+        #définition du json à envoyer à Lydia
+        internal_uuid=uuid.uuid1()
+        data_object={
+            'vendor_token': VENDOR_TOKEN, 
+            'phone': CASHIER_PHONE, 
+            'paymentData': validated_data["qrcode"], 
+            'amount': str(validated_data["montant"]),
+            'currency': "EUR",
+            'order_id': internal_uuid.hex,
+        }
+        #définition de l'url du endpoint
+        url_encaissement=LYDIA_URL+"/api/payment/payment.json"
+        #requête Lydia POST /api/payment/payment au format json
+        r = requests.post(url_encaissement, data=data_object)
+        r_status = r.status_code
+        #si le call a marché
+        if r_status == 200:
+            #récupération de la réponse
+            response = json.loads(r.text)
+            try:
+                #si la transaction est un succès, j'aurais un transaction identifier, sinon non !
+                transaction_lydia=response["transaction_identifier"]
+                #création de l'objet en base
+                validated_data["transaction_lydia"]=transaction_lydia
+                validated_data["cible_recharge"] = consommateur
+                validated_data["date"] = datetime.now()
+                validated_data["internal_uuid"] = internal_uuid.hex
+                return RechargeLydia.objects.create(**validated_data)
+            except:
+                pass
+            message="An error occured with Lydia : Error " + response["error"] + " : " + response["message"]
+            raise serializers.ValidationError(message)
+        else:
+            raise serializers.ValidationError("An error occured with Lydia")

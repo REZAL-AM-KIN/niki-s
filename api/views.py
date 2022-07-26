@@ -103,3 +103,29 @@ class HistoryViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         serializer = self.get_serializer(self.get_queryset(), many=True)
         return Response(data=serializer.data)
+
+#########################
+#         LYDIA         #
+#########################
+
+class RechargeLydiaViewSet(viewsets.ModelViewSet):
+    serializer_class = RechargeLydiaSerializer
+    http_method_names = ["get", "post", "options"]
+    permission_classes = (permissions.DjangoModelPermissions,)
+    lookup_field = "cible_recharge"
+
+    def get_queryset(self, *args, **kwargs):
+        if "cible_recharge" in self.kwargs:
+            user_id = self.kwargs["cible_recharge"]
+            consommateur = Consommateur.objects.filter(consommateur=user_id)
+            if consommateur.count() == 1:
+                queryset = RechargeLydia.objects.filter(cible_recharge=consommateur[0])
+            else:
+                queryset = RechargeLydia.objects.none()
+        else:
+            queryset = RechargeLydia.objects.all()
+        return queryset
+
+    def retrieve(self, request, *args, **kwargs):
+        serializer = self.get_serializer(self.get_queryset(), many=True)
+        return Response(data=serializer.data)
