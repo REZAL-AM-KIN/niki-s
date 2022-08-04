@@ -16,16 +16,19 @@ class CurrentUserViewSet(viewsets.ModelViewSet):
     serializer_class = ConsommateurSerializer
     http_method_names = ["get", "options"]
     permission_classes = (permissions.DjangoModelPermissions,)
+    queryset = Consommateur.objects.none()
 
-    def get_queryset(self):
+    def list(self, request):
         try:
-            queryset = Consommateur.objects.filter(consommateur=self.request.user.pk, activated=True)
+            consommateur = Consommateur.objects.get(consommateur=self.request.user.pk, activated=True)
         except:
-            queryset = []
-        return queryset
-
+            consommateur = []
+        serializer = self.get_serializer(consommateur)
+        return Response(serializer.data)
 
 # GET : récupérer tous les produits
+
+
 class ProduitViewSet(viewsets.ModelViewSet):
     queryset = Produit.objects.all()
     serializer_class = ProduitSerializer
