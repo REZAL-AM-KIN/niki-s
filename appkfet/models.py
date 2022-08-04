@@ -13,6 +13,7 @@ class Consommateur(models.Model):
     totaldep = models.DecimalField(
         max_digits=5, decimal_places=2, default=0, editable=False
     )
+    commentaire = models.CharField(max_length=50, blank=True)
     activated = models.BooleanField(default=True)
 
     def __str__(self):
