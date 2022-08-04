@@ -31,10 +31,12 @@ class ConsommateurSerializer(serializers.HyperlinkedModelSerializer):
     consommateur_nom = serializers.CharField(
         source="consommateur.username", read_only=True
     )
+    bucque = serializers.CharField(source="consommateur.bucque", read_only=True)
+    fams = serializers.CharField(source="consommateur.fams", read_only=True)
 
     class Meta:
         model = Consommateur
-        fields = ("id", "consommateur_nom", "commentaire", "solde", "totaldep")  # "bucque", "fams", "commentaire",
+        fields = ("id", "consommateur_nom", "commentaire", "bucque", "fams", "solde", "totaldep")
 
 
 class RechargeSerializer(serializers.HyperlinkedModelSerializer):
