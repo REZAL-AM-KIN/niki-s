@@ -21,8 +21,13 @@ class CurrentUserViewSet(viewsets.ModelViewSet):
     def list(self, request):
         try:
             consommateur = Consommateur.objects.get(consommateur=self.request.user.pk, activated=True)
+<<<<<<< HEAD
         except Consommateur.DoesNotExist:
             return Response({'Consommateur does not exist'}, status=404)  # TODO: 404?
+=======
+        except:
+            consommateur = []
+>>>>>>> 29ac39e248b2fbc3dc63e4efea229bca30d893b2
         serializer = self.get_serializer(consommateur)
         return Response(serializer.data)
 
