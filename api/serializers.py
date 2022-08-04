@@ -34,7 +34,7 @@ class ConsommateurSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Consommateur
-        fields = ("id", "consommateur_nom", "solde", "totaldep")
+        fields = ("id", "consommateur_nom", "commentaire", "solde", "totaldep")  # "bucque", "fams", "commentaire",
 
 
 class RechargeSerializer(serializers.HyperlinkedModelSerializer):
@@ -120,15 +120,16 @@ class HistorySerializer(serializers.HyperlinkedModelSerializer):
 #         LYDIA         #
 #########################
 
+
 class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
     cible_id = serializers.CharField(source="cible_recharge.id")
     date = serializers.DateTimeField(read_only=True)
-    transaction_lydia=serializers.CharField(read_only=True)
-    internal_uuid=serializers.CharField(read_only=True)
+    transaction_lydia = serializers.CharField(read_only=True)
+    internal_uuid = serializers.CharField(read_only=True)
 
     class Meta:
         model = RechargeLydia
-        fields = ("cible_id", "montant", "qrcode", "date","transaction_lydia", "internal_uuid")
+        fields = ("cible_id", "montant", "qrcode", "date", "transaction_lydia", "internal_uuid")
 
     def create(self, validated_data):
         #récupération du consommateur
@@ -139,17 +140,17 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
         except Consommateur.DoesNotExist:
             raise serializers.ValidationError("Cannot resolve cible id")
         #définition du json à envoyer à Lydia
-        internal_uuid=uuid.uuid1()
-        data_object={
-            'vendor_token': VENDOR_TOKEN, 
-            'phone': CASHIER_PHONE, 
-            'paymentData': validated_data["qrcode"], 
+        internal_uuid = uuid.uuid1()
+        data_object = {
+            'vendor_token': VENDOR_TOKEN,
+            'phone': CASHIER_PHONE,
+            'paymentData': validated_data["qrcode"],
             'amount': str(validated_data["montant"]),
             'currency': "EUR",
             'order_id': internal_uuid.hex,
         }
         #définition de l'url du endpoint
-        url_encaissement=LYDIA_URL+"/api/payment/payment.json"
+        url_encaissement = LYDIA_URL+"/api/payment/payment.json"
         #requête Lydia POST /api/payment/payment au format json
         r = requests.post(url_encaissement, data=data_object)
         r_status = r.status_code
@@ -159,16 +160,16 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
             response = json.loads(r.text)
             try:
                 #si la transaction est un succès, j'aurais un transaction identifier, sinon non !
-                transaction_lydia=response["transaction_identifier"]
+                transaction_lydia = response["transaction_identifier"]
                 #création de l'objet en base
-                validated_data["transaction_lydia"]=transaction_lydia
+                validated_data["transaction_lydia"] = transaction_lydia
                 validated_data["cible_recharge"] = consommateur
                 validated_data["date"] = datetime.now()
                 validated_data["internal_uuid"] = internal_uuid.hex
                 return RechargeLydia.objects.create(**validated_data)
             except:
                 pass
-            message="An error occured with Lydia : Error " + response["error"] + " : " + response["message"]
+            message = "An error occured with Lydia : Error " + response["error"] + " : " + response["message"]
             raise serializers.ValidationError(message)
         else:
             raise serializers.ValidationError("An error occured with Lydia")

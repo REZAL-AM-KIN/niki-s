@@ -11,6 +11,20 @@ from api.serializers import *
 
 # authentification nécessaire pour tous les appels de l'API KFET
 
+# GET : récupère les informations de l'utilisateur actuel
+class CurrentUserViewSet(viewsets.ModelViewSet):
+    serializer_class = ConsommateurSerializer
+    http_method_names = ["get", "options"]
+    permission_classes = (permissions.DjangoModelPermissions,)
+
+    def get_queryset(self):
+        try:
+            queryset = Consommateur.objects.filter(consommateur=self.request.user.pk, activated=True)
+        except:
+            queryset = []
+        return queryset
+
+
 # GET : récupérer tous les produits
 class ProduitViewSet(viewsets.ModelViewSet):
     queryset = Produit.objects.all()
@@ -107,6 +121,7 @@ class HistoryViewSet(viewsets.ModelViewSet):
 #########################
 #         LYDIA         #
 #########################
+
 
 class RechargeLydiaViewSet(viewsets.ModelViewSet):
     serializer_class = RechargeLydiaSerializer
