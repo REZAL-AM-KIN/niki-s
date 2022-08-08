@@ -28,15 +28,15 @@ class ProduitSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class ConsommateurSerializer(serializers.HyperlinkedModelSerializer):
-    consommateur_nom = serializers.CharField(
-        source="consommateur.username", read_only=True
-    )
+    prenom = serializers.CharField(source="consommateur.first_name", read_only=True)
     bucque = serializers.CharField(source="consommateur.bucque", read_only=True)
     fams = serializers.CharField(source="consommateur.fams", read_only=True)
+    proms = serializers.CharField(source="consommateur.proms", read_only=True)
+    nom = serializers.CharField(source="consommateur.last_name", read_only=True)
 
     class Meta:
         model = Consommateur
-        fields = ("id", "consommateur_nom", "commentaire", "bucque", "fams", "solde", "totaldep")
+        fields = ("id", "prenom", "commentaire", "bucque", "fams", "proms", "nom", "solde", "totaldep")
 
 
 class RechargeSerializer(serializers.HyperlinkedModelSerializer):
@@ -108,6 +108,8 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class HistorySerializer(serializers.HyperlinkedModelSerializer):
+    cible_evenement = ConsommateurSerializer()
+
     class Meta:
         model = History
         fields = (
