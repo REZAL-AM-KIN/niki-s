@@ -1,6 +1,7 @@
 from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.response import Response
+from rest_framework import status
 
 from api.serializers import *
 
@@ -69,10 +70,20 @@ class RechargeViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(self.get_queryset(), many=True)
         return Response(data=serializer.data)
 
+    def create(self, request, *arg, **kwargs):
+        # here we get the Utilisateur origin of the request
+        utilisateur = Utilisateur.objects.get(pk=request.user.pk)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(initiateur_evenement=utilisateur)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 # GET : récupérer toutes les bucquages pour un utilisateur donné ou pour tous
 # POST : créer un bucquage. Seuls les utilisateurs ayant été déclaré dans le groupe du produit à bucquer peuvent
 #        effectuer cette action. Le groupe d'entité est préalablement doté du droit appkfet|bucquage|can add bucquage
+
+
 class BucquageViewSet(viewsets.ModelViewSet):
     serializer_class = BucquageSerializer
     http_method_names = ["get", "post", "options"]
@@ -94,6 +105,15 @@ class BucquageViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         serializer = self.get_serializer(self.get_queryset(), many=True)
         return Response(data=serializer.data)
+
+    def create(self, request, *arg, **kwargs):
+        # here we get the Utilisateur origin of the request
+        utilisateur = Utilisateur.objects.get(pk=request.user.pk)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(initiateur_evenement=utilisateur)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 # récupérer l'historique pour un utilisateur donné ou pour tous
