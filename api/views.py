@@ -13,6 +13,24 @@ from api.permissions import AllowedIP
 # authentification nécessaire pour tous les appels de l'API KFET
 
 
+# GET : recupère les permissions de l'utilisateur
+class PermissionsViewSet(viewsets.ModelViewSet):
+    serializer_class = PermissionsSerializer
+    http_method_names = ["get", "options"]
+    # if the user doen't have permission for remote access, just deny the request
+    permission_classes = (permissions.DjangoModelPermissions, AllowedIP,)
+    queryset = Utilisateur.objects.none()
+
+    def list(self, request):
+        user = request.user
+        data = {}
+        data["all"] = user.has_perm("appkfet.bypass_ip_constraint") or user.is_superuser
+        data["vpKfet"] = user.groups.filter(name="vpKfet").exists()
+        data["vpCvis"] = user.groups.filter(name="vpCvis").exists()
+        serializer = self.get_serializer(data)
+        return Response(serializer.data)
+
+
 # GET : récupère les informations de l'utilisateur actuel
 class CurrentUserViewSet(viewsets.ModelViewSet):
     serializer_class = ConsommateurSerializer
