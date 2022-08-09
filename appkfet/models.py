@@ -113,3 +113,9 @@ class History(models.Model):
 
     def __unicode__(self):
         return self.pk
+
+
+class IP(models.Model):
+    groupe = models.ForeignKey("appuser.Groupe", on_delete=CASCADE)
+    ip = models.CharField(max_length=15)
+    description = models.CharField(max_length=100)
