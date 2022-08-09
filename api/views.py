@@ -4,13 +4,14 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from api.serializers import *
-
+from api.permissions import AllowedIP
 
 ########################
 #         KFET         #
 ########################
 
 # authentification nécessaire pour tous les appels de l'API KFET
+
 
 # GET : récupère les informations de l'utilisateur actuel
 class CurrentUserViewSet(viewsets.ModelViewSet):
@@ -27,9 +28,8 @@ class CurrentUserViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(consommateur)
         return Response(serializer.data)
 
+
 # GET : récupérer tous les produits
-
-
 class ProduitViewSet(viewsets.ModelViewSet):
     queryset = Produit.objects.all()
     serializer_class = ProduitSerializer
@@ -51,7 +51,7 @@ class ConsommateurViewSet(viewsets.ModelViewSet):
 class RechargeViewSet(viewsets.ModelViewSet):
     serializer_class = RechargeSerializer
     http_method_names = ["get", "post", "options"]
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (permissions.DjangoModelPermissions, AllowedIP,)
     lookup_field = "cible_recharge"
 
     def get_queryset(self, *args, **kwargs):
@@ -79,16 +79,15 @@ class RechargeViewSet(viewsets.ModelViewSet):
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+
 # GET : récupérer toutes les bucquages pour un utilisateur donné ou pour tous
 # POST : créer un bucquage. Seuls les utilisateurs ayant été déclaré dans le groupe du produit à bucquer peuvent
 #        effectuer cette action. Le groupe d'entité est préalablement doté du droit appkfet|bucquage|can add bucquage
-
-
 class BucquageViewSet(viewsets.ModelViewSet):
     serializer_class = BucquageSerializer
     http_method_names = ["get", "post", "options"]
     lookup_field = "cible_bucquage"
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (permissions.DjangoModelPermissions, AllowedIP,)
 
     def get_queryset(self, *args, **kwargs):
         if "cible_bucquage" in self.kwargs:
@@ -141,15 +140,14 @@ class HistoryViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(self.get_queryset(), many=True)
         return Response(data=serializer.data)
 
+
 #########################
 #         LYDIA         #
 #########################
-
-
 class RechargeLydiaViewSet(viewsets.ModelViewSet):
     serializer_class = RechargeLydiaSerializer
     http_method_names = ["get", "post", "options"]
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (permissions.DjangoModelPermissions, AllowedIP,)
     lookup_field = "cible_recharge"
 
     def get_queryset(self, *args, **kwargs):
