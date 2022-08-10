@@ -24,8 +24,24 @@ class AllowedIP(permissions.BasePermission):
             # if the ip isn't listed, throws an error
             allowedIP = IP.objects.get(ip=client_ip)
             # if the ip the user uses is in one of the user's groups
-            if request.user.groups.filter(name=allowedIP.groupe).exists():
-                return True
+            return request.user.groups.filter(name=allowedIP.groupe).exists()
+        except:
+            pass
+
+        return False
+
+
+class AllowedIPEvenSaveMethods(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.user.has_perm("appkfet.bypass_ip_constraint"):
+            return True
+
+        client_ip = get_client_ip(request)
+        try:
+            # if the ip isn't listed, throws an error
+            allowedIP = IP.objects.get(ip=client_ip)
+            # if the ip the user uses is in one of the user's groups
+            return request.user.groups.filter(name=allowedIP.groupe).exists()
         except:
             pass
 

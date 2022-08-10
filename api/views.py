@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from api.serializers import *
-from api.permissions import AllowedIP
+from api.permissions import AllowedIP, AllowedIPEvenSaveMethods
 
 ########################
 #         KFET         #
@@ -17,14 +17,13 @@ from api.permissions import AllowedIP
 class PermissionsViewSet(viewsets.ModelViewSet):
     serializer_class = PermissionsSerializer
     http_method_names = ["get", "options"]
-    # if the user doen't have permission for remote access, just deny the request
-    permission_classes = (permissions.DjangoModelPermissions, AllowedIP,)
+    permission_classes = (permissions.DjangoModelPermissions, AllowedIPEvenSaveMethods,)
     queryset = Utilisateur.objects.none()
 
     def list(self, request):
-        user = request.user
+        user = Utilisateur.objects.get(pk=request.user.pk)
         data = {}
-        data["all"] = user.has_perm("appkfet.bypass_ip_constraint") or user.is_superuser
+        data["all"] = user.is_superuser
         data["vpKfet"] = user.groups.filter(name="vpKfet").exists()
         data["vpCvis"] = user.groups.filter(name="vpCvis").exists()
         serializer = self.get_serializer(data)
