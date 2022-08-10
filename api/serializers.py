@@ -71,10 +71,11 @@ class RechargeSerializer(serializers.HyperlinkedModelSerializer):
 class BucquageSerializer(serializers.HyperlinkedModelSerializer):
     cible_bucquage = serializers.CharField(source="cible_bucquage.id")
     date = serializers.DateTimeField(read_only=True)
-    nom_produit = serializers.CharField()
+    nom_produit = serializers.CharField(read_only=True)
     prix_produit = serializers.CharField(read_only=True)
     entite_produit = serializers.CharField(read_only=True)
     initiateur_evenement = serializers.CharField(read_only=True)
+    id_produit = serializers.IntegerField(write_only=True, min_value=1)
 
     class Meta:
         model = Bucquage
@@ -85,6 +86,7 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
             "entite_produit",
             "date",
             "initiateur_evenement",
+            "id_produit",
         )
 
     def create(self, validated_data):
@@ -97,7 +99,8 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
         except Consommateur.DoesNotExist:
             raise serializers.ValidationError("Cannot resolve cible id")
         try:
-            produit = Produit.objects.get(nom=validated_data["nom_produit"])
+            produit = Produit.objects.get(id=validated_data["id_produit"])
+            validated_data.pop("id_produit")
         except Consommateur.DoesNotExist:
             raise serializers.ValidationError("Cannot resolve product name")
         if consommateur.activated is False:
