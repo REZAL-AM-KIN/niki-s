@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.models import User, Group
 from .models import Utilisateur, Groupe
+from appuser.forms import GroupeForm
+
 
 class AdminUtilisateur(admin.ModelAdmin):
     list_display = (
@@ -18,10 +20,13 @@ class AdminUtilisateur(admin.ModelAdmin):
         "is_superuser",
     )
 
+
 class AdminGroupe(admin.ModelAdmin):
+    form = GroupeForm
     list_display = (
         "name",
     )
+
 
 admin.site.register(Utilisateur, AdminUtilisateur)
 admin.site.register(Groupe, AdminGroupe)
