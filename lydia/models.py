@@ -4,13 +4,14 @@ from appkfet.models import Consommateur, History
 
 # Create your models here.
 
+
 class RechargeLydia(models.Model):
     cible_recharge = models.ForeignKey("appkfet.Consommateur", on_delete=CASCADE)
     date = models.DateTimeField()
     montant = models.DecimalField(max_digits=5, decimal_places=2)
-    qrcode=models.CharField(max_length=200)
-    internal_uuid=models.CharField(max_length=200)
-    transaction_lydia=models.CharField(max_length=200)
+    qrcode = models.CharField(max_length=200)
+    internal_uuid = models.CharField(max_length=200)
+    transaction_lydia = models.CharField(max_length=200)
     solde_before = models.DecimalField(max_digits=5, decimal_places=2)
     solde_after = models.DecimalField(max_digits=5, decimal_places=2)
 
@@ -25,6 +26,7 @@ class RechargeLydia(models.Model):
             prix_evenement=self.montant,
             entite_evenement="Recharge",
             date_evenement=self.date,
+            initiateur_evenement="QrLydia",
         )
 
     def __unicode__(self):

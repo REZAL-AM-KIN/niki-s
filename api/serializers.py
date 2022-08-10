@@ -48,13 +48,14 @@ class ConsommateurSerializer(serializers.HyperlinkedModelSerializer):
 class RechargeSerializer(serializers.HyperlinkedModelSerializer):
     cible_id = serializers.CharField(source="cible_recharge.id")
     date = serializers.DateTimeField(read_only=True)
-    initiateur_evenement = serializers.CharField(source="initiateur_evenement.bucque", read_only=True)
+    initiateur_evenement = serializers.CharField(read_only=True)
 
     class Meta:
         model = Recharge
         fields = ("cible_id", "montant", "methode", "date", "initiateur_evenement")
 
     def create(self, validated_data):
+        request = self.context.get("request")
         try:
             consommateur = Consommateur.objects.get(
                 pk=validated_data["cible_recharge"]["id"]
@@ -62,6 +63,7 @@ class RechargeSerializer(serializers.HyperlinkedModelSerializer):
         except Consommateur.DoesNotExist:
             raise serializers.ValidationError("Cannot resolve cible id")
         validated_data["cible_recharge"] = consommateur
+        validated_data["initiateur_evenement"] = Utilisateur.objects.get(id=request.user.pk).bucque
         validated_data["date"] = datetime.now()
         return Recharge.objects.create(**validated_data)
 
@@ -72,7 +74,7 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
     nom_produit = serializers.CharField()
     prix_produit = serializers.CharField(read_only=True)
     entite_produit = serializers.CharField(read_only=True)
-    initiateur_evenement = serializers.CharField(source="initiateur_evenement.bucque", read_only=True)
+    initiateur_evenement = serializers.CharField(read_only=True)
 
     class Meta:
         model = Bucquage
@@ -111,6 +113,7 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
             validated_data["nom_produit"] = produit.nom
             validated_data["prix_produit"] = produit.prix
             validated_data["entite_produit"] = produit.entite
+            validated_data["initiateur_evenement"] = Utilisateur.objects.get(id=request.user.pk).bucque
             return Bucquage.objects.create(**validated_data)
         else:
             raise serializers.ValidationError("Cannot sell this product")
@@ -118,7 +121,6 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
 
 class HistorySerializer(serializers.HyperlinkedModelSerializer):
     cible_evenement = ConsommateurSerializer()
-    initiateur_evenement = serializers.CharField(source="initiateur_evenement.bucque", read_only=True)
 
     class Meta:
         model = History
