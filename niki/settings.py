@@ -151,8 +151,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 25,
@@ -162,6 +162,10 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
+
+# CSRF validation
+# URL_CSRF = getenv("URL_CSRF", "")
+# CSRF_TRUSTED_ORIGINS = [URL_CSRF]
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
@@ -204,6 +208,6 @@ EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = getenv("DEFAULT_FROM_EMAIL", "")
 SERVER_EMAIL = getenv("SERVER_EMAIL", "")
 
-LYDIA_URL=getenv("LYDIA_URL","")
-VENDOR_TOKEN=getenv("LYDIA_VENDOR_TOKEN","")
-CASHIER_PHONE=getenv("LYDIA_CASHIER_PHONE","")
+LYDIA_URL = getenv("LYDIA_URL", "")
+VENDOR_TOKEN = getenv("LYDIA_VENDOR_TOKEN", "")
+CASHIER_PHONE = getenv("LYDIA_CASHIER_PHONE", "")
