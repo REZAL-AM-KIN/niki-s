@@ -20,13 +20,12 @@ class AllowedIP(permissions.BasePermission):
             return True
 
         client_ip = get_client_ip(request)
-        try:
-            # if the ip isn't listed, throws an error
-            allowedIP = IP.objects.get(ip=client_ip)
-            # if the ip the user uses is in one of the user's groups
-            return request.user.groups.filter(name=allowedIP.groupe).exists()
-        except:
-            pass
+        allowedIP = IP.objects.filter(ip=client_ip)
+        # if the ip the user uses is in one of the user's groups
+        # an ip can be listed more than one time
+        for ip in allowedIP:
+            if request.user.groups.filter(name=ip.groupe).exists():
+                return True
 
         return False
 
@@ -37,12 +36,12 @@ class AllowedIPEvenSaveMethods(permissions.BasePermission):
             return True
 
         client_ip = get_client_ip(request)
-        try:
-            # if the ip isn't listed, throws an error
-            allowedIP = IP.objects.get(ip=client_ip)
-            # if the ip the user uses is in one of the user's groups
-            return request.user.groups.filter(name=allowedIP.groupe).exists()
-        except:
-            pass
+
+        allowedIP = IP.objects.filter(ip=client_ip)
+        # if the ip the user uses is in one of the user's groups
+        # an ip can be listed more than one time
+        for ip in allowedIP:
+            if request.user.groups.filter(name=ip.groupe).exists():
+                return True
 
         return False

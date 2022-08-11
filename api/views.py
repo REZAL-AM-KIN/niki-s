@@ -24,10 +24,12 @@ class PermissionsViewSet(viewsets.ModelViewSet):
         user = Utilisateur.objects.get(pk=request.user.pk)
         data = {}
         data["all"] = user.is_superuser
-        try:
-            data["ipIdentification"] = IP.objects.get(ip=get_client_ip(request)).groupe
-        except:
-            data["ipIdentification"] = False
+        data["ipIdentification"] = []
+        ips = IP.objects.filter(ip=get_client_ip(request))
+        for ip in ips:
+            data["ipIdentification"].append(ip.groupe)
+
+        data["groupes"] = user.groups.all()
         serializer = self.get_serializer(data)
         return Response(serializer.data)
 
