@@ -16,8 +16,7 @@ from niki.settings import CASHIER_PHONE, LYDIA_URL, VENDOR_TOKEN
 
 class PermissionsSerializer(serializers.Serializer):
     all = serializers.BooleanField()
-    vpKfet = serializers.BooleanField()
-    vpCvis = serializers.BooleanField()
+    ipIdentification = serializers.CharField()
 
 
 ########################

@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from api.serializers import *
-from api.permissions import AllowedIP, AllowedIPEvenSaveMethods
+from api.permissions import AllowedIP, AllowedIPEvenSaveMethods, get_client_ip
 
 ########################
 #         KFET         #
@@ -24,8 +24,10 @@ class PermissionsViewSet(viewsets.ModelViewSet):
         user = Utilisateur.objects.get(pk=request.user.pk)
         data = {}
         data["all"] = user.is_superuser
-        data["vpKfet"] = user.groups.filter(name="vpKfet").exists()
-        data["vpCvis"] = user.groups.filter(name="vpCvis").exists()
+        try:
+            data["ipIdentification"] = IP.objects.get(ip=get_client_ip(request)).groupe
+        except:
+            data["ipIdentification"] = False
         serializer = self.get_serializer(data)
         return Response(serializer.data)
 
