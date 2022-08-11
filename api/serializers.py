@@ -101,7 +101,7 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
         try:
             produit = Produit.objects.get(id=validated_data["id_produit"])
             validated_data.pop("id_produit")
-        except Consommateur.DoesNotExist:
+        except Produit.DoesNotExist:
             raise serializers.ValidationError("Cannot resolve product name")
         if consommateur.activated is False:
             raise serializers.ValidationError("Consommateur is not activated")
