@@ -28,8 +28,8 @@ class PermissionsViewSet(viewsets.ModelViewSet):
         ips = IP.objects.filter(ip=get_client_ip(request))
         for ip in ips:
             data["ipIdentification"].append(ip.groupe)
-
         data["groupes"] = user.groups.all()
+        data["recharge"] = user.has_perm("appkfet.add_recharge")
         serializer = self.get_serializer(data)
         return Response(serializer.data)
 

@@ -22,6 +22,7 @@ class PermissionsSerializer(serializers.Serializer):
     groupes = serializers.ListField(
         child=serializers.CharField()
     )
+    recharge = serializers.BooleanField()
 
 
 ########################
