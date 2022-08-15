@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     "appkfet",
     "appevents",
     "rest_framework",
+    "corsheaders",
     "api",
     "captcha",
     "lydia",
@@ -78,6 +79,7 @@ if WITHLDAP:
     INSTALLED_APPS.append("ldapdb")
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -167,6 +169,9 @@ SIMPLE_JWT = {
 # URL_CSRF = getenv("URL_CSRF", "")
 # CSRF_TRUSTED_ORIGINS = [URL_CSRF]
 
+# CORS: https://github.com/adamchainz/django-cors-headers
+URL_CORS = getenv("URL_CORS", "")
+CORS_ALLOWED_ORIGINS = [URL_CORS]
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
