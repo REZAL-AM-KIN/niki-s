@@ -89,8 +89,8 @@ MIDDLEWARE = [
 ]
 
 if PROD:
-    securityMiddlewareIndex = MIDDLEWARE.index("django.middleware.security.SecurityMiddleware")
-    MIDDLEWARE.insert(securityMiddlewareIndex, "whitenoise.middleware.WhiteNoiseMiddleware")
+    security_middleware_index = MIDDLEWARE.index("django.middleware.security.SecurityMiddleware")
+    MIDDLEWARE.insert(security_middleware_index, "whitenoise.middleware.WhiteNoiseMiddleware")
 
 ROOT_URLCONF = "niki.urls"
 
