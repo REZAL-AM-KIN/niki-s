@@ -45,6 +45,7 @@ SECRET_KEY = environ["SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = getenv("DEBUG", "False") == "True"
 PROD = getenv("PROD", "False") == "True"
+COMPRESSION = getenv("RESSOURCES_COMPRESSION", "False") == "True"
 
 RADIUS = getenv("RADIUS", "False") == "True"
 
@@ -86,6 +87,10 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+if PROD:
+    security_middleware_index = MIDDLEWARE.index("django.middleware.security.SecurityMiddleware")
+    MIDDLEWARE.insert(security_middleware_index, "whitenoise.middleware.WhiteNoiseMiddleware")
 
 ROOT_URLCONF = "niki.urls"
 
@@ -188,6 +193,10 @@ else:
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = "/media/"
+
+# Auto compression of static ressources and caching
+if PROD and COMPRESSION:
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Niki specific parameters
 CAPTCHA_FONT_SIZE = 36
