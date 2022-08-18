@@ -493,7 +493,14 @@ docker ps
 
 ### En prod
 
-Blabla
+Installer les requierements pour la production
+```bash
+pip install -r requirements.txt
+```
+
+dans le dotenv
+- Prod=True 
+- RESSOURCES_COMPRESSION=True - Pour activer la compression et le caching automatique des ressources statique
 
 ## Decorators
 
