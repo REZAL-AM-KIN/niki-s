@@ -45,7 +45,6 @@ SECRET_KEY = environ["SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = getenv("DEBUG", "False") == "True"
 PROD = getenv("PROD", "False") == "True"
-GUNICORN = getenv("GUNICORN", "False") == "True"
 COMPRESSION = getenv("RESSOURCES_COMPRESSION", "False") == "True"
 
 RADIUS = getenv("RADIUS", "False") == "True"
@@ -196,7 +195,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = "/media/"
 
 # Auto compression of static ressources and caching
-if GUNICORN and COMPRESSION:
+if PROD and COMPRESSION:
     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Niki specific parameters
