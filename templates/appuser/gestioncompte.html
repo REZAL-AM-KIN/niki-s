@@ -2,12 +2,12 @@
 {% load static %}
 {% block title %}Niki - Gestion{% endblock %}
 {% block formlinks %}
-{% if utilisateur.has_cotiz %}	
+{% if has_cotiz %}
 	<a class="item" href = "{% url "gestionconnexion" %}">
 		<i class="laptop icon"></i>
 		Appareils
 	</a>
-{% endif %}	
+{% endif %}
 {% endblock %}
 {% block content %}
 <div class="ui middle aligned center aligned grid">
@@ -40,11 +40,11 @@
 			<button class = "ui blue fluid submit button" type = "submit" value = "Submit">Enregistrer les modifications</button>
 	    </form>
 	</div>
-	{% if not utilisateur.has_cotiz %}	
+	{% if not has_cotiz %}
 		<div class = "ui message">
 			Ta cotisation n'est pas à jour. Contacte un membre de l'équipe !
 		</div>
-	{% endif %}	
+	{% endif %}
 	<div class = "ui message">
 		Je souhaite <a href = "{% url "password_change" %}">changer mon mot de passe</a>
 	</div>

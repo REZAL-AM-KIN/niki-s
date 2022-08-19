@@ -3,6 +3,8 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 
+from datetime import date
+
 from appuser.forms import (
     InscriptionForm,
     GestionCompteGadzForm,
@@ -66,7 +68,7 @@ def gestion_compte(request):
             return redirect(gestion_compte)
     else:
         form = form_to_use(instance=user)
-    return render(request, "appuser/gestioncompte.html", {"form": form})
+    return render(request, "appuser/gestioncompte.html", {"form": form, "has_cotiz": has_cotiz(user)})
 
 
 def has_cotiz(user):

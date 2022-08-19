@@ -31,10 +31,9 @@ class Utilisateur(User):
     proms = models.CharField(blank=True, max_length=200, verbose_name="Prom's")
     is_gadz = models.BooleanField(default=False)
     is_conscrit = models.BooleanField(default=False)
-    has_cotiz = models.BooleanField(default=False)
     date_expiration = models.DateField(blank=True, null=True)
     ldap_password=models.CharField(max_length=200, blank=True, editable=False)
-    
+
     #surcharge de la méthode set_password pour définir le mot de passe utilisé dans le ldap (hash ssha)
     def set_password(self, password):
         super(Utilisateur, self).set_password(password)

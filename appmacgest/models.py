@@ -6,6 +6,7 @@ from django.db.models.signals import post_save
 from django.dispatch.dispatcher import receiver
 
 from appuser.models import Utilisateur
+from appuser.views import has_cotiz
 from niki.settings import RADIUS
 
 
@@ -48,7 +49,7 @@ class Device(models.Model):
         device_user = Utilisateur.objects.get(pk=self.proprietaire.pk)
         if RADIUS:
             if (
-                device_user.has_cotiz
+                has_cotiz(device_user)
                 and self.accepted is True
                 and self.has_rezal is True
             ):
@@ -71,11 +72,11 @@ class Device(models.Model):
 @receiver(post_save, sender=Utilisateur)
 def update_device(sender, instance, **kwargs):
     associated_devices = Device.objects.filter(proprietaire=instance.pk)
-    if associated_devices != [] and instance.has_cotiz is False:
+    if associated_devices != [] and has_cotiz(instance) is False:
         for device in associated_devices:
             device.has_rezal = False
             device.save()
-    if associated_devices != [] and instance.has_cotiz is True:
+    if associated_devices != [] and has_cotiz(instance) is True:
         for device in associated_devices:
             if device.accepted:
                 device.has_rezal = True
