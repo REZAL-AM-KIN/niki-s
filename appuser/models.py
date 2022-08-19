@@ -31,7 +31,6 @@ class Utilisateur(User):
     proms = models.CharField(blank=True, max_length=200, verbose_name="Prom's")
     is_gadz = models.BooleanField(default=False)
     is_conscrit = models.BooleanField(default=False)
-    has_cotiz = models.BooleanField(default=False)
     date_expiration = models.DateField(blank=True, null=True)
     ldap_password=models.CharField(max_length=200, blank=True, editable=False)
     
@@ -45,6 +44,12 @@ class Utilisateur(User):
 
     def __unicode__(self):
         return self.username
+
+    def has_cotiz(self):
+        current_date = date.today()
+        return current_date <= self.date_expiration
+    # to show the tick in the admin list_display
+    has_cotiz.boolean = True
 
 #surcharge du modèle Group de base pour lui rajouter cet attribut d'entité
 class Groupe(Group):
