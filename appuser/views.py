@@ -78,10 +78,7 @@ def has_cotiz(user):
 
 
 def is_superuser(user):
-    test = False
-    if user.is_superuser:
-        test = True
-    return test
+    return user.is_superuser
 
 
 @login_required
