@@ -70,11 +70,9 @@ def gestion_compte(request):
 
 
 def has_cotiz(user):
-    test = False
-    user = Utilisateur.objects.get(pk=user.pk)
-    if user.has_cotiz:
-        test = True
-    return test
+    utilisateur = Utilisateur.objects.get(pk=user.pk)
+    current_date = date.today()
+    return current_date <= utilisateur.date_expiration
 
 
 def is_superuser(user):
