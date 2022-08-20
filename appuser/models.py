@@ -47,7 +47,7 @@ class Utilisateur(User):
     def save(self, *args, **kwargs):
         if not self.is_active:
             self.has_cotiz=False
-            super(Utilisateur, self).save(*args, **kwargs)
+        super(Utilisateur, self).save(*args, **kwargs)
     # TODO : Desactivation du consommateur lors de la désactivation du compte
 
     def __unicode__(self):
