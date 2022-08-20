@@ -8,4 +8,5 @@ urlpatterns = [
     path("ajoutmac/", views.ajout_mac, name="ajoutmac"),
     path("activatedevice/<params>", views.activate_device, name="activatedevice"),
     path("deletedevice/<params>", views.delete_device, name="deletedevice"),
+    path("disabledevice/<params>", views.disable_device, name="disabledevice"),
 ]
