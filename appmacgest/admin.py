@@ -12,7 +12,7 @@ def disable(modeladmin, request, queryset):
 
 @admin.register(Device)
 class AdminDevice(admin.ModelAdmin):
-    list_display = ("proprietaire", "nom", "mac", "accepted", "has_rezal")
+    list_display = ("proprietaire", "nom", "mac", "accepted", "enable")
     search_fields = ["proprietaire__username", "proprietaire__phone", "mac"]
     actions = [disable]
 

@@ -30,7 +30,7 @@ def ajout_mac(request):
             macused = Device.objects.filter(proprietaire=request.user.pk).count()
             if macused == 0:
                 form.accepted = True
-                form.has_rezal = True
+                form.enable = True
                 form.save()
                 messages.success(request, "Adresse MAC ajoutée")
                 return redirect(gestion_connexion)
@@ -60,7 +60,7 @@ def gestion_demande_mac(request):
 def activate_device(request, params):
     device_to_modify = Device.objects.get(pk=params)
     device_to_modify.accepted = True
-    device_to_modify.has_rezal = True
+    device_to_modify.enable = True
     device_to_modify.save()
     messages.success(request, "Adresse MAC approuvée")
     return redirect(gestion_demande_mac)
