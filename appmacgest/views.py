@@ -9,6 +9,8 @@ from appmacgest.models import Device
 from appuser.models import Utilisateur
 from appuser.views import has_cotiz, is_superuser
 
+import requests
+
 
 @login_required
 @user_passes_test(has_cotiz)
@@ -51,6 +53,10 @@ def ajout_mac(request):
 @user_passes_test(is_superuser)
 def gestion_demande_mac(request):
     listemac = Device.objects.filter(Q(accepted=False))
+    for device in listemac:
+        url = "https://api.macvendors.com/"+device.mac
+        device.vendor = requests.get(url).text  #On effectue la requete auprès de macvendor
+
     return render(request, "appmacgest/gestiondemandemac.html", {"list": listemac})
 
 
