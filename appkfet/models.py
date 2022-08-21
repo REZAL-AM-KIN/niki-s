@@ -117,7 +117,7 @@ class History(models.Model):
 
 class IP(models.Model):
     groupe = models.ForeignKey("appuser.Groupe", on_delete=CASCADE)
-    ip = models.CharField(max_length=15)
+    ip = models.GenericIPAddressField(protocol='IPv4')
     description = models.CharField(max_length=100)
 
     class Meta:
