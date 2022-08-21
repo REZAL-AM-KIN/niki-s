@@ -28,22 +28,25 @@ class ProduitSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class ConsommateurSerializer(serializers.HyperlinkedModelSerializer):
-    consommateur_nom = serializers.CharField(
-        source="consommateur.username", read_only=True
-    )
+    prenom = serializers.CharField(source="consommateur.first_name", read_only=True)
+    bucque = serializers.CharField(source="consommateur.bucque", read_only=True)
+    fams = serializers.CharField(source="consommateur.fams", read_only=True)
+    proms = serializers.CharField(source="consommateur.proms", read_only=True)
+    nom = serializers.CharField(source="consommateur.last_name", read_only=True)
 
     class Meta:
         model = Consommateur
-        fields = ("id", "consommateur_nom", "commentaire", "solde", "totaldep")  # "bucque", "fams", "commentaire",
+        fields = ("id", "prenom", "commentaire", "bucque", "fams", "proms", "nom", "solde", "totaldep")
 
 
 class RechargeSerializer(serializers.HyperlinkedModelSerializer):
     cible_id = serializers.CharField(source="cible_recharge.id")
     date = serializers.DateTimeField(read_only=True)
+    initiateur_evenement = serializers.CharField(source="initiateur_evenement.bucque", read_only=True)
 
     class Meta:
         model = Recharge
-        fields = ("cible_id", "montant", "methode", "date")
+        fields = ("cible_id", "montant", "methode", "date", "initiateur_evenement")
 
     def create(self, validated_data):
         try:
@@ -63,6 +66,7 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
     nom_produit = serializers.CharField()
     prix_produit = serializers.CharField(read_only=True)
     entite_produit = serializers.CharField(read_only=True)
+    initiateur_evenement = serializers.CharField(source="initiateur_evenement.bucque", read_only=True)
 
     class Meta:
         model = Bucquage
@@ -72,6 +76,7 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
             "prix_produit",
             "entite_produit",
             "date",
+            "initiateur_evenement",
         )
 
     def create(self, validated_data):
@@ -106,6 +111,9 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class HistorySerializer(serializers.HyperlinkedModelSerializer):
+    cible_evenement = ConsommateurSerializer()
+    initiateur_evenement = serializers.CharField(source="initiateur_evenement.bucque", read_only=True)
+
     class Meta:
         model = History
         fields = (
@@ -114,6 +122,7 @@ class HistorySerializer(serializers.HyperlinkedModelSerializer):
             "prix_evenement",
             "entite_evenement",
             "date_evenement",
+            "initiateur_evenement",
         )
 
 #########################

@@ -17,12 +17,13 @@ class AdminBucquage(admin.ModelAdmin):
         "nom_produit",
         "prix_produit",
         "entite_produit",
+        "initiateur_evenement",
     )
 
 
 # @admin.register(Recharge)
 class AdminRecharge(admin.ModelAdmin):
-    list_display = ("cible_recharge", "date", "montant", "methode")
+    list_display = ("cible_recharge", "date", "montant", "methode", "initiateur_evenement",)
 
 
 @admin.register(Produit)
@@ -57,4 +58,5 @@ class AdminHistory(admin.ModelAdmin):
         "prix_evenement",
         "entite_evenement",
         "date_evenement",
+        "initiateur_evenement",
     )
