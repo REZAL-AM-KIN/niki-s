@@ -30,7 +30,7 @@ def ajout_mac(request):
             macused = Device.objects.filter(proprietaire=request.user.pk).count()
             if macused == 0:
                 form.accepted = True
-                form.has_rezal = True
+                form.enable = True
                 form.save()
                 messages.success(request, "Adresse MAC ajoutée")
                 return redirect(gestion_connexion)
@@ -60,7 +60,7 @@ def gestion_demande_mac(request):
 def activate_device(request, params):
     device_to_modify = Device.objects.get(pk=params)
     device_to_modify.accepted = True
-    device_to_modify.has_rezal = True
+    device_to_modify.enable = True
     device_to_modify.save()
     messages.success(request, "Adresse MAC approuvée")
     return redirect(gestion_demande_mac)
@@ -74,3 +74,15 @@ def delete_device(request, params):
     device_to_delete.delete()
     messages.success(request, "Adresse MAC rejetée")
     return redirect(gestion_demande_mac)
+
+@login_required
+@user_passes_test(is_superuser)
+def disable_device(request, params):
+    user = Utilisateur.objects.get(pk=request.user.pk)
+    device_to_delete = Device.objects.get(pk=params)
+    if device_to_delete.proprietaire != user:
+        messages.success(request, "Vous ne pouvez pas supprimer un appareil qui ne vous appartient pas.")
+        return redirect(gestion_connexion)
+    device_to_delete.disable()
+    messages.success(request, "Appareil supprimé avec succès.")
+    return redirect(gestion_connexion)

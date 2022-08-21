@@ -43,6 +43,13 @@ class Utilisateur(User):
         h.update(salt)
         self.ldap_password = base64.b64encode(h.digest() + salt).strip().decode("utf-8")
 
+
+    def save(self, *args, **kwargs):
+        if not self.is_active:
+            self.has_cotiz=False
+        super(Utilisateur, self).save(*args, **kwargs)
+    # TODO : Desactivation du consommateur lors de la désactivation du compte
+
     def __unicode__(self):
         return self.username
 

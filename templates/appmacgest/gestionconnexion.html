@@ -22,6 +22,7 @@
 				<th class = "center aligned single line">Nom de l'appareil</th>
 				<th class = "center aligned single line">Adresse MAC</th>
 				<th class = "center aligned single line">Statut</th>
+				<th class = "center aligned single line">Supprimer</th>
 			<tr>
 			</thead>
 			{% for mac in list %}
@@ -34,6 +35,14 @@
       					{% else %}
         					<i class="large red close icon"></i>
       					{% endif %}
+					</td>
+					<td class = "center aligned single line">
+						{% if mac.accepted == 1 %}
+        					<a class = "ui red button" href="{% url "disabledevice" mac.pk %}">Supprimer</a>
+      					{% else %}
+        					<a class = "ui red button disabled">Supprimer</a>
+      					{% endif %}
+
 					</td>
 				</tr>
 			{% endfor %}

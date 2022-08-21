@@ -41,7 +41,8 @@ class Device(models.Model):
         validators=[RegexValidator(regex="^([0-9a-f]{2}[:]){5}([0-9a-f]{2})$")],
     )
     accepted = models.BooleanField(default=False)
-    has_rezal = models.BooleanField(default=False)
+    enable = models.BooleanField(default=False)
+
 
     def save(self, *args, **kwargs):
         super(Device, self).save(*args, **kwargs)
@@ -50,7 +51,8 @@ class Device(models.Model):
             if (
                 device_user.has_cotiz
                 and self.accepted is True
-                and self.has_rezal is True
+                and self.enable is True
+
             ):
                 save_in_radcheck(self)
             else:
@@ -62,7 +64,7 @@ class Device(models.Model):
             delete_in_radcheck(self)
 
     def disable(self, *args, **kwargs):
-        self.has_rezal = False
+        self.enable = False
         super(Device, self).save(*args, **kwargs)
         if RADIUS:
             delete_in_radcheck(self)
@@ -71,12 +73,7 @@ class Device(models.Model):
 @receiver(post_save, sender=Utilisateur)
 def update_device(sender, instance, **kwargs):
     associated_devices = Device.objects.filter(proprietaire=instance.pk)
-    if associated_devices != [] and instance.has_cotiz is False:
+    if associated_devices != []:
         for device in associated_devices:
-            device.has_rezal = False
             device.save()
-    if associated_devices != [] and instance.has_cotiz is True:
-        for device in associated_devices:
-            if device.accepted:
-                device.has_rezal = True
-                device.save()
+
