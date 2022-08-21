@@ -181,6 +181,11 @@ USE_L10N = True
 
 USE_TZ = True
 
+# CSRF validation
+if PROD:
+    URL_CSRF = getenv("URL_CSRF", "")
+    CSRF_TRUSTED_ORIGINS = [URL_CSRF]
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
