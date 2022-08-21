@@ -4,6 +4,7 @@ from rest_framework import routers
 from . import views
 
 router = routers.DefaultRouter()
+router.register(r"utilisateur", views.CurrentUserViewSet, basename="utilisateur")
 router.register(r"produits", views.ProduitViewSet)
 router.register(r"consommateurs", views.ConsommateurViewSet)
 router.register(r"recharges", views.RechargeViewSet, basename="recharges")
