@@ -27,7 +27,7 @@ class PermissionsViewSet(viewsets.ModelViewSet):
         data = {}
         data["all"] = user.is_superuser
         data["ipIdentification"] = []
-        ips = IP.objects.filter(ip=get_client_ip(request))
+        ips = AuthorizedIP.objects.filter(ip=get_client_ip(request))
         for ip in ips:
             data["ipIdentification"].append(ip.groupe)
         data["groupes"] = user.groups.all()

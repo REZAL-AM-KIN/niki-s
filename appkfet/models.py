@@ -115,7 +115,7 @@ class History(models.Model):
         return self.pk
 
 
-class IP(models.Model):
+class AuthorizedIP(models.Model):
     groupe = models.ForeignKey("appuser.Groupe", on_delete=CASCADE)
     ip = models.GenericIPAddressField(protocol='IPv4')
     description = models.CharField(max_length=100)

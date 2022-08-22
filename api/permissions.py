@@ -1,5 +1,5 @@
 from rest_framework import permissions
-from appkfet.models import IP
+from appkfet.models import AuthorizedIP
 
 
 def get_client_ip(request):
@@ -20,7 +20,7 @@ class AllowedIP(permissions.BasePermission):
             return True
 
         client_ip = get_client_ip(request)
-        allowedIP = IP.objects.filter(ip=client_ip)
+        allowedIP = AuthorizedIP.objects.filter(ip=client_ip)
         # if the ip the user uses is in one of the user's groups
         # an ip can be listed more than one time
         for ip in allowedIP:
@@ -37,7 +37,7 @@ class AllowedIPEvenSaveMethods(permissions.BasePermission):
 
         client_ip = get_client_ip(request)
 
-        allowedIP = IP.objects.filter(ip=client_ip)
+        allowedIP = AuthorizedIP.objects.filter(ip=client_ip)
         # if the ip the user uses is in one of the user's groups
         # an ip can be listed more than one time
         for ip in allowedIP:
