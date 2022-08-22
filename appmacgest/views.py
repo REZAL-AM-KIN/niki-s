@@ -9,7 +9,7 @@ from appmacgest.models import Device
 from appuser.models import Utilisateur
 from appuser.views import has_cotiz, is_superuser
 
-import requests
+from mac_vendor_lookup import MacLookup
 
 
 @login_required
@@ -52,12 +52,11 @@ def ajout_mac(request):
 @staff_member_required
 @user_passes_test(is_superuser)
 def gestion_demande_mac(request):
-    listemac = Device.objects.filter(Q(accepted=False))
-    for device in listemac:
-        url = "https://api.macvendors.com/"+device.mac
-        device.vendor = requests.get(url).text  #On effectue la requete auprès de macvendor
+    liste_mac = Device.objects.filter(Q(accepted=False))
+    for device in liste_mac:
+        device.vendor = MacLookup().lookup(device.mac)
 
-    return render(request, "appmacgest/gestiondemandemac.html", {"list": listemac})
+    return render(request, "appmacgest/gestiondemandemac.html", {"list": liste_mac})
 
 
 @login_required
