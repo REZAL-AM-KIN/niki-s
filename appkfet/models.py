@@ -6,7 +6,7 @@ from appuser.models import Utilisateur
 
 
 class Consommateur(models.Model):
-    consommateur = models.ForeignKey("appuser.Utilisateur", on_delete=CASCADE)
+    consommateur = models.OneToOneField("appuser.Utilisateur", on_delete=CASCADE)
     solde = models.DecimalField(
         max_digits=5, decimal_places=2, default=0, editable=False
     )
