@@ -15,19 +15,26 @@ from appuser.views import has_cotiz, is_superuser
 def gestion_connexion(request):
     user = Utilisateur.objects.get(pk=request.user.pk)
     liste_mac = Device.objects.filter(Q(proprietaire=user))
-    return render(request, "appmacgest/gestionconnexion.html", {"list": liste_mac})
+    empty_slot = user.max_devices - liste_mac.count()
+    return render(request, "appmacgest/gestionconnexion.html", {"list": liste_mac, "empty_slot":empty_slot})
 
 
 @login_required
 @user_passes_test(has_cotiz)
 def ajout_mac(request):
+    user = Utilisateur.objects.get(pk=request.user.pk)
+    macused = Device.objects.filter(proprietaire=request.user.pk).count()
+
+    if macused >= user.max_devices and not user.is_superuser:
+        messages.error(request, "Tu as dépassé la limite de " + str(user.max_devices) + " appareils. Fais du trie !")
+        return redirect(gestion_connexion)
+
     if request.method == "POST":
         form = DeviceForm(request.POST)
         if form.is_valid():
             form = form.save(commit=False)
-            user = Utilisateur.objects.get(pk=request.user.pk)
             form.proprietaire = user
-            macused = Device.objects.filter(proprietaire=request.user.pk).count()
+
             if macused == 0:
                 form.accepted = True
                 form.enable = True

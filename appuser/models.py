@@ -34,6 +34,7 @@ class Utilisateur(User):
     has_cotiz = models.BooleanField(default=False)
     date_expiration = models.DateField(blank=True, null=True)
     ldap_password=models.CharField(max_length=200, blank=True, editable=False)
+    max_devices = models.PositiveIntegerField(default=10, verbose_name="Nombre maximal d'appareil")
     
     #surcharge de la méthode set_password pour définir le mot de passe utilisé dans le ldap (hash ssha)
     def set_password(self, password):
