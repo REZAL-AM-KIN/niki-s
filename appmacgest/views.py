@@ -23,10 +23,10 @@ def gestion_connexion(request):
 @user_passes_test(has_cotiz)
 def ajout_mac(request):
     user = Utilisateur.objects.get(pk=request.user.pk)
-    macused = Device.objects.filter(proprietaire=request.user.pk).count()
+    nb_mac_used = Device.objects.filter(proprietaire=request.user.pk).count()
 
-    if macused >= user.max_devices and not user.is_superuser:
-        messages.error(request, "Tu as dépassé la limite de " + str(user.max_devices) + " appareils. Fais du trie !")
+    if nb_mac_used >= user.max_devices and not user.is_superuser:
+        messages.error(request, f"Tu as dépassé la limite de {user.max_devices} appareils. Fais du trie !")
         return redirect(gestion_connexion)
 
     if request.method == "POST":
@@ -35,7 +35,7 @@ def ajout_mac(request):
             form = form.save(commit=False)
             form.proprietaire = user
 
-            if macused == 0:
+            if nb_mac_used == 0:
                 form.accepted = True
                 form.enable = True
                 form.save()
