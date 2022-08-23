@@ -18,6 +18,8 @@ from pathlib import Path
 from django.conf.global_settings import LOGOUT_REDIRECT_URL
 from dotenv import load_dotenv
 
+load_dotenv(".env")
+
 LDAP = getenv("LDAP", "False") == "True"
 
 WITHLDAP = False
@@ -29,7 +31,7 @@ if LDAP:
     except ImportError:
         pass
 
-load_dotenv(".env")
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
