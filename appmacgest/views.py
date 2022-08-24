@@ -14,7 +14,7 @@ from appuser.views import has_cotiz, is_superuser
 @user_passes_test(has_cotiz)
 def gestion_connexion(request):
     user = Utilisateur.objects.get(pk=request.user.pk)
-    liste_mac = Device.objects.filter(Q(proprietaire=user))
+    liste_mac = Device.objects.filter(Q(proprietaire=user) & Q(enable=True))
     return render(request, "appmacgest/gestionconnexion.html", {"list": liste_mac})
 
 
@@ -27,7 +27,7 @@ def ajout_mac(request):
             form = form.save(commit=False)
             user = Utilisateur.objects.get(pk=request.user.pk)
             form.proprietaire = user
-            macused = Device.objects.filter(proprietaire=request.user.pk).count()
+            macused = Device.objects.filter(Q(proprietaire=user) & Q(enable=True)).count()
             if macused == 0:
                 form.accepted = True
                 form.enable = True
@@ -76,7 +76,6 @@ def delete_device(request, params):
     return redirect(gestion_demande_mac)
 
 @login_required
-@user_passes_test(is_superuser)
 def disable_device(request, params):
     user = Utilisateur.objects.get(pk=request.user.pk)
     device_to_delete = Device.objects.get(pk=params)
