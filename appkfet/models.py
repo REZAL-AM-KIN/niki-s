@@ -6,13 +6,14 @@ from appuser.models import Utilisateur
 
 
 class Consommateur(models.Model):
-    consommateur = models.ForeignKey("appuser.Utilisateur", on_delete=CASCADE)
+    consommateur = models.OneToOneField("appuser.Utilisateur", on_delete=CASCADE)
     solde = models.DecimalField(
         max_digits=5, decimal_places=2, default=0, editable=False
     )
     totaldep = models.DecimalField(
         max_digits=5, decimal_places=2, default=0, editable=False
     )
+    commentaire = models.CharField(max_length=50, blank=True)
     activated = models.BooleanField(default=True)
 
     def __str__(self):
@@ -57,6 +58,7 @@ class Recharge(models.Model):
     methode = models.CharField(max_length=50, choices=CHOIX_METHODE)
     solde_before = models.DecimalField(max_digits=5, decimal_places=2)
     solde_after = models.DecimalField(max_digits=5, decimal_places=2)
+    initiateur_evenement = models.ForeignKey("appuser.Utilisateur", on_delete=CASCADE)
 
     def save(self, *args, **kwargs):
         self.solde_before = self.cible_recharge.solde
@@ -69,6 +71,7 @@ class Recharge(models.Model):
             prix_evenement=self.montant,
             entite_evenement="Recharge",
             date_evenement=self.date,
+            initiateur_evenement=self.initiateur_evenement,
         )
 
     def __unicode__(self):
@@ -81,6 +84,7 @@ class Bucquage(models.Model):
     nom_produit = models.CharField(max_length=50)
     prix_produit = models.DecimalField(max_digits=5, decimal_places=2)
     entite_produit = models.CharField(max_length=50)
+    initiateur_evenement = models.ForeignKey("appuser.Utilisateur", on_delete=CASCADE)
 
     def save(self, *args, **kwargs):
         if Consommateur.testdebit(self.cible_bucquage, self.prix_produit):
@@ -92,6 +96,7 @@ class Bucquage(models.Model):
                 prix_evenement=self.prix_produit,
                 entite_evenement=self.entite_produit,
                 date_evenement=self.date,
+                initiateur_evenement=self.initiateur_evenement,
             )
 
     def __unicode__(self):
@@ -104,6 +109,7 @@ class History(models.Model):
     prix_evenement = models.DecimalField(max_digits=5, decimal_places=2)
     entite_evenement = models.CharField(max_length=200)
     date_evenement = models.DateTimeField()
+    initiateur_evenement = models.ForeignKey("appuser.Utilisateur", on_delete=CASCADE)
 
     def __unicode__(self):
         return self.pk

@@ -47,12 +47,14 @@
 				</tr>
 			{% endfor %}
 		</table>
+		<p >Tu peux encore ajouter {{ empty_slot }} appareil(s).</p>
 		{% else %}
 			<p>Pas d'adresse enregistrée pour l'instant</p>
 		{% endif %}
 	</div>
 	<div class="ui message">
-     <a href="{% url "ajoutmac" %}">Ajouter un nouvel appareil</a>
+
+		<a href="{% url "ajoutmac" %}">Ajouter un nouvel appareil</a>
     </div>
 </div>
 {% endblock %}

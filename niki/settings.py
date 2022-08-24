@@ -18,6 +18,8 @@ from pathlib import Path
 from django.conf.global_settings import LOGOUT_REDIRECT_URL
 from dotenv import load_dotenv
 
+load_dotenv(".env")
+
 LDAP = getenv("LDAP", "False") == "True"
 
 WITHLDAP = False
@@ -29,7 +31,7 @@ if LDAP:
     except ImportError:
         pass
 
-load_dotenv(".env")
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -180,6 +182,11 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
+
+# CSRF validation
+if PROD:
+    URL_CSRF = getenv("URL_CSRF", "")
+    CSRF_TRUSTED_ORIGINS = [URL_CSRF]
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/

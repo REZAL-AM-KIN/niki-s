@@ -28,22 +28,25 @@ class ProduitSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class ConsommateurSerializer(serializers.HyperlinkedModelSerializer):
-    consommateur_nom = serializers.CharField(
-        source="consommateur.username", read_only=True
-    )
+    prenom = serializers.CharField(source="consommateur.first_name", read_only=True)
+    bucque = serializers.CharField(source="consommateur.bucque", read_only=True)
+    fams = serializers.CharField(source="consommateur.fams", read_only=True)
+    proms = serializers.CharField(source="consommateur.proms", read_only=True)
+    nom = serializers.CharField(source="consommateur.last_name", read_only=True)
 
     class Meta:
         model = Consommateur
-        fields = ("id", "consommateur_nom", "solde", "totaldep")
+        fields = ("id", "prenom", "commentaire", "bucque", "fams", "proms", "nom", "solde", "totaldep")
 
 
 class RechargeSerializer(serializers.HyperlinkedModelSerializer):
     cible_id = serializers.CharField(source="cible_recharge.id")
     date = serializers.DateTimeField(read_only=True)
+    initiateur_evenement = serializers.CharField(source="initiateur_evenement.bucque", read_only=True)
 
     class Meta:
         model = Recharge
-        fields = ("cible_id", "montant", "methode", "date")
+        fields = ("cible_id", "montant", "methode", "date", "initiateur_evenement")
 
     def create(self, validated_data):
         try:
@@ -63,6 +66,7 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
     nom_produit = serializers.CharField()
     prix_produit = serializers.CharField(read_only=True)
     entite_produit = serializers.CharField(read_only=True)
+    initiateur_evenement = serializers.CharField(source="initiateur_evenement.bucque", read_only=True)
 
     class Meta:
         model = Bucquage
@@ -72,6 +76,7 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
             "prix_produit",
             "entite_produit",
             "date",
+            "initiateur_evenement",
         )
 
     def create(self, validated_data):
@@ -106,6 +111,9 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class HistorySerializer(serializers.HyperlinkedModelSerializer):
+    cible_evenement = ConsommateurSerializer()
+    initiateur_evenement = serializers.CharField(source="initiateur_evenement.bucque", read_only=True)
+
     class Meta:
         model = History
         fields = (
@@ -114,21 +122,23 @@ class HistorySerializer(serializers.HyperlinkedModelSerializer):
             "prix_evenement",
             "entite_evenement",
             "date_evenement",
+            "initiateur_evenement",
         )
 
 #########################
 #         LYDIA         #
 #########################
 
+
 class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
     cible_id = serializers.CharField(source="cible_recharge.id")
     date = serializers.DateTimeField(read_only=True)
-    transaction_lydia=serializers.CharField(read_only=True)
-    internal_uuid=serializers.CharField(read_only=True)
+    transaction_lydia = serializers.CharField(read_only=True)
+    internal_uuid = serializers.CharField(read_only=True)
 
     class Meta:
         model = RechargeLydia
-        fields = ("cible_id", "montant", "qrcode", "date","transaction_lydia", "internal_uuid")
+        fields = ("cible_id", "montant", "qrcode", "date", "transaction_lydia", "internal_uuid")
 
     def create(self, validated_data):
         #récupération du consommateur
@@ -139,17 +149,17 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
         except Consommateur.DoesNotExist:
             raise serializers.ValidationError("Cannot resolve cible id")
         #définition du json à envoyer à Lydia
-        internal_uuid=uuid.uuid1()
-        data_object={
-            'vendor_token': VENDOR_TOKEN, 
-            'phone': CASHIER_PHONE, 
-            'paymentData': validated_data["qrcode"], 
+        internal_uuid = uuid.uuid1()
+        data_object = {
+            'vendor_token': VENDOR_TOKEN,
+            'phone': CASHIER_PHONE,
+            'paymentData': validated_data["qrcode"],
             'amount': str(validated_data["montant"]),
             'currency': "EUR",
             'order_id': internal_uuid.hex,
         }
         #définition de l'url du endpoint
-        url_encaissement=LYDIA_URL+"/api/payment/payment.json"
+        url_encaissement = LYDIA_URL+"/api/payment/payment.json"
         #requête Lydia POST /api/payment/payment au format json
         r = requests.post(url_encaissement, data=data_object)
         r_status = r.status_code
@@ -159,16 +169,16 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
             response = json.loads(r.text)
             try:
                 #si la transaction est un succès, j'aurais un transaction identifier, sinon non !
-                transaction_lydia=response["transaction_identifier"]
+                transaction_lydia = response["transaction_identifier"]
                 #création de l'objet en base
-                validated_data["transaction_lydia"]=transaction_lydia
+                validated_data["transaction_lydia"] = transaction_lydia
                 validated_data["cible_recharge"] = consommateur
                 validated_data["date"] = datetime.now()
                 validated_data["internal_uuid"] = internal_uuid.hex
                 return RechargeLydia.objects.create(**validated_data)
             except:
                 pass
-            message="An error occured with Lydia : Error " + response["error"] + " : " + response["message"]
+            message = "An error occured with Lydia : Error " + response["error"] + " : " + response["message"]
             raise serializers.ValidationError(message)
         else:
             raise serializers.ValidationError("An error occured with Lydia")
