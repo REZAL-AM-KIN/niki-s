@@ -1,0 +1,24 @@
+{% extends "baseform.html" %}
+{% load static %}
+{% block title %}Appareil introuvable{% endblock %}
+{% block navform %}{% endblock %}
+{% block content %}
+
+<style type="text/css">
+		body > .grid {
+		height: 100%;
+	  	}
+</style>
+
+<div class="ui middle aligned center aligned grid">
+	<div class="column">
+    	<h2 class="ui blue image header">
+      		<img src="{% static "images/logocarre.png" %}" class="image" alt="Logo">
+      		<div class="content">
+            Ton appareil n'est pas enregistré !
+      		</div>
+    	</h2>
+	<a class="ui huge primary button" href = "{% url "ajoutmac" %}">Ajouter un appareil</a>
+  	</div>
+</div>
+{% endblock %}
