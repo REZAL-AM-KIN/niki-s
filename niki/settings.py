@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     "appkfet",
     "appevents",
     "rest_framework",
+    "corsheaders",
     "api",
     "captcha",
     "lydia",
@@ -81,6 +82,7 @@ if WITHLDAP:
     INSTALLED_APPS.append("ldapdb")
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -169,6 +171,13 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
+
+# CORS: https://github.com/adamchainz/django-cors-headers
+if PROD:
+    CORS_ALLOWED_ORIGINS = URL_CORS.split(" ") if " " in (URL_CORS := getenv("URL_CORS", "")) else URL_CORS
+else:
+    # FOR DEV ONLY!!
+    CORS_ALLOW_ALL_ORIGINS = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
