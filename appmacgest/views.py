@@ -93,3 +93,6 @@ def disable_device(request, params):
     device_to_delete.disable()
     messages.success(request, "Appareil supprimé avec succès.")
     return redirect(gestion_connexion)
+
+def not_logged_in(request):
+    return render(request, "appmacgest/notlogged.html")
