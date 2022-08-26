@@ -173,8 +173,12 @@ SIMPLE_JWT = {
 }
 
 # CORS: https://github.com/adamchainz/django-cors-headers
-URL_CORS = getenv("URL_CORS", "")
-CORS_ALLOWED_ORIGINS = [URL_CORS]
+if PROD:
+    URL_CORS = getenv("URL_CORS", "")
+    CORS_ALLOWED_ORIGINS = [URL_CORS]
+else:
+    # FOR DEV ONLY!!
+    CORS_ALLOW_ALL_ORIGINS = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
