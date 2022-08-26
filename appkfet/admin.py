@@ -63,5 +63,5 @@ class AdminHistory(admin.ModelAdmin):
 
 
 @admin.register(AuthorizedIP)
-class AdminIP(admin.ModelAdmin):
+class AdminAuthorizedIP(admin.ModelAdmin):
     list_display = ("groupe", "ip", "description",)
