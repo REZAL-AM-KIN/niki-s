@@ -1,8 +1,8 @@
 from django.contrib.auth.models import Group
 from django.db import models
 from django.db.models.deletion import CASCADE
-from django.core.validators import MinValueValidator
 
+from appkfet.validators import strictlyPositiveValidator
 from appuser.models import Utilisateur
 
 
@@ -55,7 +55,7 @@ class Recharge(models.Model):
     ]
     cible_recharge = models.ForeignKey("Consommateur", on_delete=CASCADE)
     date = models.DateTimeField()
-    montant = models.DecimalField(max_digits=5, decimal_places=2, validators=[MinValueValidator(0.009)])
+    montant = models.DecimalField(max_digits=5, decimal_places=2, validators=[strictlyPositiveValidator])
     methode = models.CharField(max_length=50, choices=CHOIX_METHODE)
     solde_before = models.DecimalField(max_digits=5, decimal_places=2)
     solde_after = models.DecimalField(max_digits=5, decimal_places=2)
