@@ -6,6 +6,7 @@ from .models import Consommateur, Produit
 
 @admin.register(Consommateur)
 class AdminConsommateur(admin.ModelAdmin):
+    search_fields = ["consommateur__username", "consommateur__first_name", "consommateur__last_name", "consommateur__bucque", "consommateur__fams", "consommateur__proms"]
     list_display = ("consommateur", "solde", "activated")
 
 
@@ -28,6 +29,7 @@ class AdminRecharge(admin.ModelAdmin):
 
 @admin.register(Produit)
 class AdminProduit(admin.ModelAdmin):
+    search_fields = ["nom", "raccourci", "entite"]
     list_display = ("nom", "prix", "raccourci", "entite")
 
     # récupérer uniquement les groupes qui sont des entités, c'est à dire ceux qui ne commencent pas par un "_"
