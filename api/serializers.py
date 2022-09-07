@@ -156,6 +156,7 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
         fields = ("cible_id", "montant", "qrcode", "date", "transaction_lydia", "internal_uuid")
 
     def create(self, validated_data):
+        request = self.context.get("request")
         #récupération du consommateur
         try:
             consommateur = Consommateur.objects.get(
@@ -188,6 +189,7 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
                 #création de l'objet en base
                 validated_data["transaction_lydia"] = transaction_lydia
                 validated_data["cible_recharge"] = consommateur
+                validated_data["initiateur_evenement"] = Utilisateur.objects.get(id=request.user.pk)
                 validated_data["date"] = datetime.now()
                 validated_data["internal_uuid"] = internal_uuid.hex
                 return RechargeLydia.objects.create(**validated_data)
