@@ -33,7 +33,7 @@ class ProduitSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Produit
-        fields = ("id", "nom", "prix", "nom_entite")
+        fields = ("id", "raccourci", "nom", "prix", "nom_entite")
 
 
 class ConsommateurSerializer(serializers.HyperlinkedModelSerializer):
