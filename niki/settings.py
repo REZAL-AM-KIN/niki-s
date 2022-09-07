@@ -32,7 +32,6 @@ if LDAP:
         pass
 
 
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -229,6 +228,6 @@ EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = getenv("DEFAULT_FROM_EMAIL", "")
 SERVER_EMAIL = getenv("SERVER_EMAIL", "")
 
-LYDIA_URL=getenv("LYDIA_URL","")
-VENDOR_TOKEN=getenv("LYDIA_VENDOR_TOKEN","")
-CASHIER_PHONE=getenv("LYDIA_CASHIER_PHONE","")
+LYDIA_URL = getenv("LYDIA_URL", "")
+VENDOR_TOKEN = getenv("LYDIA_VENDOR_TOKEN", "")
+CASHIER_PHONE = getenv("LYDIA_CASHIER_PHONE", "")
