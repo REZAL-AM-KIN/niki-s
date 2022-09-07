@@ -58,6 +58,7 @@ class RechargeSerializer(serializers.HyperlinkedModelSerializer):
         fields = ("cible_id", "montant", "methode", "date", "initiateur_evenement")
 
     def create(self, validated_data):
+        request = self.context.get("request")
         try:
             consommateur = Consommateur.objects.get(
                 pk=validated_data["cible_recharge"]["id"]
@@ -65,6 +66,7 @@ class RechargeSerializer(serializers.HyperlinkedModelSerializer):
         except Consommateur.DoesNotExist:
             raise serializers.ValidationError("Cannot resolve cible id")
         validated_data["cible_recharge"] = consommateur
+        validated_data["initiateur_evenement"] = Utilisateur.objects.get(id=request.user.pk)
         validated_data["date"] = datetime.now()
         return Recharge.objects.create(**validated_data)
 
@@ -114,6 +116,7 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
             validated_data["nom_produit"] = produit.nom
             validated_data["prix_produit"] = produit.prix
             validated_data["entite_produit"] = produit.entite
+            validated_data["initiateur_evenement"] = Utilisateur.objects.get(id=request.user.pk)
             return Bucquage.objects.create(**validated_data)
         else:
             raise serializers.ValidationError("Cannot sell this product")
