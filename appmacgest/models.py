@@ -41,7 +41,7 @@ class Device(models.Model):
         validators=[RegexValidator(regex="^([0-9a-f]{2}[:]){5}([0-9a-f]{2})$")],
     )
     accepted = models.BooleanField(default=False)
-    enable = models.BooleanField(default=False)
+    enable = models.BooleanField(default=True)
 
 
     def save(self, *args, **kwargs):
