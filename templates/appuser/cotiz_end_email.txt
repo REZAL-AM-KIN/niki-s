@@ -1,9 +1,0 @@
-{% autoescape off %}
-Votre cotisation expire dans {{time_left}} jour(s).
-Pour la renouveler, veuillez contacter un membre du rezal.
-
-Sans action de votre part, votre accès au réseau de la résidence sera désactivé.
-
-Bien cordialement,
-L'équipe Rézal  
-{% endautoescape %}
