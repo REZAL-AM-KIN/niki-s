@@ -33,7 +33,7 @@ class ProduitSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Produit
-        fields = ("id", "nom", "prix", "nom_entite")
+        fields = ("id", "raccourci", "nom", "prix", "nom_entite")
 
 
 class ConsommateurSerializer(serializers.HyperlinkedModelSerializer):
@@ -58,6 +58,7 @@ class RechargeSerializer(serializers.HyperlinkedModelSerializer):
         fields = ("cible_id", "montant", "methode", "date", "initiateur_evenement")
 
     def create(self, validated_data):
+        request = self.context.get("request")
         try:
             consommateur = Consommateur.objects.get(
                 pk=validated_data["cible_recharge"]["id"]
@@ -65,6 +66,7 @@ class RechargeSerializer(serializers.HyperlinkedModelSerializer):
         except Consommateur.DoesNotExist:
             raise serializers.ValidationError("Cannot resolve cible id")
         validated_data["cible_recharge"] = consommateur
+        validated_data["initiateur_evenement"] = Utilisateur.objects.get(id=request.user.pk)
         validated_data["date"] = datetime.now()
         return Recharge.objects.create(**validated_data)
 
@@ -72,10 +74,11 @@ class RechargeSerializer(serializers.HyperlinkedModelSerializer):
 class BucquageSerializer(serializers.HyperlinkedModelSerializer):
     cible_bucquage = serializers.CharField(source="cible_bucquage.id")
     date = serializers.DateTimeField(read_only=True)
-    nom_produit = serializers.CharField()
+    nom_produit = serializers.CharField(read_only=True)
     prix_produit = serializers.CharField(read_only=True)
     entite_produit = serializers.CharField(read_only=True)
     initiateur_evenement = serializers.CharField(source="initiateur_evenement.bucque", read_only=True)
+    id_produit = serializers.IntegerField(write_only=True, min_value=1)
 
     class Meta:
         model = Bucquage
@@ -86,6 +89,7 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
             "entite_produit",
             "date",
             "initiateur_evenement",
+            "id_produit",
         )
 
     def create(self, validated_data):
@@ -98,8 +102,9 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
         except Consommateur.DoesNotExist:
             raise serializers.ValidationError("Cannot resolve cible id")
         try:
-            produit = Produit.objects.get(nom=validated_data["nom_produit"])
-        except Consommateur.DoesNotExist:
+            produit = Produit.objects.get(id=validated_data["id_produit"])
+            validated_data.pop("id_produit")
+        except Produit.DoesNotExist:
             raise serializers.ValidationError("Cannot resolve product name")
         if consommateur.activated is False:
             raise serializers.ValidationError("Consommateur is not activated")
@@ -114,6 +119,7 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
             validated_data["nom_produit"] = produit.nom
             validated_data["prix_produit"] = produit.prix
             validated_data["entite_produit"] = produit.entite
+            validated_data["initiateur_evenement"] = Utilisateur.objects.get(id=request.user.pk)
             return Bucquage.objects.create(**validated_data)
         else:
             raise serializers.ValidationError("Cannot sell this product")
@@ -150,6 +156,7 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
         fields = ("cible_id", "montant", "qrcode", "date", "transaction_lydia", "internal_uuid")
 
     def create(self, validated_data):
+        request = self.context.get("request")
         #récupération du consommateur
         try:
             consommateur = Consommateur.objects.get(
@@ -182,6 +189,7 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
                 #création de l'objet en base
                 validated_data["transaction_lydia"] = transaction_lydia
                 validated_data["cible_recharge"] = consommateur
+                validated_data["initiateur_evenement"] = Utilisateur.objects.get(id=request.user.pk)
                 validated_data["date"] = datetime.now()
                 validated_data["internal_uuid"] = internal_uuid.hex
                 return RechargeLydia.objects.create(**validated_data)
