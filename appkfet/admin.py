@@ -1,7 +1,7 @@
 from django.contrib import admin
 from appuser.models import Groupe
 
-from .models import Consommateur, Produit
+from .models import Consommateur, Produit, AuthorizedIP
 
 
 @admin.register(Consommateur)
@@ -62,3 +62,8 @@ class AdminHistory(admin.ModelAdmin):
         "date_evenement",
         "initiateur_evenement",
     )
+
+
+@admin.register(AuthorizedIP)
+class AdminAuthorizedIP(admin.ModelAdmin):
+    list_display = ("groupe", "ip", "description",)

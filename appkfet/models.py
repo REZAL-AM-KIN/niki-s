@@ -114,3 +114,14 @@ class History(models.Model):
 
     def __unicode__(self):
         return self.pk
+
+
+class AuthorizedIP(models.Model):
+    groupe = models.ForeignKey("appuser.Groupe", on_delete=CASCADE)
+    ip = models.GenericIPAddressField(protocol='IPv4')
+    description = models.CharField(max_length=100)
+
+    class Meta:
+        permissions = (
+            ("bypass_ip_constraint", "N'est pas obligé d'être au pian's pour bucquer"),
+        )
