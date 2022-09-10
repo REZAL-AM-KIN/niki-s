@@ -17,6 +17,7 @@ from pathlib import Path
 
 from django.conf.global_settings import LOGOUT_REDIRECT_URL
 from dotenv import load_dotenv
+from celery.schedules import crontab
 
 load_dotenv(".env")
 
@@ -62,6 +63,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_celery_beat",
+    "django_celery_results",
     "health_check",
     "health_check.db",
     "health_check.cache",
@@ -229,6 +232,34 @@ EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = getenv("DEFAULT_FROM_EMAIL", "")
 SERVER_EMAIL = getenv("SERVER_EMAIL", "")
 
+
 LYDIA_URL=getenv("LYDIA_URL","")
 VENDOR_TOKEN=getenv("LYDIA_VENDOR_TOKEN","")
 CASHIER_PHONE=getenv("LYDIA_CASHIER_PHONE","")
+
+# Celery settings
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERY_BROKER_URL = getenv("CELERY_BROKER_URL", "amqp://localhost")
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_CACHE_BACKEND = 'django-cache'
+
+if DEBUG and not PROD:
+    BROKER_BACKEND = "memory"
+    CELERY_TASK_ALWAYS_EAGER = True
+    CELERY_TASK_EAGER_PROPAGATES = True
+
+
+CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
+CELERY_BEAT_SCHEDULE = {
+    "check_user_cotiz_task": {
+        "task": "appuser.tasks.check_user_cotiz_task",
+        "schedule": crontab(minute=0, hour=0),
+    },
+    "send_mail_for_cotiz_task": {
+        "task": "appuser.tasks.send_mail_for_cotiz_task",
+        "schedule": crontab(),
+    },
+}
