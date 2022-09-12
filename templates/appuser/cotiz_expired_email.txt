@@ -1,7 +1,7 @@
 {% autoescape off %}
-Votre cotisation au rezal a d'expirée, vous n'avez donc plus accès à internet.
+Votre cotisation au rezal a expirée, vous n'avez donc plus accès à internet.
 
-Si vous souhaitez renouveller votre cotisation, veuillez contacter l'équipe rezal : contact@rezal.fr
+Si vous souhaitez renouveler votre cotisation, veuillez contacter l'équipe rezal : contact@rezal.fr
 
 Bien cordialement,
 L'équipe Rézal  

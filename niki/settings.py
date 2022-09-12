@@ -261,6 +261,6 @@ CELERY_BEAT_SCHEDULE = {
     },
     "send_mail_for_cotiz_task": {
         "task": "appuser.tasks.send_mail_for_cotiz_task",
-        "schedule": crontab(),
+        "schedule": crontab(minute=0, hour=0),
     },
 }

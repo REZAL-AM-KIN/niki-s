@@ -15,7 +15,7 @@ def check_user_cotiz_task():
 
     users = Utilisateur.objects.filter(Q(is_active=True) & Q(date_expiration__lt=date.today()))
 
-    emails=[]
+    emails = []
     for user in users:
         user.has_cotiz = False
         user.save()
