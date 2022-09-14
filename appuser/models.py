@@ -56,7 +56,8 @@ class Utilisateur(User):
 
 #surcharge du modèle Group de base pour lui rajouter cet attribut d'entité
 class Groupe(Group):
-    is_entity=models.BooleanField(default=False)
+    is_entity = models.BooleanField(default=False)
+    color = models.CharField(max_length=7, default="#000000")
 
 #si l'application fonctionne avec le LDAP, alors : 
 if WITHLDAP:

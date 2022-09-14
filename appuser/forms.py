@@ -2,7 +2,7 @@ from captcha.fields import CaptchaField, CaptchaTextInput
 from django import forms
 from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
 
-from .models import Utilisateur
+from .models import Utilisateur, Groupe
 
 
 class CustomLoginForm(AuthenticationForm):
@@ -89,3 +89,13 @@ class CustomPasswordResetForm(PasswordResetForm):
     captcha = CaptchaField(
         required=True, widget=CaptchaTextInput(attrs={"placeholder": "Captcha"})
     )
+
+
+class GroupeForm(forms.ModelForm):
+
+    class Meta:
+        model = Groupe
+        fields = "__all__"
+        widgets = {
+                'color': forms.widgets.TextInput(attrs={'type': 'color'}),
+            }
