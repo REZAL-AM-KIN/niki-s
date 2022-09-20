@@ -22,7 +22,7 @@
 			</thead>
 			{% for mac in list %}
 				<tr>
-					<td class = "center aligned single line">{{ mac.proprietaire }}</td>
+					<td class = "ui center aligned single line" data-title="test title" data-content="test content" >{{ mac.proprietaire.last_name }}</td>
 					<td class = "center aligned single line">{{ mac.nom }}</td>
 					<td class = "center aligned single line">{{ mac.mac }}</td>
 					<td class = "center aligned single line"><a class = "ui green button" href="{% url "activatedevice" mac.pk %}">Accepter</a></td>
@@ -35,4 +35,15 @@
 		{% endif %}
 	</div>
 </div>
+
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript">
+
+		$('.ui.center.aligned.single.line').popup({
+		debug : true
+		});
+
+</script>
 {% endblock %}
