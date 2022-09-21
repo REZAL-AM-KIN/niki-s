@@ -70,11 +70,13 @@ INSTALLED_APPS = [
     "appmacgest",
     "appkfet",
     "appevents",
+    "appcom",
     "rest_framework",
     "corsheaders",
     "api",
     "captcha",
     "lydia",
+    "tinymce",
 ]
 
 if WITHLDAP:
@@ -231,3 +233,17 @@ SERVER_EMAIL = getenv("SERVER_EMAIL", "")
 LYDIA_URL = getenv("LYDIA_URL", "")
 VENDOR_TOKEN = getenv("LYDIA_VENDOR_TOKEN", "")
 CASHIER_PHONE = getenv("LYDIA_CASHIER_PHONE", "")
+
+TINYMCE_DEFAULT_CONFIG = {
+    "theme": "silver",
+    "height": 500,
+    "menubar": False,
+    "plugins": "advlist autolink lists link image charmap preview anchor searchreplace visualblocks code "
+    "fullscreen insertdatetime media table paste code help wordcount ",
+    "toolbar": "undo redo | fontselect fontsizeselect formatselect | forecolor backcolor casechange permanentpen"
+    " | bold italic underline strikethrough removeformat | alignleft "
+    "aligncenter alignright alignjustify | numlist bullist checklist | outdent indent |"
+    " pagebreak | charmap emoticons | "
+    "insertfile image media pageembed  link anchor ",
+    "custom_undo_redo_levels": 10
+}

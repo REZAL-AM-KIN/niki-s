@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+
+  	<div class="ui inverted vertical masthead center aligned segment">
+    	<div class="ui container">
+      		<div class="ui large secondary inverted pointing menu">
+        		<a class="toc item">
+          		<i class="sidebar icon"></i>
+        		</a>
+		        {% include "mainlinks.html" %}
+				{% if utilisateur.is_gadz %}
+					{% include "navbar_gadz.html" %}
+				{% elif utilisateur.is_conscrit %}
+					{% include "navbar_conscrit.html" %}
+				{% endif %}
+				{% if user.is_staff %}
+					{% include "navbar_staff.html" %}
+				{% endif %}
+	        	<div class="right item">
+					Bienvenue {{ user.first_name }}
+			        <a class="ui inverted button" href = "{% url "logout" %}">Déconnexion</a>
+	        	</div>
+      		</div>
+   		</div>
+
+		<div class="ui raised left aligned padded large segment" style="max-width: 70%; margin: auto;">
+      		<h2 class="ui center aligned header">{{ com.title|safe }}</h2>
+			<div class="content">
+				{{ com.body_content|safe }}
+			</div>
+    	</div>
+
+	</div>
+
+
+
+
+{% endblock %}
