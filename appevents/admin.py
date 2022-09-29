@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models import Q
 
 from .models import Event, ProductEvent
 
@@ -20,7 +21,7 @@ class AdminEvent(admin.ModelAdmin):
         qs = super(AdminEvent, self).get_queryset(request)
         if request.user.is_superuser:
             return qs
-        return qs.filter(created_by=request.user)
+        return qs.filter(Q(created_by=request.user))
 
     # Surcharge de la méthode permettant d'accéder à l'édition d'un objet Event. On autorise la modification uniquement
     # pour les events dont je suis le créateur
@@ -47,7 +48,7 @@ class AdminEvent(admin.ModelAdmin):
 
 @admin.register(ProductEvent)
 class AdminProductEvent(admin.ModelAdmin):
-    list_display = ("parent_event", "nom", "prix")
+    list_display = ("parent_event", "nom", "prix_min")
 
     # ajout d'un filtre sur la page de création/édition d'un product_event permettant d'afficher dans la dropdown
     # uniquement les events non terminés et que j'ai créé
