@@ -1,6 +1,5 @@
 from celery import shared_task
 from django.core.mail import send_mass_mail
-from django.template import Context
 from django.template.loader import get_template
 
 from .models import Utilisateur
