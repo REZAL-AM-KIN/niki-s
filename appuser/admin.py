@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.models import User, Group
 from .models import Utilisateur, Groupe
+from .forms import GroupeForm
 
 class AdminUtilisateur(admin.ModelAdmin):
     search_fields = ["username", "first_name", "last_name", "phone", "email", "bucque", "fams", "proms", "chambre"]
@@ -20,6 +21,7 @@ class AdminUtilisateur(admin.ModelAdmin):
     )
 
 class AdminGroupe(admin.ModelAdmin):
+    form = GroupeForm
     list_display = (
         "name",
     )
