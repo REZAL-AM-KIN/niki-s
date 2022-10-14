@@ -5,7 +5,8 @@ from rest_framework import status
 
 from api.serializers import *
 
-from api.permissions import AllowedIP, AllowedIPEvenSaveMethods, get_client_ip
+from api.permissions import AllowedIP, AllowedIPEvenSaveMethods, get_client_ip, EditEventPermission
+
 
 ########################
 #         KFET         #
@@ -191,3 +192,22 @@ class RechargeLydiaViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         serializer = self.get_serializer(self.get_queryset(), many=True)
         return Response(data=serializer.data)
+
+
+#########################
+#        FIN'SS         #
+#########################
+
+
+# GET : récupère la liste et les informations des tous les fin'ss dont l'utilisateur est gestionnaire.
+class ListEventViewSet(viewsets.ModelViewSet):
+    serializer_class = EventSerializer
+    permission_classes = ( EditEventPermission | permissions.DjangoModelPermissions,) #On combine les permissions de bases et la perm custom pour overide uniquement les permissions de modification d'objet
+    http_method_names = ["get", "options", "post", "patch", "put"] #TODO : Allow fin'ss modification for manager user
+    def get_queryset(self):
+        user = Utilisateur.objects.get(pk=self.request.user.pk)
+        if user.has_perm("appevents.event_super_manager"):
+            return Event.objects.all()
+
+        return Event.objects.filter(managers=user)
+

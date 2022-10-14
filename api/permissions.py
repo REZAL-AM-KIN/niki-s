@@ -1,5 +1,6 @@
 from rest_framework import permissions
 from appkfet.models import AuthorizedIP
+from appuser.models import Utilisateur
 
 
 def get_client_ip(request):
@@ -36,3 +37,20 @@ class AllowedIP(permissions.BasePermission):
 class AllowedIPEvenSaveMethods(permissions.BasePermission):
     def has_permission(self, request, view):
         return _is_ip_authorized(request)
+
+
+#Classe de permissions à combiner avec DjangoModelPermissions --> Autorise la modification des Events pour les managers
+class EditEventPermission(permissions.BasePermission):
+    edit_methods = ("PUT", "PATCH")
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in self.edit_methods:           # On s'occupe ici des permissions de modification uniquement
+            user = Utilisateur.objects.get(pk=request.user.pk)
+            if user.is_superuser:
+                return True
+
+            if user.has_perm("appevents.event_super_manager"):  #Si l'user à la perm d'admin des fin'ss alors on laisse éditer
+                return True
+
+            return user in obj.managers.all()  #On vérifie que l'utilisateur est dans la liste des managers
+        return False

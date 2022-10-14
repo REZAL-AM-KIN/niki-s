@@ -12,6 +12,7 @@ router.register(r"recharges", views.RechargeViewSet, basename="recharges")
 router.register(r"bucquages", views.BucquageViewSet, basename="bucquages")
 router.register(r"history", views.HistoryViewSet, basename="history")
 router.register(r"rechargeslydia", views.RechargeLydiaViewSet, basename="rechargeslydia")
+router.register(r"eventlist", views.ListEventViewSet, basename="eventlist")
 
 urlpatterns = [
     path("", include(router.urls)),

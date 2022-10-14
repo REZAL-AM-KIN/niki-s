@@ -26,6 +26,11 @@ class Event(models.Model):
     def __str__(self):
         return self.titre + " - " + str(self.date_event)
 
+    class Meta:
+        permissions = [
+            ("event_super_manager", "Autorise l'administration de tous les évenements."),
+        ]
+
 
 class ProductEvent(models.Model):
     parent_event = models.ForeignKey("Event", on_delete=CASCADE)

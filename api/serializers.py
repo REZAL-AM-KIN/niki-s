@@ -2,7 +2,9 @@ from datetime import datetime
 from random import randint
 
 from rest_framework import serializers
+from rest_framework.fields import MultipleChoiceField
 
+from appevents.models import Event
 from appkfet.models import *
 from lydia.models import *
 
@@ -199,3 +201,22 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
             raise serializers.ValidationError(message)
         else:
             raise serializers.ValidationError("An error occured with Lydia")
+
+
+########################
+#        FIN'SS        #
+########################
+class EventSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Event
+        fields = ("id", "titre", "description", "can_subscribe", "date_event", "ended", "managers")
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        validated_data["created_by"] = Utilisateur.objects.get(id=request.user.pk)
+        managers = validated_data.pop("managers")
+        event = Event.objects.create(**validated_data)
+        event.managers.set(managers)
+        return event
+
+
