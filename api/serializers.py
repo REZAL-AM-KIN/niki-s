@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 from appkfet.models import *
 from lydia.models import *
+from appuser.models import Groupe
 
 # Assume that you have installed requests: pip install requests
 import requests
@@ -34,6 +35,13 @@ class ProduitSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Produit
         fields = ("id", "raccourci", "nom", "prix", "nom_entite")
+
+
+class EntiteSerializer(serializers.HyperlinkedModelSerializer):
+
+    class Meta:
+        model = Groupe
+        fields = ("name", "color")
 
 
 class ConsommateurSerializer(serializers.HyperlinkedModelSerializer):

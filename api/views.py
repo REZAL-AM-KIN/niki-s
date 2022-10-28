@@ -7,6 +7,7 @@ from api.serializers import *
 
 from api.permissions import AllowedIP, AllowedIPEvenSaveMethods, get_client_ip
 
+
 ########################
 #         KFET         #
 ########################
@@ -51,12 +52,19 @@ class CurrentUserViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(consommateur)
         return Response(serializer.data)
 
+
 # GET : récupérer tous les produits
-
-
 class ProduitViewSet(viewsets.ModelViewSet):
     queryset = Produit.objects.all()
     serializer_class = ProduitSerializer
+    http_method_names = ["get", "options"]
+    permission_classes = (permissions.DjangoModelPermissions,)
+
+
+# GET : recuperer les groupes (catégories)
+class EntiteViewSet(viewsets.ModelViewSet):
+    queryset = Groupe.objects.filter(is_entity=True)
+    serializer_class = EntiteSerializer
     http_method_names = ["get", "options"]
     permission_classes = (permissions.DjangoModelPermissions,)
 
@@ -103,11 +111,10 @@ class RechargeViewSet(viewsets.ModelViewSet):
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+
 # GET : récupérer toutes les bucquages pour un utilisateur donné ou pour tous
 # POST : créer un bucquage. Seuls les utilisateurs ayant été déclaré dans le groupe du produit à bucquer peuvent
 #        effectuer cette action. Le groupe d'entité est préalablement doté du droit appkfet|bucquage|can add bucquage
-
-
 class BucquageViewSet(viewsets.ModelViewSet):
     serializer_class = BucquageSerializer
     http_method_names = ["get", "post", "options"]
@@ -164,6 +171,7 @@ class HistoryViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         serializer = self.get_serializer(self.get_queryset(), many=True)
         return Response(data=serializer.data)
+
 
 #########################
 #         LYDIA         #
