@@ -47,7 +47,7 @@ class EditEventPermission(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
 
-        #Pour les test seulement
+        #Pour les tests seulement
         if request.method == "GET":
             return True
 
