@@ -205,16 +205,15 @@ class RechargeLydiaViewSet(viewsets.ModelViewSet):
 # POST : Ajoute un evenement (sous permissions addEvent)
 class EventViewSet(viewsets.ModelViewSet):
     serializer_class = EventSerializer
-    permission_classes = ( EditEventPermission | permissions.DjangoModelPermissions,) #On combine les permissions de bases et la perm custom pour overide uniquement les permissions de modification d'objet
+    permission_classes = (EditEventPermission | permissions.DjangoObjectPermissions,)  #On combine les permissions de bases et la perm custom pour overide uniquement les permissions de modification d'objet
     http_method_names = ["get", "options", "post", "patch", "put", "delete"]
 
     def get_queryset(self):
-        print(self.request.user.pk)
         user = Utilisateur.objects.get(pk=self.request.user.pk)
         if user.has_perm("appevents.event_super_manager") or user.is_superuser:
             return Event.objects.all()
 
-        return Event.objects.filter(Q(managers=user) | Q(can_subscribe=True))
+        return Event.objects.filter(ended=False) # Si c'est un utilisateur Lambda, il ne peut voir que les Event non cloturé
 
 
 # GET : renvoi tous les produits dont l'utilisateur peut gérer le fin'ss.

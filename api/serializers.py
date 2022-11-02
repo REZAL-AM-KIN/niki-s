@@ -207,25 +207,15 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
 ########################
 #        FIN'SS        #
 ########################
-class EventManagerSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = Consommateur
-        fields = ("id",)
-        
-
 class EventSerializer(serializers.HyperlinkedModelSerializer):
     can_manage = serializers.SerializerMethodField(read_only=True)
     is_prebucque = serializers.SerializerMethodField(read_only=True)
-    manager_list = serializers.SerializerMethodField('get_managers')
+    managers = serializers.PrimaryKeyRelatedField(many=True, queryset=Consommateur.objects.all())
 
     class Meta:
         model = Event
         fields = ("id", "titre", "description", "can_subscribe", "date_event", "ended", "can_manage", "is_prebucque",
-                  "manager_list")
-
-    def get_managers(self, event):
-        serializer = EventManagerSerializer(instance=event.managers, many=True)
-        return serializer.data
+                  "managers")
 
     # Regarde si l'utilisateur qui fait la requete est dans la liste des managers
     def get_can_manage(self, obj):
@@ -244,7 +234,7 @@ class EventSerializer(serializers.HyperlinkedModelSerializer):
     def create(self, validated_data):
         request = self.context.get("request")
         validated_data["created_by"] = Utilisateur.objects.get(id=request.user.pk)
-        managers = validated_data.pop("managers_list")
+        managers = validated_data.pop("managers")
         event = Event.objects.create(**validated_data)
         event.managers.set(managers)
         return event

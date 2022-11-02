@@ -46,13 +46,21 @@ class EditEventPermission(permissions.BasePermission):
     edit_methods = ("PUT", "PATCH")
 
     def has_object_permission(self, request, view, obj):
+
+        #Pour les test seulement
+        if request.method == "GET":
+            return True
+
         if request.method in self.edit_methods:           # On s'occupe ici des permissions de modification uniquement
+            print("check perm")
             user = Utilisateur.objects.get(pk=request.user.pk)
             consommateur = Consommateur.objects.get(consommateur=user)
             if user.is_superuser:
+                print("superuser")
                 return True
 
             if user.has_perm("appevents.event_super_manager"):  #Si l'user à la perm d'admin des fin'ss alors on laisse éditer
+                print("supermanager")
                 return True
 
             return consommateur in obj.managers.all()  #On vérifie que l'utilisateur est dans la liste des managers
