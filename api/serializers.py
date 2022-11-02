@@ -1,10 +1,11 @@
 from datetime import datetime
 from random import randint
 
+from django.contrib.admin.utils import lookup_field
 from rest_framework import serializers
 from rest_framework.fields import MultipleChoiceField
 
-from appevents.models import Event
+from appevents.models import Event, ProductEvent, ParticipationEvent
 from appkfet.models import *
 from lydia.models import *
 
@@ -207,9 +208,27 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
 #        FIN'SS        #
 ########################
 class EventSerializer(serializers.HyperlinkedModelSerializer):
+    can_manage = serializers.SerializerMethodField(read_only=True)
+    is_prebucque = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Event
-        fields = ("id", "titre", "description", "can_subscribe", "date_event", "ended", "managers")
+        fields = ("id", "titre", "description", "can_subscribe", "date_event", "ended", "can_manage", "is_prebucque",
+                  "managers")
+
+    # Regarde si l'utilisateur qui fait la requete est dans la liste des managers
+    def get_can_manage(self, obj):
+        request = self.context.get('request')
+        consommateur = Consommateur.objects.get(consommateur=request.user)
+        return obj.managers.filter(id=consommateur.id).exists()     # On regarde si l'utilisateur est dans la liste des managers
+
+    # Regarde sur l'utilisateur à déjà une participation enregistré pour ce fin'ss
+    def get_is_prebucque(self, obj):
+        user = self.context.get('request').user
+        consommateur = Consommateur.objects.get(consommateur=user)
+        participations = consommateur.participation_event.all()        # On récupère toute les participations de l'utilisateur
+
+        return participations.filter(product_participation__parent_event=obj).exists()  # On check l'existence de participation pour le fin'ss
 
     def create(self, validated_data):
         request = self.context.get("request")
@@ -219,4 +238,25 @@ class EventSerializer(serializers.HyperlinkedModelSerializer):
         event.managers.set(managers)
         return event
 
+class ProductEventSerializer(serializers.HyperlinkedModelSerializer):
+    #parent_event = EventSerializer()
 
+    class Meta:
+        model = ProductEvent
+        fields = ("id", "parent_event", "nom", "description", "prix_total", "prix_min", "obligatoire")
+
+
+class ParticipationEventSerialize(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = ParticipationEvent
+        fields = ("id", "cible_participation", "product_participation", "quantity", "participation_bucquee", "participation_debucquee")
+
+
+class BucquageEventSerializer(ConsommateurSerializer):
+    consommateur_id = serializers.IntegerField(source="consommateur.id")
+    consommateur_bucque = serializers.CharField(source="consommateur.bucque")
+    consommateur_prenom = serializers.CharField(source="consommateur.first_name")
+
+    class Meta:
+        model = Consommateur
+        fields = ("consommateur_id", "consommateur_bucque", "consommateur_prenom","participation_event")

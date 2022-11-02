@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -5,7 +6,8 @@ from rest_framework import status
 
 from api.serializers import *
 
-from api.permissions import AllowedIP, AllowedIPEvenSaveMethods, get_client_ip, EditEventPermission
+from api.permissions import AllowedIP, AllowedIPEvenSaveMethods, get_client_ip, EditEventPermission, \
+    EditProductEventPermission
 
 
 ########################
@@ -200,14 +202,52 @@ class RechargeLydiaViewSet(viewsets.ModelViewSet):
 
 
 # GET : récupère la liste et les informations des tous les fin'ss dont l'utilisateur est gestionnaire.
-class ListEventViewSet(viewsets.ModelViewSet):
+# POST : Ajoute un evenement (sous permissions addEvent)
+class EventViewSet(viewsets.ModelViewSet):
     serializer_class = EventSerializer
     permission_classes = ( EditEventPermission | permissions.DjangoModelPermissions,) #On combine les permissions de bases et la perm custom pour overide uniquement les permissions de modification d'objet
-    http_method_names = ["get", "options", "post", "patch", "put"] #TODO : Allow fin'ss modification for manager user
+    http_method_names = ["get", "options", "post", "patch", "put", "delete"]
+
     def get_queryset(self):
+        print(self.request.user.pk)
         user = Utilisateur.objects.get(pk=self.request.user.pk)
-        if user.has_perm("appevents.event_super_manager"):
+        if user.has_perm("appevents.event_super_manager") or user.is_superuser:
             return Event.objects.all()
 
-        return Event.objects.filter(managers=user)
+        return Event.objects.filter(Q(managers=user) | Q(can_subscribe=True))
+
+
+# GET : renvoi tous les produits dont l'utilisateur peut gérer le fin'ss.
+# Filter : finss=<id finss> --> renvoi les produits du finss passer en argument url
+class ProductEventViewSet(viewsets.ModelViewSet):
+    serializer_class = ProductEventSerializer
+    permission_classes = (EditProductEventPermission | permissions.DjangoModelPermissions,) # On combine les permissions de bases et la perm custom pour overide uniquement les permissions de modification d'objet
+    http_method_names = ["get", "options", "post", "patch", "put", "delete"]
+    queryset = ProductEvent.objects.all()
+
+    def get_queryset(self):
+        finss_id = self.request.query_params.get("finss", None)
+
+        #Retrieving complete queryset
+        if self.request.user.has_perm("appevents.event_super_manager") or self.request.user.is_superuser:
+            self.queryset = self.queryset
+        else:
+            self.queryset = self.queryset.filter(parent_event__managers=self.request.user)
+
+        if finss_id is None:
+            return self.queryset
+        if not finss_id.isdigit():
+            return self.queryset.none()
+        return self.queryset.filter(parent_event__pk=finss_id)
+
+
+class ParticipationEventViewSet(viewsets.ModelViewSet):
+
+    serializer_class = ParticipationEventSerialize
+    queryset = ParticipationEvent.objects.all()
+
+
+class BucqageEventViewSet(viewsets.ModelViewSet):
+    serializer_class = BucquageEventSerializer
+    queryset = Consommateur.objects.all()
 

@@ -1,5 +1,5 @@
 from rest_framework import permissions
-from appkfet.models import AuthorizedIP
+from appkfet.models import AuthorizedIP, Consommateur
 from appuser.models import Utilisateur
 
 
@@ -39,6 +39,8 @@ class AllowedIPEvenSaveMethods(permissions.BasePermission):
         return _is_ip_authorized(request)
 
 
+
+# TODO: problème de permissions, un user qui n'est pas gestionnaire peut modifier
 #Classe de permissions à combiner avec DjangoModelPermissions --> Autorise la modification des Events pour les managers
 class EditEventPermission(permissions.BasePermission):
     edit_methods = ("PUT", "PATCH")
@@ -46,11 +48,30 @@ class EditEventPermission(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in self.edit_methods:           # On s'occupe ici des permissions de modification uniquement
             user = Utilisateur.objects.get(pk=request.user.pk)
+            consommateur = Consommateur.objects.get(consommateur=user)
             if user.is_superuser:
                 return True
 
             if user.has_perm("appevents.event_super_manager"):  #Si l'user à la perm d'admin des fin'ss alors on laisse éditer
                 return True
 
-            return user in obj.managers.all()  #On vérifie que l'utilisateur est dans la liste des managers
+            return consommateur in obj.managers.all()  #On vérifie que l'utilisateur est dans la liste des managers
+        return False
+
+
+# Classe de permissions à combiner avec DjangoModelPermissions --> Autorise la modification des Events pour les managers
+class EditProductEventPermission(permissions.BasePermission):
+    edit_methods = ("PUT", "PATCH")
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in self.edit_methods:           # On s'occupe ici des permissions de modification uniquement
+            user = Utilisateur.objects.get(pk=request.user.pk)
+            consommateur = Consommateur.objects.get(consommateur=user)
+            if user.is_superuser:
+                return True
+
+            if user.has_perm("appevents.event_super_manager"):  #Si l'user à la perm d'admin des fin'ss alors on laisse éditer
+                return True
+
+            return consommateur in obj.parent_event.managers.all()  #On vérifie que l'utilisateur est dans la liste des managers
         return False

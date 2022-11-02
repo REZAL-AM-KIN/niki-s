@@ -10,7 +10,7 @@ from appuser.models import Utilisateur
 
 
 class Event(models.Model):
-    titre = models.CharField(max_length=100)
+    titre = models.CharField(max_length=50)
     description = models.CharField(max_length=200)
     can_subscribe = models.BooleanField(
         default=True, verbose_name="Ouvert au pré-bucquage"
@@ -21,7 +21,9 @@ class Event(models.Model):
     )
     ended = models.BooleanField(default=False, verbose_name="Evènement terminé")
 
-    managers = models.ManyToManyField(Utilisateur, related_name="finss_manages")
+    # Les managers sont des consommateurs plutôt que des User car les user sans consommateur ne peuvent pas intéragir
+    # avec le front kfet
+    managers = models.ManyToManyField(Consommateur, related_name="finss_manages", blank=True)
 
     def __str__(self):
         return self.titre + " - " + str(self.date_event)
@@ -35,9 +37,9 @@ class Event(models.Model):
 class ProductEvent(models.Model):
     parent_event = models.ForeignKey("Event", on_delete=CASCADE)
     nom = models.CharField(max_length=50)
-    description = models.CharField(max_length=200)
-    prix_total = models.DecimalField(max_digits=5, decimal_places=2)
-    prix_min = models.DecimalField(max_digits=5, decimal_places=2)
+    description = models.CharField(max_length=200, default=None, blank=True)
+    prix_total = models.DecimalField(max_digits=5, decimal_places=2, default=0, blank=True)
+    prix_min = models.DecimalField(max_digits=5, decimal_places=2, default=0, blank=True)
     obligatoire = models.BooleanField(default=False)
 
     def __str__(self):
@@ -45,7 +47,7 @@ class ProductEvent(models.Model):
 
 
 class ParticipationEvent(models.Model):
-    cible_participation = models.ForeignKey(Consommateur, on_delete=CASCADE)
+    cible_participation = models.ForeignKey(Consommateur, on_delete=CASCADE, related_name="participation_event")
     product_participation = models.ForeignKey(ProductEvent, on_delete=CASCADE)
     quantity = models.IntegerField(default=1, verbose_name="Quantité")
     participation_bucquee = models.BooleanField(default=False)
