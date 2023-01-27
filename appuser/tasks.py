@@ -12,7 +12,7 @@ def check_user_cotiz_task():
     email_template = get_template("appuser/cotiz_expired_email.txt")
     email_content = email_template.render()
 
-    users = Utilisateur.objects.filter(Q(is_active=True) & Q(date_expiration__lt=date.today()))
+    users = Utilisateur.objects.filter(Q(is_active=True) & Q(date_expiration=date.today()))
 
     emails = []
     for user in users:
