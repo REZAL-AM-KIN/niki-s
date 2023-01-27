@@ -40,46 +40,137 @@ class AllowedIPEvenSaveMethods(permissions.BasePermission):
 
 
 
-# TODO: problème de permissions, un user qui n'est pas gestionnaire peut modifier
+
 #Classe de permissions à combiner avec DjangoModelPermissions --> Autorise la modification des Events pour les managers
 class EditEventPermission(permissions.BasePermission):
     edit_methods = ("PUT", "PATCH")
 
-    def has_object_permission(self, request, view, obj):
-
-        #Pour les tests seulement
-        if request.method == "GET":
+    def has_permission(self, request, view):
+        user = request.user
+        if user.is_superuser:
             return True
 
+        if request.method == "GET":
+            if user.has_perm("appevents.view_event"):
+                return True
+        if request.method == "POST":
+            if user.has_perm("appevents.add_event"):
+                return True
+
+        if request.method in self.edit_methods:
+            return True
+        return False
+
+    def has_object_permission(self, request, view, obj):
+        user = Utilisateur.objects.get(pk=request.user.pk)
+        if user.is_superuser:
+            return True
+
+        if request.method == "GET":
+            if user.has_perm("appevents.view_event"):
+                return True
+
         if request.method in self.edit_methods:           # On s'occupe ici des permissions de modification uniquement
-            print("check perm")
-            user = Utilisateur.objects.get(pk=request.user.pk)
-            consommateur = Consommateur.objects.get(consommateur=user)
-            if user.is_superuser:
-                print("superuser")
+            if user.has_perm("appevents.change_event"):
                 return True
 
             if user.has_perm("appevents.event_super_manager"):  #Si l'user à la perm d'admin des fin'ss alors on laisse éditer
-                print("supermanager")
                 return True
 
+            consommateur = Consommateur.objects.get(consommateur=user)
             return consommateur in obj.managers.all()  #On vérifie que l'utilisateur est dans la liste des managers
         return False
 
 
 # Classe de permissions à combiner avec DjangoModelPermissions --> Autorise la modification des Events pour les managers
 class EditProductEventPermission(permissions.BasePermission):
-    edit_methods = ("PUT", "PATCH")
+    edit_methods = ("PUT", "PATCH", "DELETE")
+
+    def has_permission(self, request, view):
+        user = request.user
+        if user.is_superuser:
+            return True
+
+        if request.method == "GET":
+            if user.has_perm("appevents.view_productevent"):
+                return True
+
+        if request.method == "POST":
+            if user.has_perm("appevents.add_productevent"):
+                return True
+
+        if request.method in self.edit_methods: # On return True si c'est une permissions d'édition (donc de détail) car on s'en occupe au niveau objet
+            return True
+        return False
 
     def has_object_permission(self, request, view, obj):
+        user = Utilisateur.objects.get(pk=request.user.pk)
+        if user.is_superuser:
+            return True
+
+        if request.method == "GET":
+            if user.has_perm("appevents.view_productevent"):
+                return True
+
         if request.method in self.edit_methods:           # On s'occupe ici des permissions de modification uniquement
-            user = Utilisateur.objects.get(pk=request.user.pk)
-            consommateur = Consommateur.objects.get(consommateur=user)
-            if user.is_superuser:
+            if user.has_perm("appevents.change_productevent"):
                 return True
 
             if user.has_perm("appevents.event_super_manager"):  #Si l'user à la perm d'admin des fin'ss alors on laisse éditer
                 return True
 
+            consommateur = Consommateur.objects.get(consommateur=user)
             return consommateur in obj.parent_event.managers.all()  #On vérifie que l'utilisateur est dans la liste des managers
+
+        return False
+
+
+class BucquageEventPermission(permissions.BasePermission):
+    detail_action = ("retrieve", "update", "partial_update", "destroy")
+
+    def has_permission(self, request, view):
+        user = request.user
+        if user.is_superuser or user.has_perm("appevents.event_super_manager"):
+            return True
+
+        # Les permissions pour list sont dans la gestion du queryset
+        if view.action == "list":
+            return True
+
+        # Les permissions pour create sont dans l'action create du viewset
+        # (car necessite l'accès aux données du serializer)
+        if view.action == "create":
+            return True
+
+        if view.action == "debucquage":
+            if user.has_perm("appevents.event_super_manager"):  #Si l'user à la perm d'admin des fin'ss alors on laisse débucquer
+                return True
+
+        #Tout le monde peut acceder à ses bucquages
+        if view.action == "my_bucquages":
+            return True
+
+        # Pour les actions de détail, les perms sont gérées dans has_object_permissions
+        if view.action in self.detail_action:
+            return True
+
+        return False
+
+
+    def has_object_permission(self, request, view, obj):
+        user = Utilisateur.objects.get(pk=request.user.pk)
+        if user.is_superuser or user.has_perm("appevents.event_super_manager"):
+            return True
+
+        if view.action == "debucquer":
+            return False
+
+        if view.action in self.detail_action:
+            requester_consommateur = Consommateur.objects.get(consommateur=user)
+            if requester_consommateur == obj.cible_participation:
+                return True
+
+            if requester_consommateur in obj.product_participation.parent_event.managers.all():
+                return True
+
         return False
