@@ -64,6 +64,10 @@ class ProduitViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "options"]
     permission_classes = (permissions.DjangoModelPermissions,)
 
+    def list(self, request):
+        print(request.auth)
+        return super().list(request)
+
 
 # GET : recuperer les groupes (catégories)
 class EntiteViewSet(viewsets.ModelViewSet):

@@ -19,6 +19,7 @@ from django.conf.global_settings import LOGOUT_REDIRECT_URL
 from dotenv import load_dotenv
 from celery.schedules import crontab
 
+
 load_dotenv(".env")
 
 LDAP = getenv("LDAP", "False") == "True"
@@ -161,9 +162,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "appkfet.customJWT.CustomJWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
