@@ -60,6 +60,10 @@ class ProduitViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "options"]
     permission_classes = (permissions.DjangoModelPermissions,)
 
+    def list(self, request):
+        print(request.auth)
+        return super().list(request)
+
 
 # GET : récupérer tous les consommateurs
 class ConsommateurViewSet(viewsets.ModelViewSet):

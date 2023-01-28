@@ -1,5 +1,5 @@
 from rest_framework import permissions
-from appkfet.models import AuthorizedIP
+from appkfet.models import Pianss
 
 
 def get_client_ip(request):
@@ -10,7 +10,9 @@ def get_client_ip(request):
         ip = request.META.get('REMOTE_ADDR')
     return ip
 
+
 def _is_ip_authorized(request):
+    """
     if request.user.has_perm("appkfet.bypass_ip_constraint"):
         return True
 
@@ -21,7 +23,7 @@ def _is_ip_authorized(request):
     for ip in allowedIP:
         if request.user.groups.filter(name=ip.groupe).exists():
             return True
-
+    """
     return False
 
 
@@ -36,3 +38,4 @@ class AllowedIP(permissions.BasePermission):
 class AllowedIPEvenSaveMethods(permissions.BasePermission):
     def has_permission(self, request, view):
         return _is_ip_authorized(request)
+

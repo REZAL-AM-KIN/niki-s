@@ -1,7 +1,7 @@
 from django.contrib import admin
 from appuser.models import Groupe
 
-from .models import Consommateur, Produit, AuthorizedIP
+from .models import Consommateur, Produit, Pianss
 
 
 @admin.register(Consommateur)
@@ -64,6 +64,6 @@ class AdminHistory(admin.ModelAdmin):
     )
 
 
-@admin.register(AuthorizedIP)
-class AdminAuthorizedIP(admin.ModelAdmin):
-    list_display = ("groupe", "ip", "description",)
+@admin.register(Pianss)
+class AdminPianss(admin.ModelAdmin):
+    list_display = ("groupe", "nom", "description", "token")
