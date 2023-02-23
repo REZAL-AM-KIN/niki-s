@@ -12,22 +12,22 @@
 <div class="ui center aligned container">
 	<h2 class="ui blue center aligned header">
   		<div class="content">
-    		Inscription à l'évènement - {{ product_to_sub_instance.nom }}
+    	<!--	Inscription à l'évènement - {{ product_to_sub_instance.nom }}-->
   		</div>
 	</h2>
 	<div class="ui segment">
 		<table class = "ui very basic padded table">
 			<tr>
 				<td class = "left aligned">
-					{{ product_to_sub_instance.description }}
+					<!--{{ product_to_sub_instance.description }}-->
 				</td>
 				<td class = "center aligned">
-					<b>{{ product_to_sub_instance.prix }} €</b>
+					<!--<b>{{ product_to_sub_instance.prix }} €</b>-->
 				</td>
 			</tr>
 		</table>
 	</div>
-	<form class="ui large fluid form" action ="{% url "subproductevent" step product_to_sub_instance.pk %}" method="POST">
+	<form class="ui large fluid form" action ="{% url "subproductevent" finss %}" method="POST">
 		{% csrf_token %}
 		<div class="ui stacked segment">
 		{% for field in form %}

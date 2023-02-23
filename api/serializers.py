@@ -1,8 +1,14 @@
 from datetime import datetime
 from random import randint
 
+from django.contrib.admin.utils import lookup_field
+from django.db.models import Q
 from rest_framework import serializers
+from rest_framework.decorators import action
+from rest_framework.fields import MultipleChoiceField
+from rest_framework.response import Response
 
+from appevents.models import Event, ProductEvent, ParticipationEvent
 from appkfet.models import *
 from lydia.models import *
 from appuser.models import Groupe
@@ -165,14 +171,14 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
 
     def create(self, validated_data):
         request = self.context.get("request")
-        #récupération du consommateur
+        # récupération du consommateur
         try:
             consommateur = Consommateur.objects.get(
                 pk=validated_data["cible_recharge"]["id"]
             )
         except Consommateur.DoesNotExist:
             raise serializers.ValidationError("Cannot resolve cible id")
-        #définition du json à envoyer à Lydia
+        # définition du json à envoyer à Lydia
         internal_uuid = uuid.uuid1()
         data_object = {
             'vendor_token': VENDOR_TOKEN,
@@ -182,19 +188,19 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
             'currency': "EUR",
             'order_id': internal_uuid.hex,
         }
-        #définition de l'url du endpoint
+        # définition de l'url du endpoint
         url_encaissement = LYDIA_URL+"/api/payment/payment.json"
-        #requête Lydia POST /api/payment/payment au format json
+        # requête Lydia POST /api/payment/payment au format json
         r = requests.post(url_encaissement, data=data_object)
         r_status = r.status_code
-        #si le call a marché
+        # si le call a marché
         if r_status == 200:
-            #récupération de la réponse
+            # récupération de la réponse
             response = json.loads(r.text)
             try:
-                #si la transaction est un succès, j'aurais un transaction identifier, sinon non !
+                # si la transaction est un succès, j'aurais un transaction identifier, sinon non !
                 transaction_lydia = response["transaction_identifier"]
-                #création de l'objet en base
+                # création de l'objet en base
                 validated_data["transaction_lydia"] = transaction_lydia
                 validated_data["cible_recharge"] = consommateur
                 validated_data["initiateur_evenement"] = Utilisateur.objects.get(id=request.user.pk)
@@ -207,3 +213,147 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
             raise serializers.ValidationError(message)
         else:
             raise serializers.ValidationError("An error occured with Lydia")
+
+
+########################
+#        FIN'SS        #
+########################
+class EventSerializer(serializers.HyperlinkedModelSerializer):
+    can_manage = serializers.SerializerMethodField(read_only=True)
+    is_prebucque = serializers.SerializerMethodField(read_only=True)
+    managers = serializers.PrimaryKeyRelatedField(many=True, queryset=Consommateur.objects.all())
+
+    class Meta:
+        model = Event
+        fields = ("id", "titre", "description", "can_subscribe", "date_event", "ended", "can_manage", "is_prebucque",
+                  "managers")
+
+    # Regarde si l'utilisateur qui fait la requete est dans la liste des managers
+    def get_can_manage(self, obj):
+        request = self.context.get('request')
+
+        # On vérifie si l'utilisateur est super user ou super manager
+        if request.user.is_superuser or request.user.has_perm("appevents.event_super_manager"):
+            return True
+
+        # Sinon on regarde si l'utilisateur est dans la liste des managers du fin'ss
+        consommateur = Consommateur.objects.get(consommateur=request.user)
+        return obj.managers.filter(id=consommateur.id).exists()
+
+    # Regarde sur l'utilisateur à déjà une participation enregistré pour ce fin'ss
+    def get_is_prebucque(self, obj):
+        user = self.context.get('request').user
+        consommateur = Consommateur.objects.get(consommateur=user)
+        participations = consommateur.participation_event.all()        # On récupère toute les participations de l'utilisateur
+
+        return participations.filter(product_participation__parent_event=obj).exists()  # On check l'existence de participation pour le fin'ss
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        validated_data["created_by"] = Utilisateur.objects.get(id=request.user.pk)
+        managers = validated_data.pop("managers")
+        event = Event.objects.create(**validated_data)
+        event.managers.set(managers)
+        return event
+
+
+class ProductEventSerializer(serializers.HyperlinkedModelSerializer):
+    quantite_prebucque = serializers.SerializerMethodField(read_only=True)
+    quantite_bucque = serializers.SerializerMethodField(read_only=True)
+    parent_event = serializers.PrimaryKeyRelatedField(queryset=Event.objects.all())
+    prix_unitaire = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = ProductEvent
+        fields = ("id", "parent_event", "nom", "description", "prix_total", "prix_min", "obligatoire", "quantite_prebucque", "quantite_bucque", "prix_unitaire")
+
+    def get_quantite_prebucque(self, product):
+        qts = 0
+        participations = ParticipationEvent.objects.filter(product_participation=product)
+        for participation in participations:
+            qts += participation.prebucque_quantity
+        return qts
+
+    def get_quantite_bucque(self, product):
+        qts = 0
+        participations = ParticipationEvent.objects.filter(Q(product_participation=product) & Q(participation_bucquee=True))
+        for participation in participations:
+            qts += participation.quantity
+        return qts
+
+    def get_prix_unitaire(self, product):
+        prix = product.getPrixUnitaire()
+        if prix is None:
+            return None
+        return str(round(product.getPrixUnitaire(), 2))
+
+
+class ParticipationEventSerializer(serializers.HyperlinkedModelSerializer):
+    cible_participation = serializers.PrimaryKeyRelatedField(queryset=Consommateur.objects.all())
+    product_participation = serializers.PrimaryKeyRelatedField(queryset=ProductEvent.objects.all())
+    participation_debucquee = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = ParticipationEvent
+        fields = ("id", "cible_participation", "product_participation", "prebucque_quantity", "quantity", "participation_bucquee", "participation_debucquee")
+
+    # On surcharge create pour faire une update si a participation existe déjà
+    def create(self, validated_data):
+        # les critères de recherche pour une participation existantes sont la cible et le produit
+        # --> si une participation existe déjà, alors elle est update avec les validated_data
+        participation, created = ParticipationEvent.objects.update_or_create(
+            cible_participation=validated_data.get("cible_participation"),
+            product_participation=validated_data.get("product_participation"), defaults=validated_data)
+        return participation
+
+
+# Serializer pour les débucquages
+class DebucquageEventSerializer(serializers.Serializer):
+    participation_id = serializers.IntegerField(default=-1)
+    negatss = serializers.BooleanField(default=False)
+
+    def update(self, instance, validated_data):
+        pass
+
+    def create(self, validated_data):
+        pass
+
+
+# Serializer pour l'affichage des bucquages classés par consommateur
+class BucquageEventSerializer(ConsommateurSerializer):
+    consommateur_id = serializers.IntegerField(source="id", read_only=True)
+    consommateur_bucque = serializers.CharField(source="consommateur.bucque", read_only=True)
+    consommateur_prenom = serializers.CharField(source="consommateur.first_name", read_only=True)
+    participation_event = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Consommateur
+        fields = ("consommateur_id", "consommateur_bucque", "consommateur_prenom", "participation_event")
+
+    def get_participation_event(self, consommateur):
+        request = self.context.get("request")
+        queryset = ParticipationEvent.objects.filter(
+            Q(cible_participation=consommateur)
+            & Q(product_participation__parent_event__ended=False)
+        )
+
+        # Dans le cas ou l'utilisateur n'est pas superuser ou supermanager, il faut que les participations affichées
+        # soit uniquement les participations qui correspondent aux fin'ss dont l'utilisateur est manager.
+        # On filtre donc les participations
+        if not request.user.has_perm("appevents.event_super_manager") and not request.user.is_superuser:
+            requester_consom = Consommateur.objects.get(consommateur=request.user)
+            managed_events = Event.objects.filter(managers=requester_consom)
+            if managed_events.count() != 0:
+                queryset = queryset.filter(product_participation__parent_event__in=managed_events)
+
+        finss_id = request.query_params.get("finss", None)
+
+        # Si un finss_id est donné, alors on filtre les Participations
+        if finss_id is not None:
+            if not finss_id.isdigit():
+                queryset = queryset.none()
+            else:
+                queryset = queryset.filter(product_participation__parent_event__pk=finss_id)
+
+        serializer = ParticipationEventSerializer(instance=queryset, many=True)
+        return serializer.data
