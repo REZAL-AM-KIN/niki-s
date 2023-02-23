@@ -5,7 +5,7 @@ from rest_framework import status
 
 from api.serializers import *
 
-from api.permissions import AllowedIP, AllowedIPEvenSaveMethods, get_client_ip
+from api.permissions import AllowedPianss, AllowedIPEvenSaveMethods, get_client_ip
 
 ########################
 #         KFET         #
@@ -26,10 +26,7 @@ class PermissionsViewSet(viewsets.ModelViewSet):
         user = Utilisateur.objects.get(pk=request.user.pk)
         data = {}
         data["all"] = user.is_superuser
-        data["ipIdentification"] = []
-        ips = AuthorizedIP.objects.filter(ip=get_client_ip(request))
-        for ip in ips:
-            data["ipIdentification"].append(ip.groupe)
+
         data["groupes"] = user.groups.all()
         data["recharge"] = user.has_perm("appkfet.add_recharge")
         serializer = self.get_serializer(data)
@@ -61,7 +58,7 @@ class ProduitViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.DjangoModelPermissions,)
 
     def list(self, request):
-        print(request.auth)
+        print(request.pianss_token)
         return super().list(request)
 
 
@@ -79,7 +76,7 @@ class ConsommateurViewSet(viewsets.ModelViewSet):
 class RechargeViewSet(viewsets.ModelViewSet):
     serializer_class = RechargeSerializer
     http_method_names = ["get", "post", "options"]
-    permission_classes = (permissions.DjangoModelPermissions, AllowedIP,)
+    permission_classes = (permissions.DjangoModelPermissions, AllowedPianss,)
     lookup_field = "cible_recharge"
 
     def get_queryset(self, *args, **kwargs):
@@ -116,7 +113,7 @@ class BucquageViewSet(viewsets.ModelViewSet):
     serializer_class = BucquageSerializer
     http_method_names = ["get", "post", "options"]
     lookup_field = "cible_bucquage"
-    permission_classes = (permissions.DjangoModelPermissions, AllowedIP,)
+    permission_classes = (permissions.DjangoModelPermissions, AllowedPianss,)
 
     def get_queryset(self, *args, **kwargs):
         if "cible_bucquage" in self.kwargs:
@@ -169,6 +166,18 @@ class HistoryViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(self.get_queryset(), many=True)
         return Response(data=serializer.data)
 
+
+# La classe PianssViewSet permet de gérer les Pianss.
+# GET : récupérer tous les Pianss ou un Pianss particulier
+# POST : créer un Pianss
+# PUT : modifier un Pianss
+# DELETE : supprimer un Pianss
+
+class PianssViewSet(viewsets.ModelViewSet):
+    serializer_class = PianssSerializer
+    http_method_names = ["get", "post", "put", "delete", "options"]
+    queryset = Pianss.objects.all()
+
 #########################
 #         LYDIA         #
 #########################
@@ -177,7 +186,7 @@ class HistoryViewSet(viewsets.ModelViewSet):
 class RechargeLydiaViewSet(viewsets.ModelViewSet):
     serializer_class = RechargeLydiaSerializer
     http_method_names = ["get", "post", "options"]
-    permission_classes = (permissions.DjangoModelPermissions, AllowedIP,)
+    permission_classes = (permissions.DjangoModelPermissions, AllowedPianss,)
     lookup_field = "cible_recharge"
 
     def get_queryset(self, *args, **kwargs):
@@ -195,3 +204,4 @@ class RechargeLydiaViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         serializer = self.get_serializer(self.get_queryset(), many=True)
         return Response(data=serializer.data)
+

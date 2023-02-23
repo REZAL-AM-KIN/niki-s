@@ -111,8 +111,8 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
         if consommateur.solde - produit.prix < 0:
             raise serializers.ValidationError("Consommateur has not enough money")
         if (
-            bucqueur.groups.filter(name=produit.entite).exists()
-            or bucqueur.is_superuser
+                bucqueur.groups.filter(name=produit.entite).exists()
+                or bucqueur.is_superuser
         ):
             validated_data["cible_bucquage"] = consommateur
             validated_data["date"] = datetime.now()
@@ -140,6 +140,7 @@ class HistorySerializer(serializers.HyperlinkedModelSerializer):
             "initiateur_evenement",
         )
 
+
 #########################
 #         LYDIA         #
 #########################
@@ -157,14 +158,14 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
 
     def create(self, validated_data):
         request = self.context.get("request")
-        #récupération du consommateur
+        # récupération du consommateur
         try:
             consommateur = Consommateur.objects.get(
                 pk=validated_data["cible_recharge"]["id"]
             )
         except Consommateur.DoesNotExist:
             raise serializers.ValidationError("Cannot resolve cible id")
-        #définition du json à envoyer à Lydia
+        # définition du json à envoyer à Lydia
         internal_uuid = uuid.uuid1()
         data_object = {
             'vendor_token': VENDOR_TOKEN,
@@ -174,19 +175,19 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
             'currency': "EUR",
             'order_id': internal_uuid.hex,
         }
-        #définition de l'url du endpoint
-        url_encaissement = LYDIA_URL+"/api/payment/payment.json"
-        #requête Lydia POST /api/payment/payment au format json
+        # définition de l'url du endpoint
+        url_encaissement = LYDIA_URL + "/api/payment/payment.json"
+        # requête Lydia POST /api/payment/payment au format json
         r = requests.post(url_encaissement, data=data_object)
         r_status = r.status_code
-        #si le call a marché
+        # si le call a marché
         if r_status == 200:
-            #récupération de la réponse
+            # récupération de la réponse
             response = json.loads(r.text)
             try:
-                #si la transaction est un succès, j'aurais un transaction identifier, sinon non !
+                # si la transaction est un succès, j'aurais un transaction identifier, sinon non !
                 transaction_lydia = response["transaction_identifier"]
-                #création de l'objet en base
+                # création de l'objet en base
                 validated_data["transaction_lydia"] = transaction_lydia
                 validated_data["cible_recharge"] = consommateur
                 validated_data["initiateur_evenement"] = Utilisateur.objects.get(id=request.user.pk)
@@ -199,3 +200,12 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
             raise serializers.ValidationError(message)
         else:
             raise serializers.ValidationError("An error occured with Lydia")
+
+
+# La classe ci-dessous est le serializer pour les Pianss.
+class PianssSerializer(serializers.HyperlinkedModelSerializer):
+    groupe = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all())
+
+    class Meta:
+        model = Pianss
+        fields = ("id", "groupe", "nom", "description", "token")
