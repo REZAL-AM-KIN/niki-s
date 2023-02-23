@@ -157,6 +157,7 @@ class HistorySerializer(serializers.HyperlinkedModelSerializer):
             "initiateur_evenement",
         )
 
+
 #########################
 #         LYDIA         #
 #########################
@@ -191,9 +192,9 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
             'currency': "EUR",
             'order_id': internal_uuid.hex,
         }
-        # définition de l'url du endpoint
+        #définition de l'url du endpoint
         url_encaissement = LYDIA_URL+"/api/payment/payment.json"
-        # requête Lydia POST /api/payment/payment au format json
+        #requête Lydia POST /api/payment/payment au format json
         r = requests.post(url_encaissement, data=data_object)
         r_status = r.status_code
         # si le call a marché
@@ -216,6 +217,15 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
             raise serializers.ValidationError(message)
         else:
             raise serializers.ValidationError("An error occured with Lydia")
+
+
+# La classe ci-dessous est le serializer pour les Pianss.
+class PianssSerializer(serializers.HyperlinkedModelSerializer):
+    groupe = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all())
+
+    class Meta:
+        model = Pianss
+        fields = ("id", "groupe", "nom", "description", "token")
 
 
 ########################

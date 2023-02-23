@@ -17,7 +17,8 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.schemas import get_schema_view
 from rest_framework_simplejwt import views as jwt_views
-from appkfet.auth import CustomTokenObtainPairView
+from appkfet.auth import PianssTokenObtainPairView
+
 
 schema_view = get_schema_view(title="KIN API")
 admin.site.site_header = "Niki admin"
@@ -35,7 +36,10 @@ urlpatterns = [
     path("api-docs", schema_view, name="openapi-schema"),
     path("captcha/", include("captcha.urls")),
     path(
-        "api/token/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"
+        "api/piansstoken/", PianssTokenObtainPairView.as_view(), name="token_obtain_pair"
+    ),
+    path(
+        "api/token/", jwt_views.TokenObtainPairView.as_view(), name="token_obtain_pair"
     ),
     path(
         "api/token/refresh/", jwt_views.TokenRefreshView.as_view(), name="token_refresh"

@@ -135,3 +135,6 @@ class Pianss(models.Model):
         permissions = (
             ("bypass_pianss_constraint", "N'est pas obligé d'être au pian's pour bucquer"),
         )
+
+    def __str__(self):
+        return self.nom
