@@ -72,11 +72,13 @@ INSTALLED_APPS = [
     "appmacgest",
     "appkfet",
     "appevents",
+    "appcom",
     "rest_framework",
     "corsheaders",
     "api",
     "captcha",
     "lydia",
+    "tinymce",
 ]
 
 if WITHLDAP:
@@ -235,6 +237,20 @@ VENDOR_TOKEN = getenv("LYDIA_VENDOR_TOKEN", "")
 CASHIER_PHONE = getenv("LYDIA_CASHIER_PHONE", "")
 
 
+TINYMCE_DEFAULT_CONFIG = {
+    "theme": "silver",
+    "height": 500,
+    "menubar": False,
+    "plugins": "advlist autolink lists link image charmap preview anchor searchreplace visualblocks code "
+    "fullscreen insertdatetime media table paste code help wordcount ",
+    "toolbar": "undo redo | fontselect fontsizeselect formatselect | forecolor backcolor casechange permanentpen"
+    " | bold italic underline strikethrough removeformat | alignleft "
+    "aligncenter alignright alignjustify | numlist bullist checklist | outdent indent |"
+    " pagebreak | charmap emoticons | "
+    "insertfile image media pageembed  link anchor ",
+    "custom_undo_redo_levels": 10
+}
+
 # Celery settings
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
@@ -260,4 +276,5 @@ CELERY_BEAT_SCHEDULE = {
         "task": "appuser.tasks.send_mail_for_cotiz_task",
         "schedule": crontab(minute=0, hour=0),
     },
+
 }
