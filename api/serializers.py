@@ -4,6 +4,7 @@ from random import randint
 from rest_framework import serializers
 
 from appkfet.models import *
+from appuser.models import Groupe
 from lydia.models import *
 
 # Assume that you have installed requests: pip install requests
@@ -204,8 +205,9 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
 
 # La classe ci-dessous est le serializer pour les Pianss.
 class PianssSerializer(serializers.HyperlinkedModelSerializer):
-    groupe = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all())
+    groupe = serializers.PrimaryKeyRelatedField(queryset=Groupe.objects.all())
 
     class Meta:
         model = Pianss
         fields = ("id", "groupe", "nom", "description", "token")
+        read_only_fields = ("token",)
