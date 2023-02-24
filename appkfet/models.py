@@ -116,6 +116,17 @@ class History(models.Model):
         return self.pk
 
 
+# Model utilisé pour stocker les entités disponible sur le site kfet
+# Contient un Nom, une description et un ou plusieurs groupe associé qui pourront accéder à l'entité
+class Entity(models.Model):
+    nom = models.CharField(max_length=50)
+    description = models.CharField(max_length=200)
+    groupe = models.ManyToManyField(Group)
+
+    def __str__(self):
+        return self.nom
+
+
 class AuthorizedIP(models.Model):
     groupe = models.ForeignKey("appuser.Groupe", on_delete=CASCADE)
     ip = models.GenericIPAddressField(protocol='IPv4')
