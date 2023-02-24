@@ -10,6 +10,7 @@ from rest_framework.response import Response
 
 from appevents.models import Event, ProductEvent, ParticipationEvent
 from appkfet.models import *
+from appuser.models import Groupe
 from lydia.models import *
 from appuser.models import Groupe
 
@@ -221,11 +222,12 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
 
 # La classe ci-dessous est le serializer pour les Pianss.
 class PianssSerializer(serializers.HyperlinkedModelSerializer):
-    groupe = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all())
+    groupe = serializers.PrimaryKeyRelatedField(queryset=Groupe.objects.all())
 
     class Meta:
         model = Pianss
         fields = ("id", "groupe", "nom", "description", "token")
+        read_only_fields = ("token",)
 
 
 ########################
