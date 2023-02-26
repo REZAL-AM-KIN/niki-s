@@ -19,7 +19,7 @@ from api.permissions import AllowedPianss, AllowedIPEvenSaveMethods, get_client_
 class PermissionsViewSet(viewsets.ModelViewSet):
     serializer_class = PermissionsSerializer
     http_method_names = ["get", "options"]
-    permission_classes = (permissions.DjangoModelPermissions, AllowedIPEvenSaveMethods,)
+    permission_classes = (permissions.DjangoModelPermissions,)
     queryset = Utilisateur.objects.none()
 
     def list(self, request):
