@@ -1,7 +1,7 @@
 from django.contrib import admin
 from appuser.models import Groupe
 
-from .models import Consommateur, Produit, AuthorizedIP
+from .models import Consommateur, Produit, AuthorizedIP, Entity
 
 
 @admin.register(Consommateur)
@@ -32,15 +32,6 @@ class AdminProduit(admin.ModelAdmin):
     search_fields = ["nom", "raccourci", "entite"]
     list_display = ("nom", "prix", "raccourci", "entite")
 
-    # récupérer uniquement les groupes qui sont des entités, c'est à dire ceux qui ne commencent pas par un "_"
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == "entite":
-            qs = Groupe.objects.exclude(is_entity=False)
-            if not request.user.is_superuser:
-                qs = request.user.groups.exclude(groupe__is_entity=False)
-            kwargs["queryset"] = qs
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
     def has_change_permission(self, request, obj=None):
         if "appkfet.change_produit" not in request.user.get_all_permissions():
             return False
@@ -63,6 +54,9 @@ class AdminHistory(admin.ModelAdmin):
         "initiateur_evenement",
     )
 
+@admin.register(Entity)
+class AdminEntity(admin.ModelAdmin):
+    list_display = ("nom", "color")
 
 @admin.register(AuthorizedIP)
 class AdminAuthorizedIP(admin.ModelAdmin):

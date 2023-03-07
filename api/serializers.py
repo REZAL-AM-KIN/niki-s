@@ -29,6 +29,9 @@ class PermissionsSerializer(serializers.Serializer):
     groupes = serializers.ListField(
         child=serializers.CharField()
     )
+    entities = serializers.ListField(
+        child=serializers.CharField()
+    )
     recharge = serializers.BooleanField()
 
 
@@ -46,8 +49,8 @@ class ProduitSerializer(serializers.HyperlinkedModelSerializer):
 class EntiteSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
-        model = Groupe
-        fields = ("name", "color")
+        model = Entity
+        fields = ("name", "description", "color")
 
 
 class ConsommateurSerializer(serializers.HyperlinkedModelSerializer):
@@ -108,7 +111,7 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
 
     def create(self, validated_data):
         request = self.context.get("request")
-        bucqueur = request.user
+        bucqueur = Utilisateur.objects.get(pk=request.user.pk)
         try:
             consommateur = Consommateur.objects.get(
                 pk=validated_data["cible_bucquage"]["id"]
@@ -125,7 +128,7 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
         if consommateur.solde - produit.prix < 0:
             raise serializers.ValidationError("Consommateur has not enough money")
         if (
-            bucqueur.groups.filter(name=produit.entite).exists()
+            bucqueur.entities.filter(pk=produit.entite.pk).exists()
             or bucqueur.is_superuser
         ):
             validated_data["cible_bucquage"] = consommateur

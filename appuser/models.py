@@ -9,6 +9,8 @@ from datetime import date
 
 from django.contrib.auth.models import User, Group
 from django.db import models
+
+
 from db import WITHLDAP
 from django.db.models.signals import post_save, post_delete, m2m_changed
 from django.dispatch.dispatcher import receiver
@@ -55,10 +57,18 @@ class Utilisateur(User):
     def __unicode__(self):
         return self.username
 
+    #fonction entities renvoyant la liste des entités auxquelles appartient l'utilisateur en passant par ses groupes
+    # Entities est considéré comme un attribut de l'utilisateur
+    @property
+    def entities(self):
+        from appkfet.models import Entity
+        return Entity.objects.filter(groups__in=self.groups.all()).distinct()
+
+
 #surcharge du modèle Group de base pour lui rajouter cet attribut d'entité
 class Groupe(Group):
-    is_entity = models.BooleanField(default=False)
-    color = models.CharField(max_length=7, default="#000000")
+    from appkfet.models import Entity
+    entities = models.ManyToManyField(Entity, blank=True, related_name="groups")
 
 #si l'application fonctionne avec le LDAP, alors : 
 if WITHLDAP:

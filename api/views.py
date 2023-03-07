@@ -35,6 +35,7 @@ class PermissionsViewSet(viewsets.ModelViewSet):
         for ip in ips:
             data["ipIdentification"].append(ip.groupe)
         data["groupes"] = user.groups.all()
+        data["entities"] = user.entities.all()
         data["recharge"] = user.has_perm("appkfet.add_recharge")
         serializer = self.get_serializer(data)
         return Response(serializer.data)
@@ -66,7 +67,7 @@ class ProduitViewSet(viewsets.ModelViewSet):
 
 # GET : recuperer les groupes (catégories)
 class EntiteViewSet(viewsets.ModelViewSet):
-    queryset = Groupe.objects.filter(is_entity=True)
+    queryset = Entity.objects.all()
     serializer_class = EntiteSerializer
     http_method_names = ["get", "options"]
     permission_classes = (permissions.DjangoModelPermissions,)
