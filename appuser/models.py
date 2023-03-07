@@ -57,6 +57,7 @@ class Utilisateur(User):
 
 #surcharge du modèle Group de base pour lui rajouter cet attribut d'entité
 class Groupe(Group):
+    description = models.CharField(max_length=200, blank=True)
     is_entity = models.BooleanField(default=False)
     color = models.CharField(max_length=7, default="#000000")
 
