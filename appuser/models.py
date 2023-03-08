@@ -70,6 +70,7 @@ class Groupe(Group):
     from appkfet.models import Entity
     entities = models.ManyToManyField(Entity, blank=True, related_name="groups")
 
+
 #si l'application fonctionne avec le LDAP, alors : 
 if WITHLDAP:
 
