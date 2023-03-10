@@ -24,9 +24,6 @@ from niki.settings import CASHIER_PHONE, LYDIA_URL, VENDOR_TOKEN
 
 class PermissionsSerializer(serializers.Serializer):
     all = serializers.BooleanField()
-    ipIdentification = serializers.ListField(
-        child=serializers.CharField()
-    )
     groupes = serializers.ListField(
         child=serializers.CharField()
     )
