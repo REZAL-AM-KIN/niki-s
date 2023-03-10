@@ -2,7 +2,6 @@ from rest_framework import permissions
 from appkfet.models import Pianss
 
 
-
 class AllowedPianss(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.user.is_superuser:
@@ -14,10 +13,20 @@ class AllowedPianss(permissions.BasePermission):
         if request.user.has_perm("appkfet.bypass_pianss_constraint"):
             return True
 
-        pianss_token = request.pianss_token
-        if pianss_token is None:
+        # Check if the user is connect with a pianss
+        if not hasattr(request, "pianss_token"):
             return False
 
-        return Pianss.objects.filter(token=pianss_token).exists()
+        return Pianss.objects.filter(token=request.pianss_token).exists()
+
+
+# Permission pour l'accès a l'endpoint pian'ss
+class PianssPermission(permissions.DjangoModelPermissions):
+    def has_permission(self, request, view):
+        if request.method == "GET":
+            if request.user.has_perm("appkfet.view_pianss"):
+                return True
+            return False
+        return super().has_permission(request, view)
 
 

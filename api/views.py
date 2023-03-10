@@ -5,7 +5,8 @@ from rest_framework import status
 
 from api.serializers import *
 
-from api.permissions import AllowedPianss, AllowedIPEvenSaveMethods, get_client_ip
+from api.permissions import AllowedPianss, PianssPermission
+
 
 ########################
 #         KFET         #
@@ -26,7 +27,6 @@ class PermissionsViewSet(viewsets.ModelViewSet):
         user = Utilisateur.objects.get(pk=request.user.pk)
         data = {}
         data["all"] = user.is_superuser
-
         data["groupes"] = user.groups.all()
         data["recharge"] = user.has_perm("appkfet.add_recharge")
         serializer = self.get_serializer(data)
@@ -175,6 +175,7 @@ class HistoryViewSet(viewsets.ModelViewSet):
 
 class PianssViewSet(viewsets.ModelViewSet):
     serializer_class = PianssSerializer
+    permission_classes = (PianssPermission,)
     http_method_names = ["get", "post", "put", "delete", "options"]
     queryset = Pianss.objects.all()
 
