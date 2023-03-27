@@ -50,7 +50,7 @@ class EntiteSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Entity
-        fields = ("name", "description", "color")
+        fields = ("id", "name", "description", "color")
 
 
 class ConsommateurSerializer(serializers.HyperlinkedModelSerializer):
