@@ -54,6 +54,7 @@ class AdminHistory(admin.ModelAdmin):
         "initiateur_evenement",
     )
 
+
 @admin.register(Entity)
 class AdminEntity(admin.ModelAdmin):
     list_display = ("nom", "color")

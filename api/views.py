@@ -69,7 +69,7 @@ class ProduitViewSet(viewsets.ModelViewSet):
 class EntiteViewSet(viewsets.ModelViewSet):
     queryset = Entity.objects.all()
     serializer_class = EntiteSerializer
-    http_method_names = ["get", "options"]
+    http_method_names = ["get", "options", "post", "put", "delete"]
     permission_classes = (permissions.DjangoModelPermissions,)
 
 

@@ -36,10 +36,11 @@ class Consommateur(models.Model):
         self.totaldep += montant
         self.save()
 
+
 # Model utilisé pour stocker les entités disponible sur le site kfet
 class Entity(models.Model):
     nom = models.CharField(max_length=50)
-    description = models.CharField(max_length=200)
+    description = models.CharField(max_length=200, blank=True)
     color = models.CharField(max_length=7, default="#000000")
 
     def __str__(self):
