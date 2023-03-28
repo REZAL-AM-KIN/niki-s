@@ -1,11 +1,24 @@
 from django.contrib import admin
+from django.db.models import Q
 
-from .models import Event, ProductEvent
+from .models import Event, ProductEvent, ParticipationEvent
 
+
+@admin.action(description="Cloture les fin'ss sélectionnés")
+def end(modeladmin, request, queryset):
+    for finss in queryset:
+        finss.end()
+
+@admin.action(description="Decloture les fin'ss sélectionnés")
+def active(modeladmin, request, queryset):
+    for finss in queryset:
+        finss.ended = False
+        finss.save()
 
 @admin.register(Event)
 class AdminEvent(admin.ModelAdmin):
     list_display = ("titre", "date_event", "can_subscribe", "ended", "created_by")
+    actions = [end, active]
 
     # Surcharge de la méthode de sauvegarde des objets Event (uniquement dans la Console d'admin) afin d'ajouter
     # l'utilisateur qui a créé l'évènement
@@ -20,7 +33,7 @@ class AdminEvent(admin.ModelAdmin):
         qs = super(AdminEvent, self).get_queryset(request)
         if request.user.is_superuser:
             return qs
-        return qs.filter(created_by=request.user)
+        return qs.filter(Q(created_by=request.user))
 
     # Surcharge de la méthode permettant d'accéder à l'édition d'un objet Event. On autorise la modification uniquement
     # pour les events dont je suis le créateur
@@ -47,7 +60,7 @@ class AdminEvent(admin.ModelAdmin):
 
 @admin.register(ProductEvent)
 class AdminProductEvent(admin.ModelAdmin):
-    list_display = ("parent_event", "nom", "prix")
+    list_display = ("parent_event", "nom", "prix_min")
 
     # ajout d'un filtre sur la page de création/édition d'un product_event permettant d'afficher dans la dropdown
     # uniquement les events non terminés et que j'ai créé
@@ -89,11 +102,13 @@ class AdminProductEvent(admin.ModelAdmin):
             return False
         return True
 
-
+@admin.register(ParticipationEvent)
 class AdminParticipationEvents(admin.ModelAdmin):
     list_display = (
         "cible_participation",
         "product_participation",
-        "number",
-        "participation_ok",
+        "prebucque_quantity",
+        "quantity",
+        "participation_bucquee",
+        "participation_debucquee",
     )

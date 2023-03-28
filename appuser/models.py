@@ -35,7 +35,7 @@ class Utilisateur(User):
     date_expiration = models.DateField(blank=True, null=True)
     ldap_password=models.CharField(max_length=200, blank=True, editable=False)
     max_devices = models.PositiveIntegerField(default=10, verbose_name="Nombre maximal d'appareil")
-    last_email_date = models.DateField(null=True, default=None, editable=True)
+    last_email_date = models.DateField(null=True, default=None, editable=False)
     
     #surcharge de la méthode set_password pour définir le mot de passe utilisé dans le ldap (hash ssha)
     def set_password(self, password):
@@ -57,6 +57,7 @@ class Utilisateur(User):
 
 #surcharge du modèle Group de base pour lui rajouter cet attribut d'entité
 class Groupe(Group):
+    description = models.CharField(max_length=200, blank=True)
     is_entity = models.BooleanField(default=False)
     color = models.CharField(max_length=7, default="#000000")
 

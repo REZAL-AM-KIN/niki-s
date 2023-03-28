@@ -30,6 +30,7 @@ urlpatterns = [
     path("", include("appmacgest.urls")),
     # path("", include("appkfet.urls")),
     path("", include("appevents.urls")),
+    path("", include("appcom.urls")),
     path("api/", include("api.urls"), name="api"),
     path("api/api-auth", include("rest_framework.urls", namespace="rest_framework")),
     path("api-docs", schema_view, name="openapi-schema"),
@@ -43,6 +44,7 @@ urlpatterns = [
     path(
         "api/token/refresh/", jwt_views.TokenRefreshView.as_view(), name="token_refresh"
     ),
+
 ]
 
 handler404 = "appuser.views.page_not_found_view"
