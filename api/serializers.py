@@ -262,6 +262,8 @@ class ProductEventSerializer(serializers.HyperlinkedModelSerializer):
     quantite_bucque = serializers.SerializerMethodField(read_only=True)
     parent_event = serializers.PrimaryKeyRelatedField(queryset=Event.objects.all())
     prix_unitaire = serializers.SerializerMethodField(read_only=True)
+    prix_total = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
+    prix_min = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
 
     class Meta:
         model = ProductEvent
@@ -323,12 +325,14 @@ class DebucquageEventSerializer(serializers.Serializer):
 class BucquageEventSerializer(ConsommateurSerializer):
     consommateur_id = serializers.IntegerField(source="id", read_only=True)
     consommateur_bucque = serializers.CharField(source="consommateur.bucque", read_only=True)
-    consommateur_prenom = serializers.CharField(source="consommateur.first_name", read_only=True)
+    consommateur_nom = serializers.CharField(source="consommateur.last_name", read_only=True)
+    consommateur_fams = serializers.CharField(source="consommateur.fams", read_only=True)
     participation_event = serializers.SerializerMethodField()
 
     class Meta:
         model = Consommateur
-        fields = ("consommateur_id", "consommateur_bucque", "consommateur_prenom", "participation_event")
+        fields = (
+        "consommateur_id", "consommateur_bucque", "consommateur_nom", "consommateur_fams", "participation_event")
 
     def get_participation_event(self, consommateur):
         request = self.context.get("request")
