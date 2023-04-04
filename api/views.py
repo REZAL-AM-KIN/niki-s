@@ -6,9 +6,6 @@ from rest_framework import status
 
 from api.serializers import *
 
-
-from api.permissions import 
-
 from api.permissions import AllowedPianss, PianssPermission, EditEventPermission, \
     EditProductEventPermission, BucquageEventPermission
 
