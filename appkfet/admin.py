@@ -1,5 +1,6 @@
 from django.contrib import admin
 from appuser.models import Groupe
+from .forms import EntityForm
 
 from .models import Consommateur, Produit, AuthorizedIP, Entity
 
@@ -57,6 +58,7 @@ class AdminHistory(admin.ModelAdmin):
 
 @admin.register(Entity)
 class AdminEntity(admin.ModelAdmin):
+    form = EntityForm
     list_display = ("nom", "color")
 
 @admin.register(AuthorizedIP)
