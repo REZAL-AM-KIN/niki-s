@@ -223,6 +223,7 @@ class RechargeLydiaViewSet(viewsets.ModelViewSet):
         return Response(data=serializer.data)
 
 
+
 #########################
 #        FIN'SS         #
 #########################
@@ -427,3 +428,4 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
 
         serializer = ParticipationEventSerializer(instance=myparticipations, many=True)
         return Response(serializer.data)
+

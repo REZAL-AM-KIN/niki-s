@@ -190,9 +190,9 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
             'currency': "EUR",
             'order_id': internal_uuid.hex,
         }
-        #définition de l'url du endpoint
+        # définition de l'url du endpoint
         url_encaissement = LYDIA_URL+"/api/payment/payment.json"
-        #requête Lydia POST /api/payment/payment au format json
+        # requête Lydia POST /api/payment/payment au format json
         r = requests.post(url_encaissement, data=data_object)
         r_status = r.status_code
         # si le call a marché

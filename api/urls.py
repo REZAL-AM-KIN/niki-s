@@ -13,7 +13,9 @@ router.register(r"recharges", views.RechargeViewSet, basename="recharges")
 router.register(r"bucquages", views.BucquageViewSet, basename="bucquages")
 router.register(r"history", views.HistoryViewSet, basename="history")
 router.register(r"rechargeslydia", views.RechargeLydiaViewSet, basename="rechargeslydia")
+
 router.register(r"pianss", views.PianssViewSet, basename="pianss")
+
 router.register(r"event", views.EventViewSet, basename="event")
 router.register(r"productevent", views.ProductEventViewSet, basename="productevent")
 router.register(r"bucquagevent", views.BucqageEventViewSet, basename="bucqagevent")
