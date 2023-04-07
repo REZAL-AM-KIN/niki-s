@@ -37,11 +37,20 @@ class Consommateur(models.Model):
         self.save()
 
 
+# Model utilisé pour stocker les entités disponible sur le site kfet
+class Entity(models.Model):
+    nom = models.CharField(max_length=50)
+    description = models.CharField(max_length=200, blank=True)
+    color = models.CharField(max_length=7, default="#000000")
+
+    def __str__(self):
+        return self.nom
+
 class Produit(models.Model):
     nom = models.CharField(max_length=50)
     prix = models.DecimalField(max_digits=5, decimal_places=2)
     raccourci = models.CharField(max_length=3)
-    entite = models.ForeignKey(Group, on_delete=CASCADE)
+    entite = models.ForeignKey(Entity, on_delete=CASCADE)
 
     def __str__(self):
         return self.nom
@@ -114,6 +123,7 @@ class History(models.Model):
 
     def __unicode__(self):
         return self.pk
+
 
 
 class AuthorizedIP(models.Model):
