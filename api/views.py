@@ -29,7 +29,14 @@ class PermissionsViewSet(viewsets.ModelViewSet):
         data = {}
         data["all"] = user.is_superuser
         data["groupes"] = user.groups.all()
-        data["entities"] = user.entities.all()
+
+        # si connecter sur un pian'ss alors il ne doit avoir accès qu'a l'entité du pian'ss
+        if hasattr(request, "pianss_token") and request.pianss_token is not None:
+            pianss = Pianss.objects.get(token=request.pianss_token)
+            data["entities"] = [pianss.entity]
+        else:
+            data["entities"] = user.entities.all()
+
         data["recharge"] = user.has_perm("appkfet.add_recharge")
         serializer = self.get_serializer(data)
         return Response(serializer.data)
@@ -59,7 +66,6 @@ class ProduitViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.DjangoModelPermissions,)
 
     def list(self, request):
-        print(request.pianss_token)
         return super().list(request)
 
 

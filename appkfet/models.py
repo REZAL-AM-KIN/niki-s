@@ -126,9 +126,9 @@ class History(models.Model):
 
 
 class Pianss(models.Model):
-    groupe = models.ForeignKey("appuser.Groupe", on_delete=CASCADE)
+    entity = models.ForeignKey("appkfet.Entity", on_delete=CASCADE)
     nom = models.CharField(max_length=50)
-    description = models.CharField(max_length=100)
+    description = models.CharField(max_length=100, blank=True)
     token = models.CharField(max_length=250)
 
     class Meta:

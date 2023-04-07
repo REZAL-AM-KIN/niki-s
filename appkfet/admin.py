@@ -58,7 +58,8 @@ class AdminHistory(admin.ModelAdmin):
 
 @admin.register(Pianss)
 class AdminPianss(admin.ModelAdmin):
-    list_display = ("groupe", "nom", "description", "token")
+    list_display = ("entity", "nom", "description", "token")
+
 @admin.register(Entity)
 class AdminEntity(admin.ModelAdmin):
     form = EntityForm

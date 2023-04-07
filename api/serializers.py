@@ -110,6 +110,8 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
     def create(self, validated_data):
         request = self.context.get("request")
         bucqueur = Utilisateur.objects.get(pk=request.user.pk)
+        pianss = Pianss.objects.get(token=request.pianss_token) if hasattr(request, "pianss_token") else None
+
         try:
             consommateur = Consommateur.objects.get(
                 pk=validated_data["cible_bucquage"]["id"]
@@ -125,6 +127,11 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
             raise serializers.ValidationError("Consommateur is not activated")
         if consommateur.solde - produit.prix < 0:
             raise serializers.ValidationError("Consommateur has not enough money")
+
+        # On vérifie que le pianss a le droit de vendre ce produit
+        if pianss is not None and pianss.entity != produit.entite:
+            raise serializers.ValidationError("Cannot sell this product")
+
         if (
             bucqueur.entities.filter(pk=produit.entite.pk).exists()
             or bucqueur.is_superuser
@@ -219,11 +226,11 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
 
 # La classe ci-dessous est le serializer pour les Pianss.
 class PianssSerializer(serializers.HyperlinkedModelSerializer):
-    groupe = serializers.PrimaryKeyRelatedField(queryset=Groupe.objects.all())
+    entity = serializers.PrimaryKeyRelatedField(queryset=Entity.objects.all())
 
     class Meta:
         model = Pianss
-        fields = ("id", "groupe", "nom", "description", "token")
+        fields = ("id", "entity", "nom", "description", "token")
         read_only_fields = ("token",)
 
 

@@ -15,7 +15,7 @@ class AllowedPianss(permissions.BasePermission):
             return True
 
         # Check if the user is connect with a pianss
-        if not hasattr(request, "pianss_token"):
+        if not hasattr(request, "pianss_token") or request.pianss_token is None:
             return False
 
         return Pianss.objects.filter(token=request.pianss_token).exists()
