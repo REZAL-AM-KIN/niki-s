@@ -40,12 +40,10 @@ class PermissionsSerializer(serializers.Serializer):
 ########################
 class ProduitSerializer(serializers.HyperlinkedModelSerializer):
     entite = serializers.PrimaryKeyRelatedField(queryset=Entity.objects.all())
-    #nom_entite = serializers.CharField(source="entite.nom")
 
     class Meta:
         model = Produit
         fields = ("id", "raccourci", "nom", "prix", "entite")
-        #fields = ("id", "raccourci", "nom", "prix", "nom_entite")
 
 
 class EntiteSerializer(serializers.HyperlinkedModelSerializer):

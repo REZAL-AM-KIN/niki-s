@@ -60,9 +60,36 @@ class CurrentUserViewSet(viewsets.ModelViewSet):
 # GET : récupérer tous les produits
 class ProduitViewSet(viewsets.ModelViewSet):
     queryset = Produit.objects.all()
-    serializer_class = ProduitSerializer
     http_method_names = ["get", "options", "post", "put", "delete"]
     permission_classes = (permissions.DjangoModelPermissions,)
+    serializer_class = ProduitSerializer
+
+
+# récupérer l'historique pour un utilisateur donné ou pour tous
+class ProduitByEntityViewSet(viewsets.ModelViewSet):
+    http_method_names = ["get", "options"]
+    permission_classes = (permissions.DjangoModelPermissions,)
+    serializer_class = ProduitSerializer
+    lookup_field = "cible_entity"
+
+    def get_queryset(self):
+        if "cible_entity" in self.kwargs:
+            entite_id = self.kwargs["cible_entity"]
+            entite = Entity.objects.filter(pk=entite_id)
+            if entite.count() == 1:
+                queryset = Produit.objects.filter(
+                    entite=entite[0]
+                )
+            else:
+                queryset = Produit.objects.none()
+        else:
+            queryset = Produit.objects.all()
+        return queryset
+
+    def retrieve(self, request, *args, **kwargs):
+        serializer = self.get_serializer(self.get_queryset(), many=True)
+        return Response(data=serializer.data)
+
 
 
 # GET : recuperer les groupes (catégories)
