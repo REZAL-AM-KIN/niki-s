@@ -39,11 +39,52 @@ class PermissionsSerializer(serializers.Serializer):
 #         KFET         #
 ########################
 class ProduitSerializer(serializers.HyperlinkedModelSerializer):
-    entite = serializers.PrimaryKeyRelatedField(queryset=Entity.objects.all())
-
+    entite_id = serializers.CharField(source="entite.id")
     class Meta:
         model = Produit
-        fields = ("id", "raccourci", "nom", "prix", "entite")
+        fields = ("id", "raccourci", "nom", "prix", "entite_id")
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        try:
+            entite = Entity.objects.get(
+                pk=validated_data["entite"]["id"]
+            )
+        except Entity.DoesNotExist:
+            raise serializers.ValidationError("Cannot resolve entity id")
+
+        utilisateur = Utilisateur.objects.get(pk=request.user.pk)
+        if utilisateur.entities_manageable.filter(nom=entite).exists() or request.user.is_superuser:
+            validated_data["entite"] = entite
+            return Produit.objects.create(**validated_data)
+        else:
+            raise serializers.ValidationError("Cannot create product in this entity")
+
+    def update(self, instance, validated_data):
+        #on verifie d'abord que l'utilisateur à les permissions pour manager l'entité actuelle et celle visé du produit
+        #on vérifie que l'id de l'entite vise est correct
+        request = self.context.get("request")
+        entite_id = validated_data.pop("entite")["id"]
+        try:
+            entite_vise = Entity.objects.get(
+                pk=entite_id
+            )
+        except Entity.DoesNotExist:
+            raise serializers.ValidationError("Cannot resolve entity id")
+        #on regarde les permissions
+        utilisateur = Utilisateur.objects.get(pk=request.user.pk)
+
+        #soit l'utilisateur peut manager specifiquement les 2 entités, soit il a la permession de manager tout les produits
+        #(super_user accord toutes les permission, donc on ne vérifie pas ça en plus)
+        if (utilisateur.entities_manageable.filter(nom=entite_vise).exists() and utilisateur.entities_manageable.filter(nom=instance.entite).exists() ) or utilisateur.has_perm("appkfet.produit_super_manager"):
+            #on modifie l'entite à la main et on laisse faire le reste à la methode update de la classe. c'est elle qui va appeler la méthode save() de l'instance
+            setattr(instance, "entite", entite_vise)
+            return super(ProduitSerializer, self).update(instance, validated_data)
+        else:
+            if not(utilisateur.entities_manageable.filter(nom=instance.entite).exists()):
+                raise serializers.ValidationError("Cannot edit product from entity '"+instance.entite+"'")
+            if not(utilisateur.entities_manageable.filter(nom=entite_vise).exists()):
+                raise serializers.ValidationError("Cannot add product in entity '"+entite_vise.nom+"'")
 
 
 class EntiteSerializer(serializers.HyperlinkedModelSerializer):
@@ -140,7 +181,6 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
             return Bucquage.objects.create(**validated_data)
         else:
             raise serializers.ValidationError("Cannot sell this product")
-
 
 class HistorySerializer(serializers.HyperlinkedModelSerializer):
     cible_evenement = ConsommateurSerializer()

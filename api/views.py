@@ -7,7 +7,7 @@ from rest_framework import status
 from api.serializers import *
 
 from api.permissions import AllowedIP, AllowedIPEvenSaveMethods, get_client_ip, EditEventPermission, \
-    EditProductEventPermission, BucquageEventPermission
+    EditProductEventPermission, BucquageEventPermission, ProduitPermission
 
 
 
@@ -61,7 +61,7 @@ class CurrentUserViewSet(viewsets.ModelViewSet):
 class ProduitViewSet(viewsets.ModelViewSet):
     queryset = Produit.objects.all()
     http_method_names = ["get", "options", "post", "put", "delete"]
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (ProduitPermission,)
     serializer_class = ProduitSerializer
 
 
@@ -75,13 +75,16 @@ class ProduitByEntityViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         if "cible_entity" in self.kwargs:
             entite_id = self.kwargs["cible_entity"]
-            entite = Entity.objects.filter(pk=entite_id)
-            if entite.count() == 1:
-                queryset = Produit.objects.filter(
-                    entite=entite[0]
-                )
-            else:
+            if not entite_id.isdigit():
                 queryset = Produit.objects.none()
+            else:
+                entite = Entity.objects.filter(pk=entite_id)
+                if entite.count() == 1:
+                    queryset = Produit.objects.filter(
+                        entite=entite[0]
+                    )
+                else:
+                    queryset = Produit.objects.none()
         else:
             queryset = Produit.objects.all()
         return queryset
