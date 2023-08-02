@@ -1,9 +1,7 @@
 from django.contrib import admin
-from appuser.models import Groupe
 from .forms import EntityForm
 
 from .models import Consommateur, Produit, AuthorizedIP, Entity
-
 
 @admin.register(Consommateur)
 class AdminConsommateur(admin.ModelAdmin):
@@ -34,12 +32,20 @@ class AdminProduit(admin.ModelAdmin):
     list_display = ("nom", "prix", "raccourci", "entite")
 
     def has_change_permission(self, request, obj=None):
-        if "appkfet.change_produit" not in request.user.get_all_permissions():
-            return False
-        if obj is not None and (
-            request.user.groups.filter(name=obj.entite).exists()
-            or request.user.is_superuser
-        ):
+        if "appkfet.produit_super_manager" in request.user.get_all_permissions():
+            return True
+        """
+        if obj is not None:
+            utilisateur = Utilisateur.objects.get(pk=request.user.pk)
+            if utilisateur.entities_manageable.filter(nom=obj.entite).exists() or request.user.is_superuser:
+                return True"""
+        return False
+    def has_delete_permission(self, request, obj=None):
+        if "appkfet.produit_super_manager" in request.user.get_all_permissions():
+            return True
+        return False
+    def has_add_permission(self, request):
+        if "appkfet.produit_super_manager" in request.user.get_all_permissions():
             return True
         return False
 

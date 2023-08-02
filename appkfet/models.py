@@ -52,6 +52,11 @@ class Produit(models.Model):
     raccourci = models.CharField(max_length=3)
     entite = models.ForeignKey(Entity, on_delete=CASCADE)
 
+    class Meta:
+        permissions = [
+            ("produit_super_manager", "Autorise l'administration de tous les produits."),
+        ]
+
     def __str__(self):
         return self.nom
 
