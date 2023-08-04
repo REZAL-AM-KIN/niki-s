@@ -56,7 +56,7 @@ class ProduitPermission(permissions.BasePermission):
             # on verifie dans le serializer si l'utilisateur peut créer un produit dans l'entité
             return user.has_perm("appkfet.add_produit")
 
-        if request.method in self.edit_methods or request.method == "DELETE": #la permission va dépeder de l'objet, elle est entièrement gérée par has_object_permission
+        if request.method in self.edit_methods or request.method == "DELETE": #la permission va dépendre de l'objet, elle est entièrement gérée par has_object_permission
             return True
         return False
 
