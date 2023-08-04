@@ -48,6 +48,8 @@ class ProduitSerializer(serializers.HyperlinkedModelSerializer):
         fields = ("id", "raccourci", "nom", "prix", "entite_id")
 
     def create(self, validated_data):
+        #on verifie que l'utilisateur à les permissions pour manager l'entité où il crée le produit
+        #on vérifie que l'id de l'entite vise est correct
         request = self.context.get("request")
         try:
             entite = Entity.objects.get(
@@ -56,15 +58,17 @@ class ProduitSerializer(serializers.HyperlinkedModelSerializer):
         except Entity.DoesNotExist:
             raise serializers.ValidationError("Cannot resolve entity id")
 
+        #on vérifie les permissions
+        #soit l'utilisateur peut manager specifiquement l'entité, soit il a la permession de manager tout les produits
         utilisateur = Utilisateur.objects.get(pk=request.user.pk)
-        if utilisateur.entities_manageable.filter(nom=entite).exists() or request.user.is_superuser:
+        if utilisateur.entities_manageable.filter(nom=entite).exists() or request.user.has_perm("appkfet.produit_super_manager"):
             validated_data["entite"] = entite
             return Produit.objects.create(**validated_data)
         else:
             raise serializers.ValidationError("Cannot create product in this entity")
 
     def update(self, instance, validated_data):
-        #on verifie d'abord que l'utilisateur à les permissions pour manager l'entité actuelle et celle visé du produit
+        #on verifie que l'utilisateur à les permissions pour manager l'entité actuelle et celle visé du produit
         #on vérifie que l'id de l'entite vise est correct
         request = self.context.get("request")
         entite_id = validated_data.pop("entite")["id"]

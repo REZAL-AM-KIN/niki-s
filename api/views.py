@@ -66,7 +66,7 @@ class ProduitViewSet(viewsets.ModelViewSet):
     serializer_class = ProduitSerializer
 
 
-# récupérer l'historique pour un utilisateur donné ou pour tous
+# récupérer les produits qui appartiennent à une entité d'id donnée
 class ProduitByEntityViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "options"]
     permission_classes = (permissions.DjangoModelPermissions,)
