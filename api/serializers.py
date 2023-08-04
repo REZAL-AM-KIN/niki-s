@@ -32,6 +32,9 @@ class PermissionsSerializer(serializers.Serializer):
     entities = serializers.ListField(
         child=serializers.CharField()
     )
+    entities_manageable = serializers.ListField(
+        child=serializers.CharField()
+    )
     recharge = serializers.BooleanField()
 
 

@@ -62,7 +62,7 @@ class Utilisateur(User):
     @property
     def entities(self):
         from appkfet.models import Entity
-        return Entity.objects.filter(groups__in=self.groups.all()).distinct()
+        return Entity.objects.filter(models.Q(groups__in=self.groups.all()) | models.Q(groups_management__in=self.groups.all())).distinct()
 
     #fonction entities_manageable renvoyant la liste des entités que l'utilisateur peut gérer en passant par ses groupes
     #entities_manageable est considéré comme un attribut de l'utilisateur
