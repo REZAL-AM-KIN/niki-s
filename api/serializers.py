@@ -32,9 +32,11 @@ class PermissionsSerializer(serializers.Serializer):
     entities = serializers.ListField(
         child=serializers.CharField()
     )
+    #entities = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     entities_manageable = serializers.ListField(
         child=serializers.CharField()
     )
+    # = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     recharge = serializers.BooleanField()
 
 
@@ -42,27 +44,28 @@ class PermissionsSerializer(serializers.Serializer):
 #         KFET         #
 ########################
 class ProduitSerializer(serializers.HyperlinkedModelSerializer):
-    entite_id = serializers.CharField(source="entite.id")
+    #on renvoie le nom de l'entite
+    entite = serializers.SlugRelatedField(queryset=Entity.objects.all(), slug_field='nom')
     class Meta:
         model = Produit
-        fields = ("id", "raccourci", "nom", "prix", "entite_id")
+        fields = ("id", "raccourci", "nom", "prix", "entite")
 
     def create(self, validated_data):
         #on verifie que l'utilisateur à les permissions pour manager l'entité où il crée le produit
-        #on vérifie que l'id de l'entite vise est correct
+        #permet de résoudre les requêtes avec le nom de l'entité ou l'objet entité
         request = self.context.get("request")
         try:
             entite = Entity.objects.get(
-                pk=validated_data["entite"]["id"]
+                nom=validated_data["entite"]
             )
         except Entity.DoesNotExist:
-            raise serializers.ValidationError("Cannot resolve entity id")
+            raise serializers.ValidationError("Cannot resolve entity name")
 
         #on vérifie les permissions
         #soit l'utilisateur peut manager specifiquement l'entité, soit il a la permession de manager tout les produits
         utilisateur = Utilisateur.objects.get(pk=request.user.pk)
         if utilisateur.entities_manageable.filter(nom=entite).exists() or request.user.has_perm("appkfet.produit_super_manager"):
-            validated_data["entite"] = entite
+            validated_data["entite"]=entite
             return Produit.objects.create(**validated_data)
         else:
             raise serializers.ValidationError("Cannot create product in this entity")
@@ -71,21 +74,20 @@ class ProduitSerializer(serializers.HyperlinkedModelSerializer):
         #on verifie que l'utilisateur à les permissions pour manager l'entité actuelle et celle visé du produit
         #on vérifie que l'id de l'entite vise est correct
         request = self.context.get("request")
-        entite_id = validated_data.pop("entite")["id"]
+        #permet de résoudre les requêtes avec le nom de l'entité ou l'objet entité
         try:
             entite_vise = Entity.objects.get(
-                pk=entite_id
+                nom=validated_data["entite"]
             )
         except Entity.DoesNotExist:
-            raise serializers.ValidationError("Cannot resolve entity id")
-        #on regarde les permissions
-        utilisateur = Utilisateur.objects.get(pk=request.user.pk)
+            raise serializers.ValidationError("Cannot resolve entity name")
 
         #soit l'utilisateur peut manager specifiquement les 2 entités, soit il a la permession de manager tout les produits
         #(super_user accord toutes les permission, donc on ne vérifie pas ça en plus)
+        utilisateur = Utilisateur.objects.get(pk=request.user.pk)
         if (utilisateur.entities_manageable.filter(nom=entite_vise).exists() and utilisateur.entities_manageable.filter(nom=instance.entite).exists() ) or utilisateur.has_perm("appkfet.produit_super_manager"):
             #on modifie l'entite à la main et on laisse faire le reste à la methode update de la classe. c'est elle qui va appeler la méthode save() de l'instance
-            setattr(instance, "entite", entite_vise)
+            validated_data["entite"]=entite_vise
             return super(ProduitSerializer, self).update(instance, validated_data)
         else:
             if not(utilisateur.entities_manageable.filter(nom=instance.entite).exists()):

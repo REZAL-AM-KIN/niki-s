@@ -39,7 +39,7 @@ class Consommateur(models.Model):
 
 # Model utilisé pour stocker les entités disponible sur le site kfet
 class Entity(models.Model):
-    nom = models.CharField(max_length=50)
+    nom = models.CharField(max_length=50, unique=True)
     description = models.CharField(max_length=200, blank=True)
     color = models.CharField(max_length=7, default="#000000")
 
