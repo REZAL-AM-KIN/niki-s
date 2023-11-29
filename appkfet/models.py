@@ -125,13 +125,16 @@ class History(models.Model):
         return self.pk
 
 
-
-class AuthorizedIP(models.Model):
-    groupe = models.ForeignKey("appuser.Groupe", on_delete=CASCADE)
-    ip = models.GenericIPAddressField(protocol='IPv4')
-    description = models.CharField(max_length=100)
+class Pianss(models.Model):
+    entity = models.ForeignKey("appkfet.Entity", on_delete=CASCADE)
+    nom = models.CharField(max_length=50)
+    description = models.CharField(max_length=100, blank=True)
+    token = models.CharField(max_length=250)
 
     class Meta:
         permissions = (
-            ("bypass_ip_constraint", "N'est pas obligé d'être au pian's pour bucquer"),
+            ("bypass_pianss_constraint", "N'est pas obligé d'être au pian's pour bucquer"),
         )
+
+    def __str__(self):
+        return self.nom

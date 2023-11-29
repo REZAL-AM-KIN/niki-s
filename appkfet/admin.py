@@ -2,7 +2,7 @@ from django.contrib import admin
 from appuser.models import Groupe
 from .forms import EntityForm
 
-from .models import Consommateur, Produit, AuthorizedIP, Entity
+from .models import Consommateur, Produit, Pianss,Entity
 
 
 @admin.register(Consommateur)
@@ -56,11 +56,11 @@ class AdminHistory(admin.ModelAdmin):
     )
 
 
+@admin.register(Pianss)
+class AdminPianss(admin.ModelAdmin):
+    list_display = ("entity", "nom", "description", "token")
+
 @admin.register(Entity)
 class AdminEntity(admin.ModelAdmin):
     form = EntityForm
     list_display = ("nom", "color")
-
-@admin.register(AuthorizedIP)
-class AdminAuthorizedIP(admin.ModelAdmin):
-    list_display = ("groupe", "ip", "description",)

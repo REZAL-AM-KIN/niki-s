@@ -1,42 +1,35 @@
 from rest_framework import permissions
-from appkfet.models import AuthorizedIP, Consommateur
+from appkfet.models import Pianss, Consommateur
 from appuser.models import Utilisateur
 
 
-def get_client_ip(request):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
-    else:
-        ip = request.META.get('REMOTE_ADDR')
-    return ip
-
-def _is_ip_authorized(request):
-    if request.user.has_perm("appkfet.bypass_ip_constraint"):
-        return True
-
-    client_ip = get_client_ip(request)
-    allowedIP = AuthorizedIP.objects.filter(ip=client_ip)
-    # if the ip the user uses is in one of the user's groups
-    # an ip can be listed more than one time
-    for ip in allowedIP:
-        if request.user.groups.filter(name=ip.groupe).exists():
+class AllowedPianss(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.user.is_superuser:
             return True
 
-    return False
-
-
-class AllowedIP(permissions.BasePermission):
-    def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        return _is_ip_authorized(request)
+        if request.user.has_perm("appkfet.bypass_pianss_constraint"):
+            return True
+
+        # Check if the user is connect with a pianss
+        if not hasattr(request, "pianss_token") or request.pianss_token is None:
+            return False
+
+        return Pianss.objects.filter(token=request.pianss_token).exists()
 
 
-class AllowedIPEvenSaveMethods(permissions.BasePermission):
+# Permission pour l'accès a l'endpoint pian'ss
+class PianssPermission(permissions.DjangoModelPermissions):
     def has_permission(self, request, view):
-        return _is_ip_authorized(request)
+        if request.method == "GET":
+            if request.user.has_perm("appkfet.view_pianss"):
+                return True
+            return False
+        return super().has_permission(request, view)
+
 
 
 

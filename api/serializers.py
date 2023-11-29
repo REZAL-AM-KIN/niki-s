@@ -10,6 +10,7 @@ from rest_framework.response import Response
 
 from appevents.models import Event, ProductEvent, ParticipationEvent
 from appkfet.models import *
+from appuser.models import Groupe
 from lydia.models import *
 from appuser.models import Groupe
 
@@ -23,9 +24,6 @@ from niki.settings import CASHIER_PHONE, LYDIA_URL, VENDOR_TOKEN
 
 class PermissionsSerializer(serializers.Serializer):
     all = serializers.BooleanField()
-    ipIdentification = serializers.ListField(
-        child=serializers.CharField()
-    )
     groupes = serializers.ListField(
         child=serializers.CharField()
     )
@@ -112,6 +110,8 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
     def create(self, validated_data):
         request = self.context.get("request")
         bucqueur = Utilisateur.objects.get(pk=request.user.pk)
+        pianss = Pianss.objects.get(token=request.pianss_token) if hasattr(request, "pianss_token") else None
+
         try:
             consommateur = Consommateur.objects.get(
                 pk=validated_data["cible_bucquage"]["id"]
@@ -127,6 +127,11 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
             raise serializers.ValidationError("Consommateur is not activated")
         if consommateur.solde - produit.prix < 0:
             raise serializers.ValidationError("Consommateur has not enough money")
+
+        # On vérifie que le pianss a le droit de vendre ce produit
+        if pianss is not None and pianss.entity != produit.entite:
+            raise serializers.ValidationError("Cannot sell this product")
+
         if (
             bucqueur.entities.filter(pk=produit.entite.pk).exists()
             or bucqueur.is_superuser
@@ -156,6 +161,7 @@ class HistorySerializer(serializers.HyperlinkedModelSerializer):
             "date_evenement",
             "initiateur_evenement",
         )
+
 
 #########################
 #         LYDIA         #
@@ -216,6 +222,16 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
             raise serializers.ValidationError(message)
         else:
             raise serializers.ValidationError("An error occured with Lydia")
+
+
+# La classe ci-dessous est le serializer pour les Pianss.
+class PianssSerializer(serializers.HyperlinkedModelSerializer):
+    entity = serializers.PrimaryKeyRelatedField(queryset=Entity.objects.all())
+
+    class Meta:
+        model = Pianss
+        fields = ("id", "entity", "nom", "description", "token")
+        read_only_fields = ("token",)
 
 
 ########################
