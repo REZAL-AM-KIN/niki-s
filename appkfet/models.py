@@ -39,7 +39,7 @@ class Consommateur(models.Model):
 
 # Model utilisé pour stocker les entités disponible sur le site kfet
 class Entity(models.Model):
-    nom = models.CharField(max_length=50)
+    nom = models.CharField(max_length=50, unique=True)
     description = models.CharField(max_length=200, blank=True)
     color = models.CharField(max_length=7, default="#000000")
 
@@ -51,6 +51,11 @@ class Produit(models.Model):
     prix = models.DecimalField(max_digits=5, decimal_places=2)
     raccourci = models.CharField(max_length=3)
     entite = models.ForeignKey(Entity, on_delete=CASCADE)
+
+    class Meta:
+        permissions = [
+            ("produit_super_manager", "Autorise l'administration de tous les produits."),
+        ]
 
     def __str__(self):
         return self.nom
