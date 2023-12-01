@@ -29,7 +29,7 @@ class AdminRecharge(admin.ModelAdmin):
 @admin.register(Produit)
 class AdminProduit(admin.ModelAdmin):
     search_fields = ["nom", "raccourci", "entite"]
-    list_display = ("nom", "prix", "raccourci", "entite")
+    list_display = ("nom", "prix", "stock", "suivi_stock", "raccourci", "entite")
 
     def has_change_permission(self, request, obj=None):
         if "appkfet.produit_super_manager" in request.user.get_all_permissions():

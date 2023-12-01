@@ -48,7 +48,7 @@ class ProduitSerializer(serializers.HyperlinkedModelSerializer):
     entite = serializers.SlugRelatedField(queryset=Entity.objects.all(), slug_field='nom')
     class Meta:
         model = Produit
-        fields = ("id", "raccourci", "nom", "prix", "entite")
+        fields = ("id", "raccourci", "nom", "prix", "stock", "suivi_stock", "entite")
 
     def create(self, validated_data):
         #on verifie que l'utilisateur à les permissions pour manager l'entité où il crée le produit
