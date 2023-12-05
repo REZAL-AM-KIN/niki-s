@@ -38,6 +38,9 @@ class AllowedIPEvenSaveMethods(permissions.BasePermission):
     def has_permission(self, request, view):
         return _is_ip_authorized(request)
 
+class RequiersConsommateur(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return Consommateur.objects.filter(consommateur=request.user.pk, activated=True).exists()
 
 
 
