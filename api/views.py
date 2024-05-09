@@ -68,6 +68,7 @@ class ProduitViewSet(viewsets.ModelViewSet):
 
 # récupérer les produits qui appartiennent à une entité d'id donnée
 class ProduitByEntityViewSet(viewsets.ModelViewSet):
+    http_method_names = ["get", "options"]
     permission_classes = (permissions.DjangoModelPermissions, RequiersConsommateur,)
     serializer_class = ProduitSerializer
     lookup_field = "cible_entity"
