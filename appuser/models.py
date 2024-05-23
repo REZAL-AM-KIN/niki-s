@@ -69,6 +69,8 @@ class Utilisateur(User):
     @property
     def entities_manageable(self):
         from appkfet.models import Entity
+        if self.has_perm("appkfet.produit_super_manager"):
+            return Entity.objects.all()
         return Entity.objects.filter(groups_management__in=self.groups.all()).distinct()
 
 
