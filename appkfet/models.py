@@ -9,10 +9,10 @@ from appuser.models import Utilisateur
 class Consommateur(models.Model):
     consommateur = models.OneToOneField("appuser.Utilisateur", on_delete=CASCADE)
     solde = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0, editable=False
+        max_digits=6, decimal_places=2, default=0, editable=False
     )
     totaldep = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0, editable=False
+        max_digits=6, decimal_places=2, default=0, editable=False
     )
     commentaire = models.CharField(max_length=50, blank=True)
     activated = models.BooleanField(default=True)
@@ -66,8 +66,8 @@ class Recharge(models.Model):
     date = models.DateTimeField()
     montant = models.DecimalField(max_digits=5, decimal_places=2, validators=[strictly_positive_validator])
     methode = models.CharField(max_length=50, choices=CHOIX_METHODE)
-    solde_before = models.DecimalField(max_digits=5, decimal_places=2)
-    solde_after = models.DecimalField(max_digits=5, decimal_places=2)
+    solde_before = models.DecimalField(max_digits=6, decimal_places=2)
+    solde_after = models.DecimalField(max_digits=6, decimal_places=2)
     initiateur_evenement = models.ForeignKey("appuser.Utilisateur", on_delete=CASCADE)
 
     def save(self, *args, **kwargs):

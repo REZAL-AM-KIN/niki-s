@@ -265,8 +265,8 @@ class ProductEventSerializer(serializers.HyperlinkedModelSerializer):
     quantite_bucque = serializers.SerializerMethodField(read_only=True)
     parent_event = serializers.PrimaryKeyRelatedField(queryset=Event.objects.all())
     prix_unitaire = serializers.SerializerMethodField(read_only=True)
-    prix_total = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
-    prix_min = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
+    prix_total = serializers.DecimalField(max_digits=6, decimal_places=2, min_value=0)
+    prix_min = serializers.DecimalField(max_digits=5, decimal_places=2, min_value=0)
 
     class Meta:
         model = ProductEvent
