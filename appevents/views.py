@@ -65,46 +65,50 @@ def sub_event(request, params, step):
 # Un contrôle est fait sur la valeur de la quantité qui doit être positive ou nulle
 @login_required
 @user_passes_test(has_consommateur)
-def sub_product_event(request, step, product_to_sub):
-    product_to_sub_instance = ProductEvent.objects.get(pk=product_to_sub)
+def sub_product_event(request, finss):
+    products = ProductEvent.objects.filter(parent_event__pk=finss)
     if request.method == "POST":
-        form = ParticipationEventForm(request.POST)
-        if form.is_valid():
-            number = form.cleaned_data["number"]
-            if number < 0:
-                messages.error(request, "Une erreur est survenue lors de l'inscription")
-                return redirect(list_events)
-            if number > 0:
-                cible_participation = Consommateur.objects.get(
-                    consommateur=request.user
-                )
-                participation = ParticipationEvent(
-                    number=number,
-                    product_participation=product_to_sub_instance,
-                    cible_participation=cible_participation,
-                )
-                participation.save()
-            if number == 0 and product_to_sub_instance.obligatoire is True:
-                messages.warning(request, "Ce produit est obligatoire")
-                return redirect(
-                    sub_product_event, step=step, product_to_sub=product_to_sub
-                )
-            step = int(step) + 1
-            return redirect(
-                sub_event, params=product_to_sub_instance.parent_event.pk, step=step
-            )
-        else:
-            messages.error(request, "Une erreur est survenue lors de l'inscription")
-            return redirect(list_events)
+        messages.warning(request, "Post")
+        return redirect(
+                     sub_product_event, finss=finss
+                 )
+        # form = ParticipationEventForm(request.POST)
+        # if form.is_valid():
+        #     number = form.cleaned_data["number"]
+        #     if number < 0:
+        #         messages.error(request, "Une erreur est survenue lors de l'inscription")
+        #         return redirect(list_events)
+        #     if number > 0:
+        #         cible_participation = Consommateur.objects.get(
+        #             consommateur=request.user
+        #         )
+        #         participation = ParticipationEvent(
+        #             number=number,
+        #             product_participation=product_to_sub_instance,
+        #             cible_participation=cible_participation,
+        #         )
+        #         participation.save()
+        #     if number == 0 and product_to_sub_instance.obligatoire is True:
+        #         messages.warning(request, "Ce produit est obligatoire")
+        #         return redirect(
+        #             sub_product_event, step=step, product_to_sub=product_to_sub
+        #         )
+        #     step = int(step) + 1
+        #     return redirect(
+        #         sub_event, params=product_to_sub_instance.parent_event.pk, step=step
+        #     )
+        # else:
+        #     messages.error(request, "Une erreur est survenue lors de l'inscription")
+        #     return redirect(list_events)
     else:
-        form = ParticipationEventForm()
+        form = ParticipationEventForm(products)
         return render(
             request,
             "appevents/event.html",
             {
                 "form": form,
-                "step": step,
-                "product_to_sub_instance": product_to_sub_instance,
+                "products": products,
+                "finss": finss
             },
         )
 

@@ -9,6 +9,8 @@ from datetime import date
 
 from django.contrib.auth.models import User, Group
 from django.db import models
+
+
 from db import WITHLDAP
 from django.db.models.signals import post_save, post_delete, m2m_changed
 from django.dispatch.dispatcher import receiver
@@ -34,6 +36,8 @@ class Utilisateur(User):
     has_cotiz = models.BooleanField(default=False)
     date_expiration = models.DateField(blank=True, null=True)
     ldap_password=models.CharField(max_length=200, blank=True, editable=False)
+    max_devices = models.PositiveIntegerField(default=10, verbose_name="Nombre maximal d'appareil")
+    last_email_date = models.DateField(null=True, default=None, editable=False)
     
     #surcharge de la méthode set_password pour définir le mot de passe utilisé dans le ldap (hash ssha)
     def set_password(self, password):
@@ -43,12 +47,29 @@ class Utilisateur(User):
         h.update(salt)
         self.ldap_password = base64.b64encode(h.digest() + salt).strip().decode("utf-8")
 
+
+    def save(self, *args, **kwargs):
+        if not self.is_active:
+            self.has_cotiz=False
+        super(Utilisateur, self).save(*args, **kwargs)
+    # TODO : Desactivation du consommateur lors de la désactivation du compte
+
     def __unicode__(self):
         return self.username
 
+    #fonction entities renvoyant la liste des entités auxquelles appartient l'utilisateur en passant par ses groupes
+    # Entities est considéré comme un attribut de l'utilisateur
+    @property
+    def entities(self):
+        from appkfet.models import Entity
+        return Entity.objects.filter(groups__in=self.groups.all()).distinct()
+
+
 #surcharge du modèle Group de base pour lui rajouter cet attribut d'entité
 class Groupe(Group):
-    is_entity=models.BooleanField(default=False)
+    from appkfet.models import Entity
+    entities = models.ManyToManyField(Entity, blank=True, related_name="groups")
+
 
 #si l'application fonctionne avec le LDAP, alors : 
 if WITHLDAP:

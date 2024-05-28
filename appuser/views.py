@@ -84,6 +84,12 @@ def is_superuser(user):
     return test
 
 
+def is_gadz(user):
+    user = Utilisateur.objects.get(pk=user.pk)
+    return user.is_gadz
+
+
+
 @login_required
 @staff_member_required
 def administration(request):

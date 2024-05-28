@@ -3,6 +3,7 @@ from django.contrib.auth.models import User, Group
 from .models import Utilisateur, Groupe
 
 class AdminUtilisateur(admin.ModelAdmin):
+    search_fields = ["username", "first_name", "last_name", "phone", "email", "bucque", "fams", "proms", "chambre"]
     list_display = (
         "username",
         "first_name",
