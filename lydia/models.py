@@ -12,8 +12,8 @@ class RechargeLydia(models.Model):
     qrcode = models.CharField(max_length=200)
     internal_uuid = models.CharField(max_length=200)
     transaction_lydia = models.CharField(max_length=200)
-    solde_before = models.DecimalField(max_digits=6, decimal_places=2)
-    solde_after = models.DecimalField(max_digits=6, decimal_places=2)
+    solde_before = models.DecimalField(max_digits=5, decimal_places=2)
+    solde_after = models.DecimalField(max_digits=5, decimal_places=2)
     initiateur_evenement = models.ForeignKey("appuser.Utilisateur", on_delete=CASCADE)
 
     def save(self, *args, **kwargs):
