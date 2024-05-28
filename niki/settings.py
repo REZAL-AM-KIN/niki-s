@@ -19,7 +19,7 @@ from django.conf.global_settings import LOGOUT_REDIRECT_URL
 from dotenv import load_dotenv
 from celery.schedules import crontab
 
-from mac_vendor_lookup import MacLookup
+from mac_vendor_lookup import MacLookup, BaseMacLookup
 
 
 load_dotenv(".env")
@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_celery_beat",
+    'django_celery_results',
     "health_check",
     "health_check.db",
     "health_check.cache",
@@ -255,6 +256,7 @@ TINYMCE_DEFAULT_CONFIG = {
 }
 
 # Maclookup defined in settings to update the vendor list
+BaseMacLookup.cache_path = "./.cache/mac-vendors.txt"
 MACLOOKUP = MacLookup()
 MACLOOKUP.update_vendors()
 
@@ -275,7 +277,6 @@ if DEBUG and not PROD:
 
 CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
-# TODO task to update MACLOOKUP vendors list
 CELERY_BEAT_SCHEDULE = {
     "check_user_cotiz_task": {
         "task": "appuser.tasks.check_user_cotiz_task",
@@ -284,6 +285,10 @@ CELERY_BEAT_SCHEDULE = {
     "send_mail_for_cotiz_task": {
         "task": "appuser.tasks.send_mail_for_cotiz_task",
         "schedule": crontab(minute=0, hour=0),
+    },
+    "update_maclookup_vendors_list_task": {
+        "task": "appmacgest.tasks.update_maclookup_vendors_list_task",
+        "schedule": crontab(minute=32, hour=0),
     },
 
 }
