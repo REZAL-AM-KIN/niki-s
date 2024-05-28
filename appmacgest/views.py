@@ -9,7 +9,7 @@ from appmacgest.models import Device
 from appuser.models import Utilisateur
 from appuser.views import has_cotiz, is_superuser
 
-from mac_vendor_lookup import MacLookup
+from niki.settings import MACLOOKUP
 
 
 @login_required
@@ -62,7 +62,7 @@ def ajout_mac(request):
 def gestion_demande_mac(request):
     liste_mac = Device.objects.filter(Q(accepted=False))
     for device in liste_mac:
-        device.vendor = MacLookup().lookup(device.mac)
+        device.vendor = MACLOOKUP.lookup(device.mac)
 
     return render(request, "appmacgest/gestiondemandemac.html", {"list": liste_mac})
 
