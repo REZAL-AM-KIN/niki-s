@@ -66,8 +66,8 @@ class Recharge(models.Model):
     date = models.DateTimeField()
     montant = models.DecimalField(max_digits=5, decimal_places=2, validators=[strictly_positive_validator])
     methode = models.CharField(max_length=50, choices=CHOIX_METHODE)
-    solde_before = models.DecimalField(max_digits=5, decimal_places=2)
-    solde_after = models.DecimalField(max_digits=5, decimal_places=2)
+    solde_before = models.DecimalField(max_digits=6, decimal_places=2)
+    solde_after = models.DecimalField(max_digits=6, decimal_places=2)
     initiateur_evenement = models.ForeignKey("appuser.Utilisateur", on_delete=CASCADE)
 
     def save(self, *args, **kwargs):
