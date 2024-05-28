@@ -10,7 +10,7 @@ from appuser.models import Utilisateur
 from appuser.views import has_cotiz, is_superuser
 
 from niki.settings import MACLOOKUP
-
+from mac_vendor_lookup import VendorNotFoundError
 
 @login_required
 @user_passes_test(has_cotiz)
@@ -62,7 +62,10 @@ def ajout_mac(request):
 def gestion_demande_mac(request):
     liste_mac = Device.objects.filter(Q(accepted=False))
     for device in liste_mac:
-        device.vendor = MACLOOKUP.lookup(device.mac)
+        try:
+            device.vendor = MACLOOKUP.lookup(device.mac)
+        except VendorNotFoundError:
+            device.vendor = "Inconnu"
 
     return render(request, "appmacgest/gestiondemandemac.html", {"list": liste_mac})
 
