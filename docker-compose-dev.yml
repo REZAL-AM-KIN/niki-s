@@ -1,0 +1,23 @@
+name: niki-dev
+
+services:
+  niki:
+    container_name: "niki"
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    networks:
+      - external
+      - niki-internal
+    env_file:
+      - .env
+    volumes:
+      - ./db.sqlite3:/niki/db.sqlite3
+
+networks:
+  niki-internal:
+    driver: bridge
+    internal: true
+  external:
+    driver: bridge
