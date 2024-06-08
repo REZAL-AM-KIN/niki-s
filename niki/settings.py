@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_celery_beat",
+    'django_celery_results',
     "health_check",
     "health_check.db",
     "health_check.cache",

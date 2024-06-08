@@ -2,6 +2,7 @@
 django-cors-headers==3.13.0
 django-health-check==3.16.5
 django-simple-captcha==0.5.17
+django-celery-results==2.5.1
 djangorestframework==3.13.1
 djangorestframework_simplejwt==5.2.0
 python-dotenv==0.20.0
