@@ -116,6 +116,10 @@ surcharger la méthode delete du modèle user pour y rajouter la suppression de 
       l'utilisateur est passé en `is_active=False`, l'entrée est immédiatement supprimée côté LDAP
     - La fonction set_password permet de hasher le mot de passe rentré par l'utilisateur selon l'algorithme utilisé par
       le LDAP (SSHA). Ce mot de passe hashé est stocké dans l'attribut `ldap_password`
+    - La propriété entities permet de récupérer la liste des entités de chacun les groupes auquel l'utilisateur appartion
+    - La propriété entities_manageable permet de récupérer la liste des entités que l'utilsateur peut gérer de chacun les groupes auquel l'utilisateur appartion
+- Groupe (dérivé du modèle standard Group)
+  - ajout de entities et entities_manageable pour donner la permission aux utilisateurs du groupe de travailler avec des entités
 
 ### Fonctions pertinentes
 
@@ -196,7 +200,10 @@ Fonctionnellement :
         - debit qui retire de l'argent sur le solde du consommateur. Ne teste pas si le solde est positif à la suite du
           débit !
         - testdebit qui permet de savoir si le solde sera positif après le débit.
+- Entity
+  - Contient les produits poru assigner des permissions de débuquage et d'édition par groupe de produit
 - Produits
+    - L'édition (création, modification, suppression) des produits peut se faire sur l'interface admin pour les utilisateurs qui ont la permission produit_super_manager. Sinon l'édition se fait avec l'API pour vérifier les entités sources et destinatrices
 - Bucquage
     - La méthode save est surchargée pour mettre à jour le solde du consommateur. Si la fonction testdebit renvoie True,
       alors la fonction debit est appelée et la ligne d'History rajoutée.
@@ -217,9 +224,8 @@ Comme vu précédemment, les consommateurs et produits sont créés via l'interf
 corresponde à nos besoins, certaines fonctions ont été surchargées dans `admin.py`. Hors superuser (qui peut tout
 faire !), les règles sont les suivantes :
 
-- Il n'est possible de modifier un produit que si l'utilisateur dispose de la permission change_produit ET qu'il fait
-  parti de l'entité du produit créé. Ce test est fait en surchargeant la méthode "has_change_permission"
-- sur la page de création d'un produit, la dropdown ne propose que les valeurs pour lesquelles l'utilisateur peut créer
+- Il n'est possible de modifier un produit que si l'utilisateur dispose de la permission produit_super_manager. Ce test est fait en surchargeant la méthode "has_change_permission".
+- Sur la page de création d'un produit, la dropdown ne propose que les valeurs pour lesquelles l'utilisateur peut créer
   un produit (uniquement ses groupes d'entité). Cette initialisation est faite en surchargeant la méthode
   formfield_for_foreignkey
 
