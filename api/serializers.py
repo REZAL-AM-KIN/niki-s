@@ -172,7 +172,7 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
             produit = Produit.objects.get(id=validated_data["id_produit"])
             validated_data.pop("id_produit")
         except Produit.DoesNotExist:
-            raise serializers.ValidationError("Cannot resolve product name")
+            raise serializers.ValidationError("Cannot resolve product id")
         if consommateur.activated is False:
             raise serializers.ValidationError("Consommateur is not activated")
         if consommateur.solde - produit.prix < 0:
@@ -187,6 +187,7 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
             validated_data["prix_produit"] = produit.prix
             validated_data["entite_produit"] = produit.entite
             validated_data["initiateur_evenement"] = Utilisateur.objects.get(id=request.user.pk)
+            produit.bucquage()
             return Bucquage.objects.create(**validated_data)
         else:
             raise serializers.ValidationError("Cannot sell this product")

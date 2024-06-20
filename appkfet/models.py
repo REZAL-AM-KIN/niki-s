@@ -72,6 +72,11 @@ class Produit(models.Model):
             self.stock = 0
         super(Produit, self).save(*args, **kwargs)
 
+    def bucquage(self):
+        if self.suivi_stock:
+            self.stock -= 1
+            self.save()
+
 
 class Recharge(models.Model):
     CHOIX_METHODE = [
