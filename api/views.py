@@ -9,6 +9,7 @@ from api.serializers import *
 from api.permissions import AllowedIP, AllowedIPEvenSaveMethods, get_client_ip, EditEventPermission, \
     EditProductEventPermission, BucquageEventPermission, RequiersConsommateur
 
+from django.http.request import QueryDict
 
 
 ########################
@@ -213,16 +214,48 @@ class RechargeLydiaViewSet(viewsets.ModelViewSet):
 # GET : récupère la liste et les informations des tous les fin'ss dont l'utilisateur est gestionnaire.
 # POST : Ajoute un evenement (sous permissions addEvent)
 class EventViewSet(viewsets.ModelViewSet):
-    serializer_class = EventSerializer
     permission_classes = (RequiersConsommateur, EditEventPermission,)  #On combine les permissions de bases et la perm custom pour overide uniquement les permissions de modification d'objet
     http_method_names = ["get", "options", "post", "patch", "put", "delete"]
+
+    def get_serializer_class(self):
+        if "fermeture_prebucquage" in self.action:
+            return FermeturePrebucquageEventSerializer
+        return EventSerializer
 
     def get_queryset(self):
         user = Utilisateur.objects.get(pk=self.request.user.pk)
         if user.has_perm("appevents.event_super_manager") or user.is_superuser:
             return Event.objects.all()
 
-        return Event.objects.filter(ended=False) # Si c'est un utilisateur Lambda, il ne peut voir que les Event non cloturé
+        return Event.objects.filter(~Q(etat_event=Event.EtatEventChoices.TERMINE)) # Si c'est un utilisateur Lambda, il ne peut voir que les Event non cloturé
+
+
+
+    @action(methods=['POST'], detail=False)
+    def fermeture_prebucquage(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        event = Event.objects.get(pk=serializer.validated_data["id"])
+        serializer.fermeture_prebucquage(serializer.validated_data)
+        headers = self.get_success_headers(serializer.data)
+        return Response({'status': 'Prébucquage fermé pour "'+event.titre+'"'}, status=status.HTTP_200_OK, headers=headers)
+
+
+    # GET : Affiche la liste
+    @fermeture_prebucquage.mapping.get
+    def fermeture_prebucquage_list(self, request):
+        user = Utilisateur.objects.get(pk=request.user.pk)
+        if user.has_perm("appevents.event_super_manager") or user.is_superuser:
+            queryset = Event.objects.filter(etat_event=Event.EtatEventChoices.PREBUCQUAGE)
+        else:
+            consommateur = Consommateur.objects.get(consommateur=request.user)
+            queryset = Event.objects.filter(
+                Q(etat_event=Event.EtatEventChoices.PREBUCQUAGE)
+                & Q(managers=consommateur)
+            )
+        serializer = self.get_serializer(instance=queryset, many=True)
+        return Response(serializer.data)
+
 
 
 # GET : renvoi tous les produits dont l'utilisateur peut gérer le fin'ss.
@@ -241,7 +274,7 @@ class ProductEventViewSet(viewsets.ModelViewSet):
         if self.request.user.has_perm("appevents.event_super_manager") or self.request.user.is_superuser:
             self.queryset = self.queryset
         else:
-            self.queryset = self.queryset.filter(parent_event__ended=False)
+            self.queryset = self.queryset.filter(~Q(parent_event__etat_event=Event.EtatEventChoices.TERMINE))
 
         if finss_id is None:
             return self.queryset
@@ -276,7 +309,7 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
             if self.request.user.has_perm("appevents.event_super_manager") \
                     or self.request.user.is_superuser:
                 obj = Consommateur.objects.filter(
-                    participation_event__product_participation__parent_event__ended=False
+                    participation_event__product_participation__parent_event__etat_event__lt=Event.EtatEventChoices.TERMINE
                     ).distinct()
                 return obj
 
@@ -284,19 +317,24 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
             # sur un fin'ss en cours managé par l'utilisateur
             if Event.objects.filter(managers=consommateur).count() != 0:
                 return Consommateur.objects.filter(
-                    Q(participation_event__product_participation__parent_event__ended=False) &
+                    Q(participation_event__product_participation__parent_event__etat_event__lt=Event.EtatEventChoices.TERMINE) &
                     Q(participation_event__product_participation__parent_event__managers=consommateur)
-                )
+                ).distinct()
+            return Consommateur.objects.none()
 
         # Si c'est une autre action que list alors on renvoie la liste de toutes les participations de fin'ss actif
-        return ParticipationEvent.objects.filter(product_participation__parent_event__ended=False)
+        return ParticipationEvent.objects.filter(product_participation__parent_event__etat_event__lt=Event.EtatEventChoices.TERMINE)
 
     # On permet la création de plusieurs objets en une seule fois
     # et l'édition d'un objet via le post (car perform_create appelle la méthode save du serializer)
     def create(self, request, *args, **kwargs):
         success = []
         errors = []
-        for data in request.data:
+        if type(request.data) is QueryDict:
+            datas = [request.data]
+        else:
+            datas = request.data
+        for data in datas:
             serializer = self.get_serializer(data=data)
             if serializer.is_valid():
                 if not self.request.user.has_perm("appevents.event_super_manager") \
@@ -385,7 +423,7 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
     def debucquage_list(self, request):
         queryset = ParticipationEvent.objects.filter(
             Q(participation_debucquee=True)
-            & Q(product_participation__parent_event__ended=False)
+            & Q(product_participation__parent_event__etat_event__lt=Event.EtatEventChoices.TERMINE)
         )
         serializer = ParticipationEventSerializer(instance=queryset, many=True)
         return Response(serializer.data)
@@ -397,7 +435,7 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
 
         myparticipations = ParticipationEvent.objects.filter(
             Q(cible_participation=consommateur)
-            & Q(product_participation__parent_event__ended=False)
+            & Q(product_participation__parent_event__etat_event__lt=Event.EtatEventChoices.TERMINE)
         )
 
         finss_id = request.query_params.get("finss", None)

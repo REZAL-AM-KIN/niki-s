@@ -228,8 +228,7 @@ class EventSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Event
-        fields = ("id", "titre", "description", "can_subscribe", "date_event", "ended", "can_manage", "is_prebucque",
-                  "managers")
+        fields = ("id", "titre", "description", "date_event", "can_manage", "is_prebucque", "etat_event", "managers")
 
     # Regarde si l'utilisateur qui fait la requete est dans la liste des managers
     def get_can_manage(self, obj):
@@ -313,6 +312,31 @@ class ParticipationEventSerializer(serializers.HyperlinkedModelSerializer):
 
 
 # Serializer pour les débucquages
+class FermeturePrebucquageEventSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.IntegerField()
+    class Meta:
+        model = Event
+        fields = ("id", "titre", "description", "date_event")
+        read_only_fields = ["titre", "description", "date_event"]
+
+    def validate_id(self, value):
+        if type(value) is not int:
+            raise serializers.ValidationError("L'id doit être un entier")
+        try:
+            event = Event.objects.get(pk=value)
+            if event.etat_event != Event.EtatEventChoices.PREBUCQUAGE:
+                raise serializers.ValidationError("L'event n'est pas en mode prébucquage")
+        except Event.DoesNotExist:
+            raise serializers.ValidationError("L'id ne correspond à aucun event")
+        return value
+
+    def fermeture_prebucquage(self, validated_data):
+        event = Event.objects.get(pk=validated_data["id"])
+        event.mode_bucquage()
+        return event
+
+
+# Serializer pour les débucquages
 class DebucquageEventSerializer(serializers.Serializer):
     participation_id = serializers.IntegerField(default=-1)
     negatss = serializers.BooleanField(default=False)
@@ -341,7 +365,7 @@ class BucquageEventSerializer(ConsommateurSerializer):
         request = self.context.get("request")
         queryset = ParticipationEvent.objects.filter(
             Q(cible_participation=consommateur)
-            & Q(product_participation__parent_event__ended=False)
+            & ~Q(product_participation__parent_event__etat_event=Event.EtatEventChoices.TERMINE)
         )
 
         # Dans le cas ou l'utilisateur n'est pas superuser ou supermanager, il faut que les participations affichées
@@ -352,6 +376,8 @@ class BucquageEventSerializer(ConsommateurSerializer):
             managed_events = Event.objects.filter(managers=requester_consom)
             if managed_events.count() != 0:
                 queryset = queryset.filter(product_participation__parent_event__in=managed_events)
+            else:
+                queryset = queryset.none()
 
         finss_id = request.query_params.get("finss", None)
 

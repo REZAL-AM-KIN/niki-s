@@ -9,16 +9,25 @@ def end(modeladmin, request, queryset):
     for finss in queryset:
         finss.end()
 
-@admin.action(description="Decloture les fin'ss sélectionnés")
-def active(modeladmin, request, queryset):
+@admin.action(description="Passage en mode Prébucquage des fin'ss sélectionnés")
+def prebucquage(modeladmin, request, queryset):
     for finss in queryset:
-        finss.ended = False
-        finss.save()
+        finss.mode_prebucquage()
+
+@admin.action(description="Passage en mode Bucquage des fin'ss sélectionnés")
+def bucquage(modeladmin, request, queryset):
+    for finss in queryset:
+        finss.mode_bucquage()
+
+@admin.action(description="Passage en mode Débucquage des fin'ss sélectionnés")
+def debucquage(modeladmin, request, queryset):
+    for finss in queryset:
+        finss.mode_debucquage()
 
 @admin.register(Event)
 class AdminEvent(admin.ModelAdmin):
-    list_display = ("titre", "date_event", "can_subscribe", "ended", "created_by")
-    actions = [end, active]
+    list_display = ("titre", "date_event", "etat_event", "created_by")
+    actions = [end, prebucquage, bucquage, debucquage]
 
     # Surcharge de la méthode de sauvegarde des objets Event (uniquement dans la Console d'admin) afin d'ajouter
     # l'utilisateur qui a créé l'évènement
@@ -66,7 +75,7 @@ class AdminProductEvent(admin.ModelAdmin):
     # uniquement les events non terminés et que j'ai créé
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "parent_event":
-            qs = Event.objects.filter(ended=False)
+            qs = Event.objects.filter(etat_event__lt=Event.EtatEventChoices.TERMINE)
             if not request.user.is_superuser:
                 qs = qs.filter(created_by=request.user)
             kwargs["queryset"] = qs

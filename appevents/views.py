@@ -24,7 +24,7 @@ from .forms import BucqueEventForm, ParticipationEventForm
 @user_passes_test(has_consommateur)
 def list_events(request):
     list_of_event_subscribed = []
-    list_to_display = Event.objects.filter(Q(can_subscribe=True) & Q(ended=False))
+    list_to_display = Event.objects.filter(Q(etat_event=Event.EtatEventChoices.PREBUCQUAGE))
     consommateur = Consommateur.objects.get(consommateur=request.user)
     participation_event_subscribed_list = ParticipationEvent.objects.filter(
         cible_participation=consommateur
@@ -46,7 +46,7 @@ def list_events(request):
 @user_passes_test(has_consommateur)
 def sub_event(request, params, step):
     event_to_subscribe = Event.objects.get(pk=params)
-    if event_to_subscribe.can_subscribe is False:
+    if event_to_subscribe.etat_event_choices != Event.EtatEventChoices.PREBUCQUAGE:
         messages.error(request, "Les inscriptions à cet évènement sont fermées")
         return redirect(list_events)
     product_list_to_choose = ProductEvent.objects.filter(
@@ -207,7 +207,7 @@ def export_participation_in_xls(request, event):
 @login_required
 @user_passes_test(lambda u: u.has_perm("appkfet.can_add_bucquage"))
 def list_events_to_bucque(request):
-    list_of_event_to_bucque = Event.objects.filter(ended=False)
+    list_of_event_to_bucque = Event.objects.filter(etat_event__lt=Event.EtatEventChoices.TERMINE)
     return render(
         request, "appevents/listeventstobucque.html", {"list": list_of_event_to_bucque}
     )

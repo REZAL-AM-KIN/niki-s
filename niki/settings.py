@@ -177,7 +177,7 @@ SIMPLE_JWT = {
 
 # CORS: https://github.com/adamchainz/django-cors-headers
 if PROD:
-    CORS_ALLOWED_ORIGINS = URL_CORS.split(" ") if " " in (URL_CORS := getenv("URL_CORS", "")) else URL_CORS
+    CORS_ALLOWED_ORIGINS = URL_CORS.split(" ") if " " in (URL_CORS := getenv("URL_CORS", "")) else [URL_CORS]
 else:
     # FOR DEV ONLY!!
     CORS_ALLOW_ALL_ORIGINS = True

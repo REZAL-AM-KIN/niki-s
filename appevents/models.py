@@ -12,14 +12,20 @@ from appuser.models import Utilisateur
 class Event(models.Model):
     titre = models.CharField(max_length=50)
     description = models.CharField(max_length=200)
-    can_subscribe = models.BooleanField(
-        default=True, verbose_name="Ouvert au pré-bucquage"
-    )
     date_event = models.DateTimeField()
     created_by = models.ForeignKey(
         User, on_delete=CASCADE, editable=False, verbose_name="Créé par", related_name="created_by"
     )
-    ended = models.BooleanField(default=False, verbose_name="Evènement terminé")
+
+    class EtatEventChoices(models.IntegerChoices):
+        PREBUCQUAGE = 1, "Prébucquage"
+        BUCQUAGE = 2, "Bucquage"
+        DEBUCQUAGE = 3, "Débucquage"
+        TERMINE = 4, "Terminé"
+
+    etat_event = models.PositiveSmallIntegerField(
+        choices=EtatEventChoices.choices, default=EtatEventChoices.PREBUCQUAGE, verbose_name="Etat de l'évènement", editable=False
+    )
 
     # Les managers sont des consommateurs plutôt que des User car les user sans consommateur ne peuvent pas intéragir
     # avec le front kfet
@@ -34,7 +40,19 @@ class Event(models.Model):
         ]
 
     def end(self, *args, **kwargs):
-        self.ended = True
+        self.etat_event = self.EtatEventChoices.TERMINE
+        self.save()
+
+    def mode_bucquage(self, *args, **kwargs):
+        self.etat_event = self.EtatEventChoices.BUCQUAGE
+        self.save()
+
+    def mode_debucquage(self, *args, **kwargs):
+        self.etat_event = self.EtatEventChoices.DEBUCQUAGE
+        self.save()
+
+    def mode_prebucquage(self, *args, **kwargs):
+        self.etat_event = self.EtatEventChoices.PREBUCQUAGE
         self.save()
 
 
@@ -78,7 +96,7 @@ class ParticipationEvent(models.Model):
         return self.pk
 
     """
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs):http://localhost:8000/api/bucquagevent/3/
         if self.participation_ok is True and self.participation_bucquee is False:
             prix_total = Decimal(self.number) * self.product_participation.prix
             if Consommateur.testdebit(self.cible_participation, prix_total):
