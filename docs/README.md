@@ -233,20 +233,43 @@ car il serait trop facile de tricher ou de faire une erreur !
 
 Cette application a pour but de gérer les évènements organisés à KIN et surtout les fin's. L'objectif est de créer des
 évènements (Event), composés de produits (Product_Event) obligatoires ou non et que les utilisateurs (Consommateur)
-puissent s'y inscrire (Participation_Event). Un évènement peut être ouvert à l'inscription ou pas, terminé ou pas.
-La liste des évènements peut être consultable sur l'interface de la solution. Il sera aussi possible de générer le lien
+puissent s'y inscrire (Participation_Event). 
+Un évènement peut être dans 4 états, qui se suivent chronologiquement :
+- prébucquage : les inscriptions sont ouvertes. Les prébucquages servent généralement pour dimensionner les appro.
+- bucquage : Pendant le service. Les inscriptions sont fermées.
+- débucquage : Après le service. L'event est dans cet état quand certains consommateurs ont déjà été débucqué (montant 
+  débité sur leur compte kfet). Dans cet état, il ne faut pas que les bucquages puissent être modifiés, car le coût de
+  chaque produit est calculé en fonction du nombre total de bucquage
+- ended : Quand le débucquage est terminé. L'event n'apparaitra plus dans la liste des évènements, sauf permission avancé
+
+La gestion courante des events passe par le site kfet grâce à l'API.
+Des modifications avancés sont possible sur l'interface admin de django.
+(TODO or TODELETE) La liste des évènements peut être consultable sur l'interface de la solution. Il sera aussi possible de générer le lien
 d'inscription, de le poster sur un groupe Facebook pour que les gens puissent s'inscrire directement.
 La solution proposera ensuite une interface permettant d'exporter les participations. Cet export permettra de valider
 les présents, d'en rajouter ou d'en supprimer. Le fichier modifié sera réimporté dans la solution qui validera ou non
 les bucquages.
 
+
 Fonctionnellement :
 
-- la création des évènements et des produits de ces évènements est faite via l'interface admin de django. Lorsqu'un
-  évènement est terminé il est passé à "ended"=False par son créateur ou un administrateur. Cette partie n'est
-  accessible qu'au groupe "Event Manager" (par exemple) qui dispose des permissions create_event, change_event,
-  create_product_event, change_product_event, delete_product_event
-- l'inscription et le bucquage sont faits via la solution.
+- la création des évènements et des produits de ces évènements est faite via l'API avec un front (kfet) ou l'interface
+  admin de django. Cette partie n'est accessible qu'au groupe "Event Manager" (par exemple) qui dispose des permissions
+  create_event, change_event, create_product_event, change_product_event, delete_product_event
+- L'inscription (prébucquage) sont faits via l'API. Il faut juste un compte consommateur.
+  La fermeture de l'inscription est faite via l'API. Seul les managers de l'évènement peuvent le faire.
+- Le bucquage est fait via l'API. Seul les managers de l'évènement peuvent le faire.
+  Egalement, on vérifie que l'on est bien dans l'état bucquage
+- Le débucquage est fait via l'API. Seul les utilisateurs avaec une certaine permission à déterminer peuvent le faire.
+  On peut débucquer en négatif si l'utilisateur qui effectue l'action a la permission.
+  Egalement, on vérifie que l'on est bien dans l'état débucquage. Si ce n'est pas le cas, une autre possibilité: on est 
+  dans l'état bucquage. Dans ce cas, l'event est passé dans l'état débucquage.
+- la cluture de l'évènement est faite via l'API. Seul les utilisateurs avaec une certaine permission à déterminer peuvent
+  le faire. Il faut que l'event soit dans létat débucquage. On vérifier aussi que les bucquages ont été débucqués.
+
+Le changement de l'état d'un event peut se faire à travers l'interface admin django, mais elle se fait sans vérification
+de conditions de changement d'état. (donc danger)
+
 
 ### Views
 

@@ -145,7 +145,7 @@ class BucquageEventPermission(permissions.BasePermission):
         if view.action == "create":
             return True
 
-        if view.action == "debucquage":
+        if view.action == "debucquage" or view.action == "debucquage_list":
             if user.has_perm("appevents.event_super_manager"):  #Si l'user à la perm d'admin des fin'ss alors on laisse débucquer
                 return True
 

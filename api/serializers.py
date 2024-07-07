@@ -347,6 +347,15 @@ class DebucquageEventSerializer(serializers.Serializer):
     def create(self, validated_data):
         pass
 
+    def validate_participation_id(self, value):
+        if type(value) is not int:
+            raise serializers.ValidationError("L'id doit être un entier")
+        try:
+            participation = ParticipationEvent.objects.get(pk=value)
+        except ParticipationEvent.DoesNotExist:
+            raise serializers.ValidationError("L'id ne correspond à aucune participation")
+        return value
+
 
 # Serializer pour l'affichage des bucquages classés par consommateur
 class BucquageEventSerializer(ConsommateurSerializer):

@@ -293,7 +293,7 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "list":
             return BucquageEventSerializer
-        if self.action in ["debucquer", "debucquage"]:
+        if self.action == "debucquage":
             return DebucquageEventSerializer
 
         return ParticipationEventSerializer
@@ -330,7 +330,7 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         success = []
         errors = []
-        if type(request.data) is QueryDict:
+        if type(request.data) is QueryDict or type(request.data) is dict:
             datas = [request.data]
         else:
             datas = request.data
@@ -355,53 +355,29 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
         else:
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(methods=['POST'], detail=True)
-    def debucquer(self, request, pk=None):
-        user = Utilisateur.objects.get(pk=request.user.pk)
-        try:
-            participation = ParticipationEvent.objects.get(pk=pk)
-        except ParticipationEvent.DoesNotExist:
-            return Response({"Cannot resolve participation"}, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = DebucquageEventSerializer(data=request.data)
-
-        if serializer.is_valid():
-            debucquage = participation.debucquage(user, serializer.validated_data.get("negatss"))
-            if debucquage is True:
-                return Response({'status': 'Participation débucquée'}, status=status.HTTP_200_OK)
-            else:
-                return Response({debucquage}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
     # TODO : Delete ou pas de création si quantité = 0
     ### /bucquage/ ###
-    # POST : Prends une liste de Debucquage format: [{id_participation:<id>, (optionel) negats:<True|False>}, ... ]
+    # POST : Prends une liste de Debucquage format: [{id_participation:<id>, (optionel) negats:<True|False>}, ... ] ou
+    # simplement {id_participation:<id>, (optionel) negats:<True|False>}
     @action(methods=['POST'], detail=False)
     def debucquage(self, request):
         user = Utilisateur.objects.get(pk=request.user.pk)
+
         success = []
         errors = []
 
-        serializer = DebucquageEventSerializer(data=request.data, many=True)
+        if type(request.data) is QueryDict or type(request.data) is dict:
+            datas = [request.data]
+        else:
+            datas = request.data
+
+        serializer = DebucquageEventSerializer(data=datas, many=True, context={'request': request})
 
         if serializer.is_valid():
-            for p in serializer.validated_data:
-                participation_id = p.get("participation_id")
-                if participation_id == -1:
-                    return Response({"All participation_id must be specified"}, status=status.HTTP_400_BAD_REQUEST)
-
-                try:
-                    participation = ParticipationEvent.objects.get(pk=participation_id)
-                except ParticipationEvent.DoesNotExist:
-                    errors.append({
-                        "participation_id": participation_id,
-                        "error": "Cannot resolve participation"
-                    })
-                    continue
-
-
-                debucquage = participation.debucquage(user, p.get("negatss"))
+            for p_data in serializer.validated_data:
+                participation_id = p_data.get("participation_id")
+                participation = ParticipationEvent.objects.get(pk=participation_id)
+                debucquage = participation.debucquage(user, p_data.get("negatss"))
                 if debucquage is True:
                     success.append({
                         "participation_id": participation_id,
@@ -412,20 +388,29 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
                         "participation_id": participation_id,
                         "error": debucquage
                     })
-
-            return Response({"success": success, "errors": errors})
+            if len(errors) > 0:
+                resp_status = status.HTTP_400_BAD_REQUEST
+            else:
+                resp_status = status.HTTP_200_OK
+            return Response({"success_count": len(success), "errors_count": len(errors), "success": success,
+                             "errors": errors}, status=resp_status)
 
         else:
+            errors=[]
+            for index in range(len(serializer.data)):
+                err = serializer.errors[index]
+                if err != {}:
+                    errors.append({"participation_id": serializer.data[index].get("participation_id"),
+                                    "status": err})
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # GET : Affiche la liste
     @debucquage.mapping.get
     def debucquage_list(self, request):
         queryset = ParticipationEvent.objects.filter(
-            Q(participation_debucquee=True)
-            & Q(product_participation__parent_event__etat_event__lt=Event.EtatEventChoices.TERMINE)
+            Q(product_participation__parent_event__etat_event=Event.EtatEventChoices.DEBUCQUAGE)
         )
-        serializer = ParticipationEventSerializer(instance=queryset, many=True)
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
     # Affiche la liste des participations de l'utilisateur connecté
@@ -445,5 +430,5 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
             if finss_id.isdigit():
                 myparticipations = myparticipations.filter(product_participation__parent_event__pk=finss_id)
 
-        serializer = ParticipationEventSerializer(instance=myparticipations, many=True)
+        serializer = self.get_serializer(myparticipations, many=True)
         return Response(serializer.data)

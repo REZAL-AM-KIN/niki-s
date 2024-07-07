@@ -37,6 +37,7 @@ class Event(models.Model):
     class Meta:
         permissions = [
             ("event_super_manager", "Autorise l'administration de tous les évenements."),
+            ("event_debucquage_negats", "Autorise le débucquage des produits d'un évenement en négatif."),
         ]
 
     def end(self, *args, **kwargs):
@@ -116,24 +117,31 @@ class ParticipationEvent(models.Model):
         else:
             super(ParticipationEvent, self).save(*args, **kwargs)"""
 
-    def debucquage(self, debucqueur, negats=False):
-        if self.quantity == 0:
-            return "Nothing to debucque"
 
-        if self.participation_bucquee is False:
-            return "Participation is not bucquée"
+    def test_debucquage(self, debucqueur, negats=False):
+        if self.product_participation.parent_event.etat_event != Event.EtatEventChoices.DEBUCQUAGE:
+            return "L'event n'est pas en mode débucquage"
+        if not self.participation_bucquee:
+            return "La participation n'est pas bucquée"
         if self.participation_debucquee:
-            return "Participation already débucquée"
-
+            return "La participation est déjà débucquée"
         if self.cible_participation.activated is False:
-            return "Consommateur is not activated"
+            return "Consommateur désactivé"
+        if negats and not debucqueur.has_perm("appevents.event_debucquage_negats"):
+            return "Vous n'avez pas la permission de débucquer en négatif"
+        return True
 
-        #TODO : vérifiction de permission de débucquage negat'ss
+    def debucquage(self, debucqueur, negats=False):
+        res = self.test_debucquage(debucqueur, negats)
+        if res is not True:
+            return res
 
+        if self.quantity == 0:
+            self.participation_debucquee = True
+            self.save()
+            return True
 
         produit = self.product_participation
-
-
         prix_total = produit.getPrixUnitaire()*Decimal(self.quantity)
 
         if Consommateur.testdebit(self.cible_participation, prix_total) or negats:
@@ -150,5 +158,5 @@ class ParticipationEvent(models.Model):
                 date_evenement=self.product_participation.parent_event.date_event,
             )
             return True
-        return "Consommateur has not enough money"
+        return "Le consommateur n'a pas assez d'argent"
 
