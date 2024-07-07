@@ -9,7 +9,7 @@ from datetime import date
 
 from django.contrib.auth.models import User, Group
 from django.db import models
-
+from django.apps import apps
 
 from db import WITHLDAP
 from django.db.models.signals import post_save, post_delete, m2m_changed
@@ -61,14 +61,25 @@ class Utilisateur(User):
     # Entities est considéré comme un attribut de l'utilisateur
     @property
     def entities(self):
-        from appkfet.models import Entity
-        return Entity.objects.filter(groups__in=self.groups.all()).distinct()
+        Entity = apps.get_model("appkfet", "Entity", require_ready=True)
+        return Entity.objects.filter(models.Q(groups__in=self.groups.all()) | models.Q(groups_management__in=self.groups.all())).distinct()
+
+    #fonction entities_manageable renvoyant la liste des entités que l'utilisateur peut gérer en passant par ses groupes
+    #entities_manageable est considéré comme un attribut de l'utilisateur
+    @property
+    def entities_manageable(self):
+        Entity = apps.get_model("appkfet", "Entity", require_ready=True)
+        if self.has_perm("appkfet.produit_super_manager"):
+            return Entity.objects.all()
+        return Entity.objects.filter(groups_management__in=self.groups.all()).distinct()
+
 
 
 #surcharge du modèle Group de base pour lui rajouter cet attribut d'entité
 class Groupe(Group):
     from appkfet.models import Entity
     entities = models.ManyToManyField(Entity, blank=True, related_name="groups")
+    entities_manageable = models.ManyToManyField(Entity, blank=True, related_name="groups_management")
 
 
 #si l'application fonctionne avec le LDAP, alors : 
