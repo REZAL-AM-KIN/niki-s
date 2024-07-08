@@ -117,6 +117,10 @@ class ParticipationEvent(models.Model):
         else:
             super(ParticipationEvent, self).save(*args, **kwargs)"""
 
+    @property
+    def prix_total(self):
+        return self.product_participation.getPrixUnitaire()*Decimal(self.quantity)
+
 
     def test_debucquage(self, debucqueur, negats=False):
         if self.product_participation.parent_event.etat_event != Event.EtatEventChoices.DEBUCQUAGE:
@@ -141,8 +145,7 @@ class ParticipationEvent(models.Model):
             self.save()
             return True
 
-        produit = self.product_participation
-        prix_total = produit.getPrixUnitaire()*Decimal(self.quantity)
+        prix_total = self.prix_total
 
         if Consommateur.testdebit(self.cible_participation, prix_total) or negats:
             self.participation_debucquee = True

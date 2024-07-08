@@ -1,4 +1,3 @@
-from django.db.models import Q
 from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -374,20 +373,41 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
         serializer = DebucquageEventSerializer(data=datas, many=True, context={'request': request})
 
         if serializer.is_valid():
-            for p_data in serializer.validated_data:
-                participation_id = p_data.get("participation_id")
-                participation = ParticipationEvent.objects.get(pk=participation_id)
-                debucquage = participation.debucquage(user, p_data.get("negatss"))
-                if debucquage is True:
-                    success.append({
-                        "participation_id": participation_id,
-                        "status": "Participation débucquée"
-                    })
+            def message_debucquage_valide(participation_id):
+                return {"participation_id": participation_id, "status": "Participation débucquée"}
+            def message_debucquage_non_valide(participation_id, error):
+                return {"participation_id": participation_id, "error": error}
+
+            # on traite les participations à débucquer par consommateur
+            participations_request = {p_data.get("participation_id"): p_data.get("negatss") for p_data in serializer.validated_data}
+            participations = ParticipationEvent.objects.filter(pk__in=participations_request.keys())
+            consommateurs = {p.cible_participation for p in participations}
+            for consommateur in consommateurs:
+                # on sépare les participations qu'on autorise à débucquer en négatif des autres
+                participations_filter = participations.filter(cible_participation=consommateur)
+                participations_non_negats = participations_filter.filter(pk__in=[p.pk for p in participations_filter if not participations_request[p.pk]])
+                participations_negats = participations_filter.filter(pk__in=[p.pk for p in participations_filter if participations_request[p.pk]])
+
+                # pour les participations qui ne seront pas débucqués en négatif, on regarde si ensemble, elles font passer le consommateur en négatif
+                cout_non_negats = sum([participation.prix_total for participation in participations_non_negats])
+                if consommateur.testdebit(cout_non_negats):
+                    for participation in participations_non_negats:
+                        debucquage = participation.debucquage(user, False)
+                        if debucquage is True:
+                            success.append(message_debucquage_valide(participation.id))
+                        else:
+                            errors.append(message_debucquage_non_valide(participation.id, debucquage))
                 else:
-                    errors.append({
-                        "participation_id": participation_id,
-                        "error": debucquage
-                    })
+                    errors.extend([message_debucquage_non_valide(p.pk, "Le consommateur n'a pas assez d'argent") for p in participations_non_negats])
+
+                # on débucque ensuite les participations du consommateur qu'on autorise à être débucquée en négatif.
+                for participation in participations_negats:
+                    debucquage = participation.debucquage(user, True)
+                    if debucquage is True:
+                        success.append(message_debucquage_valide(participation.id))
+                    else:
+                        errors.append(message_debucquage_non_valide(participation.id, debucquage))
+
             if len(errors) > 0:
                 resp_status = status.HTTP_400_BAD_REQUEST
             else:

@@ -356,6 +356,13 @@ class DebucquageEventSerializer(serializers.Serializer):
             raise serializers.ValidationError("L'id ne correspond à aucune participation")
         return value
 
+    def validate(self, data):
+        participation = ParticipationEvent.objects.get(pk=data["participation_id"])
+        res_test = participation.test_debucquage(self.context.get("request").user, data["negatss"])
+        if res_test is not True:
+            raise serializers.ValidationError({data["participation_id"]: res_test})
+        return data
+
 
 # Serializer pour l'affichage des bucquages classés par consommateur
 class BucquageEventSerializer(ConsommateurSerializer):
