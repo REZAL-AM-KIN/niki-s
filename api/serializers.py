@@ -364,6 +364,32 @@ class DebucquageEventSerializer(serializers.Serializer):
         return data
 
 
+class PrebucquageEventSerializer(serializers.ModelSerializer):
+    cible_participation = serializers.PrimaryKeyRelatedField(queryset=Consommateur.objects.all())
+    product_participation = serializers.PrimaryKeyRelatedField(queryset=ProductEvent.objects.all())
+    prebucque_quantity = serializers.IntegerField(min_value=0)
+
+    class Meta:
+        model = ParticipationEvent
+        fields = ("id", "cible_participation", "product_participation", "prebucque_quantity")
+
+    def create(self, validated_data):
+        print(validated_data)
+        if validated_data["prebucque_quantity"] == 0:
+            try:
+                participation = ParticipationEvent.objects.get(cible_participation=validated_data.get("cible_participation"),
+                                                               product_participation=validated_data.get("product_participation"))
+                participation.delete()
+            except ParticipationEvent.DoesNotExist:
+                pass
+            return ParticipationEvent.objects.none()
+
+        participation, created = ParticipationEvent.objects.update_or_create(
+            cible_participation=validated_data.get("cible_participation"),
+            product_participation=validated_data.get("product_participation"), defaults=validated_data)
+        return participation
+
+
 # Serializer pour l'affichage des bucquages classés par consommateur
 class BucquageEventSerializer(ConsommateurSerializer):
     consommateur_id = serializers.IntegerField(source="id", read_only=True)

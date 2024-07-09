@@ -294,6 +294,8 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
             return BucquageEventSerializer
         if self.action == "debucquage":
             return DebucquageEventSerializer
+        if self.action == "prebucquage" or self.action == "prebucquage_list":
+            return PrebucquageEventSerializer
 
         return ParticipationEventSerializer
 
@@ -354,7 +356,52 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
         else:
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # TODO : Delete ou pas de création si quantité = 0
+    @action(methods=['POST'], detail=False)
+    def prebucquage(self, request):
+        user = Utilisateur.objects.get(pk=request.user.pk)
+        success = []
+        errors = []
+
+        if type(request.data) is QueryDict or type(request.data) is dict:
+            datas = [request.data]
+        else:
+            datas = request.data
+        for data in datas:
+            serializer = self.get_serializer(data=data)
+            if serializer.is_valid():
+                if not self.request.user.has_perm("appevents.event_super_manager") and not self.request.user.is_superuser:
+                    if serializer.validated_data.get("cible_participation") != Consommateur.objects.get(consommateur=request.user):
+                        errors.append(["Vous ne pouvez gérer les participation du consommateur d'id " + str(serializer.data.get("cible_participation"))])
+                        continue
+
+                produit_event = serializer.validated_data.get("product_participation")
+                if produit_event.parent_event.etat_event != Event.EtatEventChoices.PREBUCQUAGE:
+                    errors.append(["Les prébucquages sont fermés pour le produit " + str(produit_event.nom)])
+                    continue
+
+                serializer.save()  # gère la création ou édition (ou supression si prebucque_quantity = 0) de la participation
+                if serializer.validated_data.get("prebucque_quantity") != 0:
+                    success.append(serializer.data)
+            else:
+                errors.append(serializer.errors)
+
+        if len(errors) > 0:
+            resp_status = status.HTTP_400_BAD_REQUEST
+        else:
+            resp_status = status.HTTP_200_OK
+        return Response({"success_count": len(success), "errors_count": len(errors), "success": success,
+                         "errors": errors}, status=resp_status)
+
+    # GET : Affiche la liste
+    @prebucquage.mapping.get
+    def prebucquage_list(self, request):
+        queryset = ParticipationEvent.objects.filter(
+            Q(product_participation__parent_event__etat_event=Event.EtatEventChoices.PREBUCQUAGE)
+        )
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
     ### /bucquage/ ###
     # POST : Prends une liste de Debucquage format: [{id_participation:<id>, (optionel) negats:<True|False>}, ... ] ou
     # simplement {id_participation:<id>, (optionel) negats:<True|False>}
@@ -417,11 +464,11 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
 
         else:
             errors=[]
-            for index in range(len(serializer.data)):
+            liste_id = [p_data.get("participation_id") for p_data in datas]
+            for index in range(len(liste_id)):
                 err = serializer.errors[index]
                 if err != {}:
-                    errors.append({"participation_id": serializer.data[index].get("participation_id"),
-                                    "status": err})
+                    errors.append({"participation_id": liste_id[index], "status": err})
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # GET : Affiche la liste

@@ -129,7 +129,9 @@ class EditProductEventPermission(permissions.BasePermission):
 
 
 class BucquageEventPermission(permissions.BasePermission):
-    detail_action = ("retrieve", "update", "partial_update", "destroy")
+    # les utilisateurs qui n'ont pas la permission appevents.event_super_manager ne peuvent pas modifier directement des
+    # entrées avec l'api, ils doivent utiliser les endpoints spéciaux (/bucquagevent/prebucquage/, ...)
+    detail_action = ("retrieve",)
 
     def has_permission(self, request, view):
         user = request.user
@@ -140,17 +142,16 @@ class BucquageEventPermission(permissions.BasePermission):
         if view.action == "list":
             return True
 
-        # Les permissions pour create sont dans l'action create du viewset
-        # (car necessite l'accès aux données du serializer)
-        if view.action == "create":
-            return True
-
         if view.action == "debucquage" or view.action == "debucquage_list":
             if user.has_perm("appevents.event_super_manager"):  #Si l'user à la perm d'admin des fin'ss alors on laisse débucquer
                 return True
 
-        #Tout le monde peut acceder à ses bucquages
+        # Tout le monde peut acceder à ses bucquages
         if view.action == "my_bucquages":
+            return True
+
+        # Tout le monde peut accèdes aux prébucquages (des permissions par objects sont géré dans le viewModel)
+        if view.action == "prebucquage" or view.action == "prebucquage_list":
             return True
 
         # Pour les actions de détail, les perms sont gérées dans has_object_permissions
@@ -164,9 +165,6 @@ class BucquageEventPermission(permissions.BasePermission):
         user = Utilisateur.objects.get(pk=request.user.pk)
         if user.is_superuser or user.has_perm("appevents.event_super_manager"):
             return True
-
-        if view.action == "debucquer":
-            return False
 
         if view.action in self.detail_action:
             requester_consommateur = Consommateur.objects.get(consommateur=user)
