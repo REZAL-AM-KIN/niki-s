@@ -337,9 +337,14 @@ class FermeturePrebucquageEventSerializer(serializers.HyperlinkedModelSerializer
 
 
 # Serializer pour les débucquages
-class DebucquageEventSerializer(serializers.Serializer):
-    participation_id = serializers.IntegerField(default=-1)
-    negatss = serializers.BooleanField(default=False)
+class DebucquageEventSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=False)
+    negatss = serializers.BooleanField(default=False, write_only=True)
+
+    class Meta:
+        model = ParticipationEvent
+        fields = ("id", "cible_participation", "product_participation", "prebucque_quantity", "quantity", "participation_bucquee", "participation_debucquee", "negatss")
+        read_only_fields = ["cible_participation", "product_participation", "prebucque_quantity", "quantity", "participation_bucquee", "participation_debucquee"]
 
     def update(self, instance, validated_data):
         pass
@@ -347,20 +352,18 @@ class DebucquageEventSerializer(serializers.Serializer):
     def create(self, validated_data):
         pass
 
-    def validate_participation_id(self, value):
-        if type(value) is not int:
-            raise serializers.ValidationError("L'id doit être un entier")
+    def validate_id(self, value):
         try:
             participation = ParticipationEvent.objects.get(pk=value)
         except ParticipationEvent.DoesNotExist:
-            raise serializers.ValidationError("L'id ne correspond à aucune participation")
+            raise serializers.ValidationError(f"L'id {value} ne correspond à aucune participation.")
         return value
 
     def validate(self, data):
-        participation = ParticipationEvent.objects.get(pk=data["participation_id"])
+        participation = ParticipationEvent.objects.get(pk=data["id"])
         res_test = participation.test_debucquage(self.context.get("request").user, data["negatss"])
         if res_test is not True:
-            raise serializers.ValidationError({data["participation_id"]: res_test})
+            raise serializers.ValidationError({data["id"]: res_test})
         return data
 
 

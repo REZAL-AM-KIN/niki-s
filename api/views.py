@@ -292,7 +292,7 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "list":
             return BucquageEventSerializer
-        if self.action == "debucquage":
+        if self.action == "debucquage" or self.action == "debucquage_list":
             return DebucquageEventSerializer
         if self.action == "prebucquage" or self.action == "prebucquage_list":
             return PrebucquageEventSerializer
@@ -397,7 +397,6 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
     @action(methods=['POST'], detail=False)
     def debucquage(self, request):
         user = Utilisateur.objects.get(pk=request.user.pk)
-
         success = []
         errors = []
 
@@ -415,7 +414,7 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
                 return {"participation_id": participation_id, "error": error}
 
             # on traite les participations à débucquer par consommateur
-            participations_request = {p_data.get("participation_id"): p_data.get("negatss") for p_data in serializer.validated_data}
+            participations_request = {p_data.get("id"): p_data.get("negatss") for p_data in serializer.validated_data}
             participations = ParticipationEvent.objects.filter(pk__in=participations_request.keys())
             consommateurs = {p.cible_participation for p in participations}
             for consommateur in consommateurs:
