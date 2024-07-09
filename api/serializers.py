@@ -373,6 +373,19 @@ class PrebucquageEventSerializer(serializers.ModelSerializer):
         model = ParticipationEvent
         fields = ("id", "cible_participation", "product_participation", "prebucque_quantity")
 
+    def validate(self, data):
+        print(data)
+        user = self.context['request'].user
+        if not user.has_perm("appevents.event_super_manager") and not user.is_superuser:
+            if data.get("cible_participation") != user:
+                raise serializers.ValidationError({"cible_participation": "Vous ne pouvez gérer les participation du consommateur " + str(
+                    data.get("cible_participation"))})
+
+        if data.get("product_participation").parent_event.etat_event != Event.EtatEventChoices.PREBUCQUAGE:
+            raise serializers.ValidationError({"product_participation": "Les prébucquages sont fermés pour le produit " + str(
+                data.get("product_participation").nom)})
+        return data
+
     def create(self, validated_data):
         print(validated_data)
         if validated_data["prebucque_quantity"] == 0:

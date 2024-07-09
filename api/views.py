@@ -358,7 +358,6 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
 
     @action(methods=['POST'], detail=False)
     def prebucquage(self, request):
-        user = Utilisateur.objects.get(pk=request.user.pk)
         success = []
         errors = []
 
@@ -369,16 +368,6 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
         for data in datas:
             serializer = self.get_serializer(data=data)
             if serializer.is_valid():
-                if not self.request.user.has_perm("appevents.event_super_manager") and not self.request.user.is_superuser:
-                    if serializer.validated_data.get("cible_participation") != Consommateur.objects.get(consommateur=request.user):
-                        errors.append(["Vous ne pouvez gérer les participation du consommateur d'id " + str(serializer.data.get("cible_participation"))])
-                        continue
-
-                produit_event = serializer.validated_data.get("product_participation")
-                if produit_event.parent_event.etat_event != Event.EtatEventChoices.PREBUCQUAGE:
-                    errors.append(["Les prébucquages sont fermés pour le produit " + str(produit_event.nom)])
-                    continue
-
                 serializer.save()  # gère la création ou édition (ou supression si prebucque_quantity = 0) de la participation
                 if serializer.validated_data.get("prebucque_quantity") != 0:
                     success.append(serializer.data)
