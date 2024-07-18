@@ -146,6 +146,10 @@ class BucquageEventPermission(permissions.BasePermission):
             if user.has_perm("appevents.event_super_manager"):  #Si l'user à la perm d'admin des fin'ss alors on laisse débucquer
                 return True
 
+        # Les permissions dépendent de l'event: il faut que l'utilisateur soit manager de l'event
+        if view.action == "bucquage" or view.action == "bucquage_list":
+            return True
+
         # Tout le monde peut acceder à ses bucquages
         if view.action == "my_bucquages":
             return True

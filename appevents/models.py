@@ -133,7 +133,11 @@ class ParticipationEvent(models.Model):
             return "Consommateur désactivé"
         if negats and not debucqueur.has_perm("appevents.event_debucquage_negats"):
             return "Vous n'avez pas la permission de débucquer en négatif"
-        return True
+        if negats or Consommateur.testdebit(self.cible_participation, self.prix_total):
+            return True
+        else:
+            return "Le consommateur n'a pas assez d'argent pour ce produit"
+
 
     def debucquage(self, debucqueur, negats=False):
         res = self.test_debucquage(debucqueur, negats)
@@ -161,5 +165,5 @@ class ParticipationEvent(models.Model):
                 date_evenement=self.product_participation.parent_event.date_event,
             )
             return True
-        return "Le consommateur n'a pas assez d'argent"
+        return "Le consommateur n'a pas assez d'argent pour ce produit"
 

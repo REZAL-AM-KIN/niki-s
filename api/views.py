@@ -291,9 +291,11 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action == "list":
-            return BucquageEventSerializer
+            return BucquageEventDefaultSerializer
         if self.action == "debucquage" or self.action == "debucquage_list":
             return DebucquageEventSerializer
+        if self.action == "bucquage" or self.action == "bucquage_list":
+            return BucquageEventSerializer
         if self.action == "prebucquage" or self.action == "prebucquage_list":
             return PrebucquageEventSerializer
 
@@ -390,8 +392,56 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-
     ### /bucquage/ ###
+    # POST : Prends une liste de Bucquage format: [{id_participation:<id>, (optionel) negats:<True|False>}, ... ] ou
+    # simplement {id_participation:<id>, (optionel) negats:<True|False>}
+    @action(methods=['POST'], detail=False)
+    def bucquage(self, request):
+        user = Utilisateur.objects.get(pk=request.user.pk)
+        success = []
+        errors = []
+
+        if type(request.data) is QueryDict or type(request.data) is dict:
+            datas = [request.data]
+        else:
+            datas = request.data
+        serializer = self.get_serializer(data=datas, many=True, context={'request': request})
+
+        if serializer.is_valid():
+            def message_bucquage_valide(cible_participation_id, product_participation_id):
+                return {"cible_participation_id": cible_participation_id, "product_participation_id": product_participation_id, "status": "Participation bucquée"}
+            def message_bucquage_non_valide(cible_participation_id, product_participation_id, error):
+                return {"cible_participation_id": cible_participation_id, "product_participation_id": product_participation_id, "error": error}
+
+            #TODO: vérification du solde de chaque consommateur par rapport au total des buquages
+
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        else:
+            errors = []
+            liste_ids = [(p_data.get("cible_participation"),p_data.get("product_participation")) for p_data in datas]
+            for index in range(len(liste_ids)):
+                err = serializer.errors[index]
+                if err != {}:
+                    errors.append({"cible_participation": liste_ids[index][0],
+                                   "product_participation": liste_ids[index][1],
+                                   "error(s)": err})
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # GET : Affiche la liste
+    @bucquage.mapping.get
+    def bucquage_list(self, request):
+        queryset = ParticipationEvent.objects.filter(
+            Q(product_participation__parent_event__etat_event=Event.EtatEventChoices.BUCQUAGE)
+        )
+        if not self.request.user.has_perm("appevents.event_super_manager"):
+            consommateur = Consommateur.objects.get(consommateur=self.request.user)
+            queryset = queryset.filter(product_participation__parent_event__managers=consommateur)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    ### /debucquage/ ###
     # POST : Prends une liste de Debucquage format: [{id_participation:<id>, (optionel) negats:<True|False>}, ... ] ou
     # simplement {id_participation:<id>, (optionel) negats:<True|False>}
     @action(methods=['POST'], detail=False)
@@ -465,6 +515,7 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
         queryset = ParticipationEvent.objects.filter(
             Q(product_participation__parent_event__etat_event=Event.EtatEventChoices.DEBUCQUAGE)
         )
+        # pas de filtre supplémentaire car il faut la permission appevents.event_super_manager pour cet endpoint
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
