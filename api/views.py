@@ -257,17 +257,11 @@ class EventViewSet(viewsets.ModelViewSet):
 
         return Event.objects.filter(~Q(etat_event=Event.EtatEventChoices.TERMINE)) # Si c'est un utilisateur Lambda, il ne peut voir que les Event non cloturé
 
-
-
     @action(methods=['PATCH'], detail=True)
     def fermeture_prebucquage(self, request, pk=None):
-        print(request.data)
         event = self.get_object()
         if event.etat_event != Event.EtatEventChoices.PREBUCQUAGE:
             return Response({'status': 'L\'évènement "'+event.titre+'" n\'est pas en prébucquage'}, status=status.HTTP_400_BAD_REQUEST)
-        if not self.request.user.has_perm("appevents.event_super_manager") and not self.request.user.is_superuser:
-            if not Consommateur.objects.get(consommateur=self.request.user) in event.managers.all():
-                return Response({'status': 'Vous n\'avez pas la permission de fermer le prébucquage de "'+event.titre+'"'}, status=status.HTTP_403_FORBIDDEN)
         event.mode_bucquage()
         return Response({'status': 'Prébucquage fermé pour "'+event.titre+'"'}, status=status.HTTP_200_OK)
 
