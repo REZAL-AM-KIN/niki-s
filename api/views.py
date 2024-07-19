@@ -6,7 +6,7 @@ from rest_framework import status
 from api.serializers import *
 
 from api.permissions import AllowedIP, AllowedIPEvenSaveMethods, get_client_ip, EditEventPermission, \
-    EditProductEventPermission, BucquageEventPermission, RequiersConsommateur
+    EditProductEventPermission, BucquageEventPermission, RequiersConsommateur, ProduitPermission
 
 from django.http.request import QueryDict
 
@@ -36,6 +36,7 @@ class PermissionsViewSet(viewsets.ModelViewSet):
             data["ipIdentification"].append(ip.groupe)
         data["groupes"] = user.groups.all()
         data["entities"] = user.entities.all()
+        data["entities_manageable"] = user.entities_manageable.all()
         data["recharge"] = user.has_perm("appkfet.add_recharge")
         serializer = self.get_serializer(data)
         return Response(serializer.data)
@@ -60,9 +61,39 @@ class CurrentUserViewSet(viewsets.ModelViewSet):
 # GET : récupérer tous les produits
 class ProduitViewSet(viewsets.ModelViewSet):
     queryset = Produit.objects.all()
+    http_method_names = ["get", "options", "post", "put", "delete"]
+    permission_classes = (ProduitPermission, RequiersConsommateur)
     serializer_class = ProduitSerializer
+
+
+# récupérer les produits qui appartiennent à une entité d'id donnée
+class ProduitByEntityViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "options"]
     permission_classes = (permissions.DjangoModelPermissions, RequiersConsommateur,)
+    serializer_class = ProduitSerializer
+    lookup_field = "cible_entity"
+
+    def get_queryset(self):
+        if "cible_entity" in self.kwargs:
+            entite_id = self.kwargs["cible_entity"]
+            if not entite_id.isdigit():
+                queryset = Produit.objects.none()
+            else:
+                entite = Entity.objects.filter(pk=entite_id)
+                if entite.count() == 1:
+                    queryset = Produit.objects.filter(
+                        entite=entite[0]
+                    )
+                else:
+                    queryset = Produit.objects.none()
+        else:
+            queryset = Produit.objects.all()
+        return queryset
+
+    def retrieve(self, request, *args, **kwargs):
+        serializer = self.get_serializer(self.get_queryset(), many=True)
+        return Response(data=serializer.data)
+
 
 
 # GET : recuperer les groupes (catégories)
