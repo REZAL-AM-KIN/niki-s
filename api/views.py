@@ -248,8 +248,6 @@ class EventViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "options", "post", "patch", "put", "delete"]
 
     def get_serializer_class(self):
-        if "fermeture_prebucquage" in self.action:
-            return FermeturePrebucquageEventSerializer
         return EventSerializer
 
     def get_queryset(self):
@@ -261,31 +259,17 @@ class EventViewSet(viewsets.ModelViewSet):
 
 
 
-    @action(methods=['POST'], detail=False)
-    def fermeture_prebucquage(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        event = Event.objects.get(pk=serializer.validated_data["id"])
-        serializer.fermeture_prebucquage(serializer.validated_data)
-        headers = self.get_success_headers(serializer.data)
-        return Response({'status': 'Prébucquage fermé pour "'+event.titre+'"'}, status=status.HTTP_200_OK, headers=headers)
-
-
-    # GET : Affiche la liste
-    @fermeture_prebucquage.mapping.get
-    def fermeture_prebucquage_list(self, request):
-        user = Utilisateur.objects.get(pk=request.user.pk)
-        if user.has_perm("appevents.event_super_manager") or user.is_superuser:
-            queryset = Event.objects.filter(etat_event=Event.EtatEventChoices.PREBUCQUAGE)
-        else:
-            consommateur = Consommateur.objects.get(consommateur=request.user)
-            queryset = Event.objects.filter(
-                Q(etat_event=Event.EtatEventChoices.PREBUCQUAGE)
-                & Q(managers=consommateur)
-            )
-        serializer = self.get_serializer(instance=queryset, many=True)
-        return Response(serializer.data)
-
+    @action(methods=['PATCH'], detail=True)
+    def fermeture_prebucquage(self, request, pk=None):
+        print(request.data)
+        event = self.get_object()
+        if event.etat_event != Event.EtatEventChoices.PREBUCQUAGE:
+            return Response({'status': 'L\'évènement "'+event.titre+'" n\'est pas en prébucquage'}, status=status.HTTP_400_BAD_REQUEST)
+        if not self.request.user.has_perm("appevents.event_super_manager") and not self.request.user.is_superuser:
+            if not Consommateur.objects.get(consommateur=self.request.user) in event.managers.all():
+                return Response({'status': 'Vous n\'avez pas la permission de fermer le prébucquage de "'+event.titre+'"'}, status=status.HTTP_403_FORBIDDEN)
+        event.mode_bucquage()
+        return Response({'status': 'Prébucquage fermé pour "'+event.titre+'"'}, status=status.HTTP_200_OK)
 
 
 # GET : renvoi tous les produits dont l'utilisateur peut gérer le fin'ss.
