@@ -248,6 +248,9 @@ class EventViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "options", "post", "patch", "put", "delete"]
 
     def get_serializer_class(self):
+        if self.action in ["fermeture_prebucquage", "fermeture_bucquage", "fermeture_debucquage"]:
+            # On n'a besoin d'aucune donnée dans champ data de la requête
+            return serializers.Serializer
         return EventSerializer
 
     def get_queryset(self):
@@ -261,9 +264,27 @@ class EventViewSet(viewsets.ModelViewSet):
     def fermeture_prebucquage(self, request, pk=None):
         event = self.get_object()
         if event.etat_event != Event.EtatEventChoices.PREBUCQUAGE:
-            return Response({'status': 'L\'évènement "'+event.titre+'" n\'est pas en prébucquage'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'status': 'L\'évènement "'+event.titre+'" n\'est pas en mode prébucquage'}, status=status.HTTP_400_BAD_REQUEST)
         event.mode_bucquage()
         return Response({'status': 'Prébucquage fermé pour "'+event.titre+'"'}, status=status.HTTP_200_OK)
+
+    @action(methods=['PATCH'], detail=True)
+    def fermeture_bucquage(self, request, pk=None):
+        event = self.get_object()
+        if event.etat_event != Event.EtatEventChoices.BUCQUAGE:
+            return Response({'status': 'L\'évènement "'+event.titre+'" n\'est pas en mode bucquage'}, status=status.HTTP_400_BAD_REQUEST)
+        # TODO: vérifier si tout les prébucquages sont passés? (et rajouter un booléen dans les données de la requête pour forcer)
+        event.mode_debucquage()
+        return Response({'status': 'Bucquage fermé pour "'+event.titre+'"'}, status=status.HTTP_200_OK)
+
+    @action(methods=['PATCH'], detail=True)
+    def fermeture_debucquage(self, request, pk=None):
+        event = self.get_object()
+        if event.etat_event != Event.EtatEventChoices.DEBUCQUAGE:
+            return Response({'status': 'L\'évènement "'+event.titre+'" n\'est pas en débucquage'}, status=status.HTTP_400_BAD_REQUEST)
+        # TODO: vérifier si tout les bucquages ont été débucqué
+        event.end()
+        return Response({'status': 'Débucquage fermé pour "'+event.titre+'"'}, status=status.HTTP_200_OK)
 
 
 # GET : renvoi tous les produits dont l'utilisateur peut gérer le fin'ss.

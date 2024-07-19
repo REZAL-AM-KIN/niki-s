@@ -128,8 +128,15 @@ class EditEventPermission(permissions.BasePermission):
             if user.has_perm("appevents.event_super_manager"):  #Si l'user à la perm d'admin des fin'ss alors on laisse éditer
                 return True
 
-            consommateur = Consommateur.objects.get(consommateur=user)
-            return consommateur in obj.managers.all()  #On vérifie que l'utilisateur est dans la liste des managers
+            # pour la fermeture des prebucquages et des bucquages, il suffit que l'utilisateur puis gérer le finss
+            # pour la fermeture complète (passage du mode débucquage au mode ferme), il faut la perm appevents.event_super_manager
+            if view.action == "fermeture_prebucquage" or view.action == "fermeture_bucquage":
+                consommateur = Consommateur.objects.get(consommateur=user)
+                return consommateur in obj.managers.all()
+
+            if view.action == "update" or view.action == "partial_update":
+                consommateur = Consommateur.objects.get(consommateur=user)
+                return consommateur in obj.managers.all()  #On vérifie que l'utilisateur est dans la liste des managers
         return False
 
 

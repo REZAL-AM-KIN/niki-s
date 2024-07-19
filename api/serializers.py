@@ -361,30 +361,6 @@ class ParticipationEventSerializer(serializers.HyperlinkedModelSerializer):
         return participation
 
 
-class FermeturePrebucquageEventSerializer(serializers.HyperlinkedModelSerializer):
-    id = serializers.IntegerField()
-    class Meta:
-        model = Event
-        fields = ("id", "titre", "description", "date_event")
-        read_only_fields = ["titre", "description", "date_event"]
-
-    def validate_id(self, value):
-        if type(value) is not int:
-            raise serializers.ValidationError("L'id doit être un entier")
-        try:
-            event = Event.objects.get(pk=value)
-            if event.etat_event != Event.EtatEventChoices.PREBUCQUAGE:
-                raise serializers.ValidationError("L'event n'est pas en mode prébucquage")
-        except Event.DoesNotExist:
-            raise serializers.ValidationError("L'id ne correspond à aucun event")
-        return value
-
-    def fermeture_prebucquage(self, validated_data):
-        event = Event.objects.get(pk=validated_data["id"])
-        event.mode_bucquage()
-        return event
-
-
 # Serializer pour les débucquages
 class DebucquageEventSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=False)
