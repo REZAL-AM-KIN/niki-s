@@ -27,7 +27,7 @@ def debucquage(modeladmin, request, queryset):
 @admin.register(Event)
 class AdminEvent(admin.ModelAdmin):
     list_display = ("titre", "date_event", "etat_event", "created_by")
-    actions = [end, prebucquage, bucquage, debucquage]
+    actions = [prebucquage, bucquage, debucquage, end]
 
     # Surcharge de la méthode de sauvegarde des objets Event (uniquement dans la Console d'admin) afin d'ajouter
     # l'utilisateur qui a créé l'évènement
