@@ -282,7 +282,12 @@ class EventViewSet(viewsets.ModelViewSet):
         event = self.get_object()
         if event.etat_event != Event.EtatEventChoices.DEBUCQUAGE:
             return Response({'status': 'L\'évènement "'+event.titre+'" n\'est pas en débucquage'}, status=status.HTTP_400_BAD_REQUEST)
-        # TODO: vérifier si tout les bucquages ont été débucqué
+        not_all_debucquees = event.productevent_set.all().filter(
+            Q(participationevent__participation_debucquee=False) & Q(participationevent__participation_bucquee=True)
+        ).exists()
+        if not_all_debucquees:
+            return Response({'status': 'Toutes les participations ne sont pas débucquées pour "' + event.titre + '"'},
+                            status=status.HTTP_400_BAD_REQUEST)
         event.end()
         return Response({'status': 'Débucquage fermé pour "'+event.titre+'"'}, status=status.HTTP_200_OK)
 
