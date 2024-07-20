@@ -42,7 +42,7 @@ class ProductEvent(models.Model):
     parent_event = models.ForeignKey("Event", on_delete=CASCADE)
     nom = models.CharField(max_length=50)
     description = models.CharField(max_length=200, default=None, blank=True)
-    prix_total = models.DecimalField(max_digits=5, decimal_places=2, default=0, blank=True)
+    prix_total = models.DecimalField(max_digits=6, decimal_places=2, default=0, blank=True)
     prix_min = models.DecimalField(max_digits=5, decimal_places=2, default=0, blank=True)
     obligatoire = models.BooleanField(default=False)
 

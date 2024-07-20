@@ -9,6 +9,8 @@ from datetime import date
 
 from django.contrib.auth.models import User, Group
 from django.db import models
+from django.apps import apps
+
 from db import WITHLDAP
 from django.db.models.signals import post_save, post_delete, m2m_changed
 from django.dispatch.dispatcher import receiver
@@ -35,7 +37,7 @@ class Utilisateur(User):
     date_expiration = models.DateField(blank=True, null=True)
     ldap_password=models.CharField(max_length=200, blank=True, editable=False)
     max_devices = models.PositiveIntegerField(default=10, verbose_name="Nombre maximal d'appareil")
-    last_email_date = models.DateField(null=True, default=None, editable=True)
+    last_email_date = models.DateField(null=True, default=None, editable=False)
     
     #surcharge de la méthode set_password pour définir le mot de passe utilisé dans le ldap (hash ssha)
     def set_password(self, password):
@@ -55,10 +57,30 @@ class Utilisateur(User):
     def __unicode__(self):
         return self.username
 
+    #fonction entities renvoyant la liste des entités auxquelles appartient l'utilisateur en passant par ses groupes
+    # Entities est considéré comme un attribut de l'utilisateur
+    @property
+    def entities(self):
+        Entity = apps.get_model("appkfet", "Entity", require_ready=True)
+        return Entity.objects.filter(models.Q(groups__in=self.groups.all()) | models.Q(groups_management__in=self.groups.all())).distinct()
+
+    #fonction entities_manageable renvoyant la liste des entités que l'utilisateur peut gérer en passant par ses groupes
+    #entities_manageable est considéré comme un attribut de l'utilisateur
+    @property
+    def entities_manageable(self):
+        Entity = apps.get_model("appkfet", "Entity", require_ready=True)
+        if self.has_perm("appkfet.produit_super_manager"):
+            return Entity.objects.all()
+        return Entity.objects.filter(groups_management__in=self.groups.all()).distinct()
+
+
+
 #surcharge du modèle Group de base pour lui rajouter cet attribut d'entité
 class Groupe(Group):
-    is_entity = models.BooleanField(default=False)
-    color = models.CharField(max_length=7, default="#000000")
+    from appkfet.models import Entity
+    entities = models.ManyToManyField(Entity, blank=True, related_name="groups")
+    entities_manageable = models.ManyToManyField(Entity, blank=True, related_name="groups_management")
+
 
 #si l'application fonctionne avec le LDAP, alors : 
 if WITHLDAP:

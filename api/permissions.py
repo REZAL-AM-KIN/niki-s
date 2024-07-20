@@ -38,7 +38,58 @@ class AllowedIPEvenSaveMethods(permissions.BasePermission):
     def has_permission(self, request, view):
         return _is_ip_authorized(request)
 
+class RequiersConsommateur(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return Consommateur.objects.filter(consommateur=request.user.pk, activated=True).exists()
 
+#Classe de permissions à combiner avec DjangoModelPermissions --> Autorise la modification des produits en fonction des permissions et entitées possédées par l'utilisateur
+class ProduitPermission(permissions.BasePermission):
+    edit_methods = ("PUT", "PATCH")
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        user = Utilisateur.objects.get(pk=request.user.pk)
+        if user.is_superuser:
+            return True
+
+        if request.method == "GET":
+            return True
+        if request.method == "POST":
+            # on verifie dans le serializer si l'utilisateur peut créer un produit dans l'entité
+            return user.has_perm("appkfet.add_produit")
+
+        if request.method in self.edit_methods or request.method == "DELETE": #la permission va dépendre de l'objet, elle est entièrement gérée par has_object_permission
+            return True
+        return False
+
+    def has_object_permission(self, request, view, obj):
+        # la vérification de connection est faite dans has_permission()
+        user = Utilisateur.objects.get(pk=request.user.pk)
+        if user.is_superuser:
+            return True
+
+        if request.method == "GET":
+            return True
+
+        if request.method in self.edit_methods:           # On s'occupe ici des permissions de modification uniquement
+            if user.has_perm("appkfet.produit_super_manager"):  #Si l'user à la perm d'admin de tout les produits alors on laisse éditer
+                return True
+
+            if user.has_perm("appkfet.change_produit"):
+                #On regarde si l'entité actuelle du produit est dans les entités manageables par l'utilisateur
+                return user.entities_manageable.filter(nom=obj.entite).exists()
+
+        if request.method == "DELETE":           # On s'occupe ici des permissions de modification uniquement
+            if user.has_perm("appkfet.produit_super_manager"):  #Si l'user à la perm d'admin de tout les produits alors on laisse éditer
+                return True
+
+            if user.has_perm("appkfet.delete_produit"):
+                #On regarde si l'entité actuelle du produit est dans les entités manageables par l'utilisateur
+                return user.entities_manageable.filter(nom=obj.entite).exists()
+
+        return False
 
 
 #Classe de permissions à combiner avec DjangoModelPermissions --> Autorise la modification des Events pour les managers

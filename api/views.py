@@ -7,7 +7,7 @@ from rest_framework import status
 from api.serializers import *
 
 from api.permissions import AllowedIP, AllowedIPEvenSaveMethods, get_client_ip, EditEventPermission, \
-    EditProductEventPermission, BucquageEventPermission
+    EditProductEventPermission, BucquageEventPermission, RequiersConsommateur, ProduitPermission
 
 
 
@@ -35,6 +35,8 @@ class PermissionsViewSet(viewsets.ModelViewSet):
         for ip in ips:
             data["ipIdentification"].append(ip.groupe)
         data["groupes"] = user.groups.all()
+        data["entities"] = user.entities.all()
+        data["entities_manageable"] = user.entities_manageable.all()
         data["recharge"] = user.has_perm("appkfet.add_recharge")
         serializer = self.get_serializer(data)
         return Response(serializer.data)
@@ -44,7 +46,7 @@ class PermissionsViewSet(viewsets.ModelViewSet):
 class CurrentUserViewSet(viewsets.ModelViewSet):
     serializer_class = ConsommateurSerializer
     http_method_names = ["get", "options"]
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (permissions.DjangoModelPermissions, RequiersConsommateur,)
     queryset = Consommateur.objects.none()
 
     def list(self, request):
@@ -59,17 +61,47 @@ class CurrentUserViewSet(viewsets.ModelViewSet):
 # GET : récupérer tous les produits
 class ProduitViewSet(viewsets.ModelViewSet):
     queryset = Produit.objects.all()
+    http_method_names = ["get", "options", "post", "put", "delete"]
+    permission_classes = (ProduitPermission, RequiersConsommateur)
     serializer_class = ProduitSerializer
+
+
+# récupérer les produits qui appartiennent à une entité d'id donnée
+class ProduitByEntityViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "options"]
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (permissions.DjangoModelPermissions, RequiersConsommateur,)
+    serializer_class = ProduitSerializer
+    lookup_field = "cible_entity"
+
+    def get_queryset(self):
+        if "cible_entity" in self.kwargs:
+            entite_id = self.kwargs["cible_entity"]
+            if not entite_id.isdigit():
+                queryset = Produit.objects.none()
+            else:
+                entite = Entity.objects.filter(pk=entite_id)
+                if entite.count() == 1:
+                    queryset = Produit.objects.filter(
+                        entite=entite[0]
+                    )
+                else:
+                    queryset = Produit.objects.none()
+        else:
+            queryset = Produit.objects.all()
+        return queryset
+
+    def retrieve(self, request, *args, **kwargs):
+        serializer = self.get_serializer(self.get_queryset(), many=True)
+        return Response(data=serializer.data)
+
 
 
 # GET : recuperer les groupes (catégories)
 class EntiteViewSet(viewsets.ModelViewSet):
-    queryset = Groupe.objects.filter(is_entity=True)
+    queryset = Entity.objects.all()
     serializer_class = EntiteSerializer
-    http_method_names = ["get", "options"]
-    permission_classes = (permissions.DjangoModelPermissions,)
+    http_method_names = ["get", "options", "post", "put", "delete"]
+    permission_classes = (permissions.DjangoModelPermissions, RequiersConsommateur,)
 
 
 # GET : récupérer tous les consommateurs
@@ -77,7 +109,7 @@ class ConsommateurViewSet(viewsets.ModelViewSet):
     queryset = Consommateur.objects.filter(activated=True)
     serializer_class = ConsommateurSerializer
     http_method_names = ["get", "options"]
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (permissions.DjangoModelPermissions, RequiersConsommateur,)
 
 
 # GET : récupérer toutes les recharges pour tous les utilisateurs ou pour un en particulier
@@ -86,7 +118,7 @@ class ConsommateurViewSet(viewsets.ModelViewSet):
 class RechargeViewSet(viewsets.ModelViewSet):
     serializer_class = RechargeSerializer
     http_method_names = ["get", "post", "options"]
-    permission_classes = (permissions.DjangoModelPermissions, AllowedIP,)
+    permission_classes = (permissions.DjangoModelPermissions, RequiersConsommateur, AllowedIP,)
     lookup_field = "cible_recharge"
 
     def get_queryset(self, *args, **kwargs):
@@ -122,7 +154,7 @@ class BucquageViewSet(viewsets.ModelViewSet):
     serializer_class = BucquageSerializer
     http_method_names = ["get", "post", "options"]
     lookup_field = "cible_bucquage"
-    permission_classes = (permissions.DjangoModelPermissions, AllowedIP,)
+    permission_classes = (permissions.DjangoModelPermissions, RequiersConsommateur, AllowedIP,)
 
     def get_queryset(self, *args, **kwargs):
         if "cible_bucquage" in self.kwargs:
@@ -153,7 +185,7 @@ class BucquageViewSet(viewsets.ModelViewSet):
 # récupérer l'historique pour un utilisateur donné ou pour tous
 class HistoryViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "options"]
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (permissions.DjangoModelPermissions, RequiersConsommateur,)
     serializer_class = HistorySerializer
     lookup_field = "cible_evenement"
 
@@ -184,7 +216,7 @@ class HistoryViewSet(viewsets.ModelViewSet):
 class RechargeLydiaViewSet(viewsets.ModelViewSet):
     serializer_class = RechargeLydiaSerializer
     http_method_names = ["get", "post", "options"]
-    permission_classes = (permissions.DjangoModelPermissions, AllowedIP,)
+    permission_classes = (permissions.DjangoModelPermissions, RequiersConsommateur, AllowedIP,)
     lookup_field = "cible_recharge"
 
     def get_queryset(self, *args, **kwargs):
@@ -213,7 +245,7 @@ class RechargeLydiaViewSet(viewsets.ModelViewSet):
 # POST : Ajoute un evenement (sous permissions addEvent)
 class EventViewSet(viewsets.ModelViewSet):
     serializer_class = EventSerializer
-    permission_classes = (EditEventPermission,)  #On combine les permissions de bases et la perm custom pour overide uniquement les permissions de modification d'objet
+    permission_classes = (RequiersConsommateur, EditEventPermission,)  #On combine les permissions de bases et la perm custom pour overide uniquement les permissions de modification d'objet
     http_method_names = ["get", "options", "post", "patch", "put", "delete"]
 
     def get_queryset(self):
@@ -228,7 +260,7 @@ class EventViewSet(viewsets.ModelViewSet):
 # Filter : finss=<id finss> --> renvoi les produits du finss passer en argument url
 class ProductEventViewSet(viewsets.ModelViewSet):
     serializer_class = ProductEventSerializer
-    permission_classes = (EditProductEventPermission,) # On combine les permissions de bases et la perm custom pour overide uniquement les permissions de modification d'objet
+    permission_classes = (RequiersConsommateur, EditProductEventPermission,) # On combine les permissions de bases et la perm custom pour overide uniquement les permissions de modification d'objet
     http_method_names = ["get", "options", "post", "patch", "put", "delete"]
     queryset = ProductEvent.objects.all()
 
@@ -254,7 +286,7 @@ class ProductEventViewSet(viewsets.ModelViewSet):
 #                                  [{consommateur_id:id, participation:[liste des participations de l'utilisateur}, ...]
 # Filter : finss=<id finss> --> filtre les participations qui ne concernent que le finss id finss
 class BucqageEventViewSet(viewsets.ModelViewSet):
-    permission_classes = (BucquageEventPermission,)
+    permission_classes = (RequiersConsommateur, BucquageEventPermission,)
 
     def get_serializer_class(self):
         if self.action == "list":

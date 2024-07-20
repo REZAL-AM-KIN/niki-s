@@ -91,11 +91,3 @@ class CustomPasswordResetForm(PasswordResetForm):
     )
 
 
-class GroupeForm(forms.ModelForm):
-
-    class Meta:
-        model = Groupe
-        fields = "__all__"
-        widgets = {
-                'color': forms.widgets.TextInput(attrs={'type': 'color'}),
-            }
