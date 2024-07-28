@@ -341,6 +341,11 @@ class ProductEventSerializer(serializers.HyperlinkedModelSerializer):
             return None
         return str(round(product.getPrixUnitaire(), 2))
 
+    def validate(self, data):
+        if data["parent_event"].etat_event > Event.EtatEventChoices.BUCQUAGE:
+            raise serializers.ValidationError("Vous ne pouvez plus modifier les produits de cet event")
+        return data
+
 
 class ParticipationEventSerializer(serializers.HyperlinkedModelSerializer):
     cible_participation = serializers.PrimaryKeyRelatedField(queryset=Consommateur.objects.all())
