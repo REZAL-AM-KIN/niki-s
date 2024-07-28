@@ -9,10 +9,10 @@ from appuser.models import Utilisateur
 class Consommateur(models.Model):
     consommateur = models.OneToOneField("appuser.Utilisateur", on_delete=CASCADE)
     solde = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0, editable=False
+        max_digits=6, decimal_places=2, default=0, editable=False
     )
     totaldep = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0, editable=False
+        max_digits=6, decimal_places=2, default=0, editable=False
     )
     commentaire = models.CharField(max_length=50, blank=True)
     activated = models.BooleanField(default=True)
@@ -39,7 +39,7 @@ class Consommateur(models.Model):
 
 # Model utilisé pour stocker les entités disponible sur le site kfet
 class Entity(models.Model):
-    nom = models.CharField(max_length=50)
+    nom = models.CharField(max_length=50, unique=True)
     description = models.CharField(max_length=200, blank=True)
     color = models.CharField(max_length=7, default="#000000")
 
@@ -51,9 +51,31 @@ class Produit(models.Model):
     prix = models.DecimalField(max_digits=5, decimal_places=2)
     raccourci = models.CharField(max_length=3)
     entite = models.ForeignKey(Entity, on_delete=CASCADE)
+    stock = models.SmallIntegerField(blank=True, null=True, default=None)
+    suivi_stock = models.BooleanField(default=False, verbose_name="Suivit du stock")
+
+    class Meta:
+        permissions = [
+            ("produit_super_manager", "Autorise l'administration de tous les produits."),
+        ]
 
     def __str__(self):
         return self.nom
+
+    def save(self, *args, **kwargs):
+        """On définit la valeur du stock à None si on ne suit pas le stock du produit (pour remplacer une précédente
+        valeur dans le cas où l'où désactive le suivit), et à 0 si on suit le stock mais qu'il est à None (si on active
+        un stock précédement non suivit par exemple)"""
+        if not self.suivi_stock:
+            self.stock = None
+        elif self.stock is None:
+            self.stock = 0
+        super(Produit, self).save(*args, **kwargs)
+
+    def bucquage(self):
+        if self.suivi_stock:
+            self.stock -= 1
+            self.save()
 
 
 class Recharge(models.Model):
@@ -66,8 +88,8 @@ class Recharge(models.Model):
     date = models.DateTimeField()
     montant = models.DecimalField(max_digits=5, decimal_places=2, validators=[strictly_positive_validator])
     methode = models.CharField(max_length=50, choices=CHOIX_METHODE)
-    solde_before = models.DecimalField(max_digits=5, decimal_places=2)
-    solde_after = models.DecimalField(max_digits=5, decimal_places=2)
+    solde_before = models.DecimalField(max_digits=6, decimal_places=2)
+    solde_after = models.DecimalField(max_digits=6, decimal_places=2)
     initiateur_evenement = models.ForeignKey("appuser.Utilisateur", on_delete=CASCADE)
 
     def save(self, *args, **kwargs):

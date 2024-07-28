@@ -32,6 +32,11 @@ class PermissionsSerializer(serializers.Serializer):
     entities = serializers.ListField(
         child=serializers.CharField()
     )
+    #entities = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    entities_manageable = serializers.ListField(
+        child=serializers.CharField()
+    )
+    # = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     recharge = serializers.BooleanField()
 
 
@@ -39,11 +44,56 @@ class PermissionsSerializer(serializers.Serializer):
 #         KFET         #
 ########################
 class ProduitSerializer(serializers.HyperlinkedModelSerializer):
-    nom_entite = serializers.CharField(source="entite.name", read_only=True)
-
+    #on renvoie le nom de l'entite
+    entite = serializers.SlugRelatedField(queryset=Entity.objects.all(), slug_field='nom')
     class Meta:
         model = Produit
-        fields = ("id", "raccourci", "nom", "prix", "nom_entite")
+        fields = ("id", "raccourci", "nom", "prix", "stock", "suivi_stock", "entite")
+
+    def create(self, validated_data):
+        #on verifie que l'utilisateur à les permissions pour manager l'entité où il crée le produit
+        #permet de résoudre les requêtes avec le nom de l'entité ou l'objet entité
+        request = self.context.get("request")
+        try:
+            entite = Entity.objects.get(
+                nom=validated_data["entite"]
+            )
+        except Entity.DoesNotExist:
+            raise serializers.ValidationError("Cannot resolve entity name")
+
+        #on vérifie les permissions
+        #soit l'utilisateur peut manager specifiquement l'entité, soit il a la permession de manager tout les produits
+        utilisateur = Utilisateur.objects.get(pk=request.user.pk)
+        if utilisateur.entities_manageable.filter(nom=entite).exists() or request.user.has_perm("appkfet.produit_super_manager"):
+            validated_data["entite"]=entite
+            return Produit.objects.create(**validated_data)
+        else:
+            raise serializers.ValidationError("Cannot create product in this entity")
+
+    def update(self, instance, validated_data):
+        #on verifie que l'utilisateur à les permissions pour manager l'entité actuelle et celle visé du produit
+        #on vérifie que l'id de l'entite vise est correct
+        request = self.context.get("request")
+        #permet de résoudre les requêtes avec le nom de l'entité ou l'objet entité
+        try:
+            entite_vise = Entity.objects.get(
+                nom=validated_data["entite"]
+            )
+        except Entity.DoesNotExist:
+            raise serializers.ValidationError("Cannot resolve entity name")
+
+        #soit l'utilisateur peut manager specifiquement les 2 entités, soit il a la permession de manager tout les produits
+        #(super_user accord toutes les permission, donc on ne vérifie pas ça en plus)
+        utilisateur = Utilisateur.objects.get(pk=request.user.pk)
+        if (utilisateur.entities_manageable.filter(nom=entite_vise).exists() and utilisateur.entities_manageable.filter(nom=instance.entite).exists() ) or utilisateur.has_perm("appkfet.produit_super_manager"):
+            #on modifie l'entite à la main et on laisse faire le reste à la methode update de la classe. c'est elle qui va appeler la méthode save() de l'instance
+            validated_data["entite"]=entite_vise
+            return super(ProduitSerializer, self).update(instance, validated_data)
+        else:
+            if not(utilisateur.entities_manageable.filter(nom=instance.entite).exists()):
+                raise serializers.ValidationError("Cannot edit product from entity '"+instance.entite+"'")
+            if not(utilisateur.entities_manageable.filter(nom=entite_vise).exists()):
+                raise serializers.ValidationError("Cannot add product in entity '"+entite_vise.nom+"'")
 
 
 class EntiteSerializer(serializers.HyperlinkedModelSerializer):
@@ -122,7 +172,7 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
             produit = Produit.objects.get(id=validated_data["id_produit"])
             validated_data.pop("id_produit")
         except Produit.DoesNotExist:
-            raise serializers.ValidationError("Cannot resolve product name")
+            raise serializers.ValidationError("Cannot resolve product id")
         if consommateur.activated is False:
             raise serializers.ValidationError("Consommateur is not activated")
         if consommateur.solde - produit.prix < 0:
@@ -137,10 +187,10 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
             validated_data["prix_produit"] = produit.prix
             validated_data["entite_produit"] = produit.entite
             validated_data["initiateur_evenement"] = Utilisateur.objects.get(id=request.user.pk)
+            produit.bucquage()
             return Bucquage.objects.create(**validated_data)
         else:
             raise serializers.ValidationError("Cannot sell this product")
-
 
 class HistorySerializer(serializers.HyperlinkedModelSerializer):
     cible_evenement = ConsommateurSerializer()
@@ -265,8 +315,8 @@ class ProductEventSerializer(serializers.HyperlinkedModelSerializer):
     quantite_bucque = serializers.SerializerMethodField(read_only=True)
     parent_event = serializers.PrimaryKeyRelatedField(queryset=Event.objects.all())
     prix_unitaire = serializers.SerializerMethodField(read_only=True)
-    prix_total = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
-    prix_min = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
+    prix_total = serializers.DecimalField(max_digits=6, decimal_places=2, min_value=0)
+    prix_min = serializers.DecimalField(max_digits=5, decimal_places=2, min_value=0)
 
     class Meta:
         model = ProductEvent
