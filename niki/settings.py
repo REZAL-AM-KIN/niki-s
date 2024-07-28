@@ -19,6 +19,9 @@ from django.conf.global_settings import LOGOUT_REDIRECT_URL
 from dotenv import load_dotenv
 from celery.schedules import crontab
 
+from mac_vendor_lookup import MacLookup, BaseMacLookup
+
+
 load_dotenv(".env")
 
 LDAP = getenv("LDAP", "False") == "True"
@@ -252,6 +255,12 @@ TINYMCE_DEFAULT_CONFIG = {
     "custom_undo_redo_levels": 10
 }
 
+# Maclookup defined in settings to update the vendor list
+BaseMacLookup.cache_path = "./.cache/mac-vendors.txt"
+MACLOOKUP = MacLookup()
+MACLOOKUP.update_vendors()
+
+
 # Celery settings
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
@@ -276,6 +285,10 @@ CELERY_BEAT_SCHEDULE = {
     "send_mail_for_cotiz_task": {
         "task": "appuser.tasks.send_mail_for_cotiz_task",
         "schedule": crontab(minute=0, hour=0),
+    },
+    "update_maclookup_vendors_list_task": {
+        "task": "appmacgest.tasks.update_maclookup_vendors_list_task",
+        "schedule": crontab(minute=32, hour=0),
     },
 
 }
