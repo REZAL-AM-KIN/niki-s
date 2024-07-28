@@ -1,4 +1,3 @@
-from django.db.models import Q
 from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -9,6 +8,7 @@ from api.serializers import *
 from api.permissions import AllowedIP, AllowedIPEvenSaveMethods, get_client_ip, EditEventPermission, \
     EditProductEventPermission, BucquageEventPermission, RequiersConsommateur, ProduitPermission
 
+from django.http.request import QueryDict
 
 
 ########################
@@ -244,16 +244,52 @@ class RechargeLydiaViewSet(viewsets.ModelViewSet):
 # GET : récupère la liste et les informations des tous les fin'ss dont l'utilisateur est gestionnaire.
 # POST : Ajoute un evenement (sous permissions addEvent)
 class EventViewSet(viewsets.ModelViewSet):
-    serializer_class = EventSerializer
     permission_classes = (RequiersConsommateur, EditEventPermission,)  #On combine les permissions de bases et la perm custom pour overide uniquement les permissions de modification d'objet
     http_method_names = ["get", "options", "post", "patch", "put", "delete"]
+
+    def get_serializer_class(self):
+        if self.action in ["fermeture_prebucquage", "fermeture_bucquage", "fermeture_debucquage"]:
+            # On n'a besoin d'aucune donnée dans champ data de la requête
+            return serializers.Serializer
+        return EventSerializer
 
     def get_queryset(self):
         user = Utilisateur.objects.get(pk=self.request.user.pk)
         if user.has_perm("appevents.event_super_manager") or user.is_superuser:
             return Event.objects.all()
 
-        return Event.objects.filter(ended=False) # Si c'est un utilisateur Lambda, il ne peut voir que les Event non cloturé
+        return Event.objects.filter(~Q(etat_event=Event.EtatEventChoices.TERMINE)) # Si c'est un utilisateur Lambda, il ne peut voir que les Event non cloturé
+
+    @action(methods=['PATCH'], detail=True)
+    def fermeture_prebucquage(self, request, pk=None):
+        event = self.get_object()
+        if event.etat_event != Event.EtatEventChoices.PREBUCQUAGE:
+            return Response({'status': 'L\'évènement "'+event.titre+'" n\'est pas en mode prébucquage'}, status=status.HTTP_400_BAD_REQUEST)
+        event.mode_bucquage()
+        return Response({'status': 'Prébucquage fermé pour "'+event.titre+'"'}, status=status.HTTP_200_OK)
+
+    @action(methods=['PATCH'], detail=True)
+    def fermeture_bucquage(self, request, pk=None):
+        event = self.get_object()
+        if event.etat_event != Event.EtatEventChoices.BUCQUAGE:
+            return Response({'status': 'L\'évènement "'+event.titre+'" n\'est pas en mode bucquage'}, status=status.HTTP_400_BAD_REQUEST)
+        # TODO: vérifier si tout les prébucquages sont passés? (et rajouter un booléen dans les données de la requête pour forcer)
+        event.mode_debucquage()
+        return Response({'status': 'Bucquage fermé pour "'+event.titre+'"'}, status=status.HTTP_200_OK)
+
+    @action(methods=['PATCH'], detail=True)
+    def fermeture_debucquage(self, request, pk=None):
+        event = self.get_object()
+        if event.etat_event != Event.EtatEventChoices.DEBUCQUAGE:
+            return Response({'status': 'L\'évènement "'+event.titre+'" n\'est pas en débucquage'}, status=status.HTTP_400_BAD_REQUEST)
+        not_all_debucquees = event.productevent_set.all().filter(
+            Q(participationevent__participation_debucquee=False) & Q(participationevent__participation_bucquee=True)
+        ).exists()
+        if not_all_debucquees:
+            return Response({'status': 'Toutes les participations ne sont pas débucquées pour "' + event.titre + '"'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        event.end()
+        return Response({'status': 'Débucquage fermé pour "'+event.titre+'"'}, status=status.HTTP_200_OK)
 
 
 # GET : renvoi tous les produits dont l'utilisateur peut gérer le fin'ss.
@@ -272,7 +308,7 @@ class ProductEventViewSet(viewsets.ModelViewSet):
         if self.request.user.has_perm("appevents.event_super_manager") or self.request.user.is_superuser:
             self.queryset = self.queryset
         else:
-            self.queryset = self.queryset.filter(parent_event__ended=False)
+            self.queryset = self.queryset.filter(~Q(parent_event__etat_event=Event.EtatEventChoices.TERMINE))
 
         if finss_id is None:
             return self.queryset
@@ -290,9 +326,13 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action == "list":
-            return BucquageEventSerializer
-        if self.action in ["debucquer", "debucquage"]:
+            return BucquageEventDefaultSerializer
+        if self.action == "debucquage" or self.action == "debucquage_list":
             return DebucquageEventSerializer
+        if self.action == "bucquage" or self.action == "bucquage_list":
+            return BucquageEventSerializer
+        if self.action == "prebucquage" or self.action == "prebucquage_list":
+            return PrebucquageEventSerializer
 
         return ParticipationEventSerializer
 
@@ -307,7 +347,7 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
             if self.request.user.has_perm("appevents.event_super_manager") \
                     or self.request.user.is_superuser:
                 obj = Consommateur.objects.filter(
-                    participation_event__product_participation__parent_event__ended=False
+                    participation_event__product_participation__parent_event__etat_event__lt=Event.EtatEventChoices.TERMINE
                     ).distinct()
                 return obj
 
@@ -315,19 +355,24 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
             # sur un fin'ss en cours managé par l'utilisateur
             if Event.objects.filter(managers=consommateur).count() != 0:
                 return Consommateur.objects.filter(
-                    Q(participation_event__product_participation__parent_event__ended=False) &
+                    Q(participation_event__product_participation__parent_event__etat_event__lt=Event.EtatEventChoices.TERMINE) &
                     Q(participation_event__product_participation__parent_event__managers=consommateur)
-                )
+                ).distinct()
+            return Consommateur.objects.none()
 
         # Si c'est une autre action que list alors on renvoie la liste de toutes les participations de fin'ss actif
-        return ParticipationEvent.objects.filter(product_participation__parent_event__ended=False)
+        return ParticipationEvent.objects.filter(product_participation__parent_event__etat_event__lt=Event.EtatEventChoices.TERMINE)
 
     # On permet la création de plusieurs objets en une seule fois
     # et l'édition d'un objet via le post (car perform_create appelle la méthode save du serializer)
     def create(self, request, *args, **kwargs):
         success = []
         errors = []
-        for data in request.data:
+        if type(request.data) is QueryDict or type(request.data) is dict:
+            datas = [request.data]
+        else:
+            datas = request.data
+        for data in datas:
             serializer = self.get_serializer(data=data)
             if serializer.is_valid():
                 if not self.request.user.has_perm("appevents.event_super_manager") \
@@ -348,77 +393,165 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
         else:
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(methods=['POST'], detail=True)
-    def debucquer(self, request, pk=None):
-        user = Utilisateur.objects.get(pk=request.user.pk)
-        try:
-            participation = ParticipationEvent.objects.get(pk=pk)
-        except ParticipationEvent.DoesNotExist:
-            return Response({"Cannot resolve participation"}, status=status.HTTP_400_BAD_REQUEST)
+    @action(methods=['POST'], detail=False)
+    def prebucquage(self, request):
+        success = []
+        errors = []
 
-        serializer = DebucquageEventSerializer(data=request.data)
+        if type(request.data) is QueryDict or type(request.data) is dict:
+            datas = [request.data]
+        else:
+            datas = request.data
+        for data in datas:
+            serializer = self.get_serializer(data=data)
+            if serializer.is_valid():
+                serializer.save()  # gère la création ou édition (ou supression si prebucque_quantity = 0) de la participation
+                if serializer.validated_data.get("prebucque_quantity") != 0:
+                    success.append(serializer.data)
+            else:
+                errors.append(serializer.errors)
+
+        if len(errors) > 0:
+            resp_status = status.HTTP_400_BAD_REQUEST
+        else:
+            resp_status = status.HTTP_200_OK
+        return Response({"success_count": len(success), "errors_count": len(errors), "success": success,
+                         "errors": errors}, status=resp_status)
+
+    # GET : Affiche la liste
+    @prebucquage.mapping.get
+    def prebucquage_list(self, request):
+        queryset = ParticipationEvent.objects.filter(
+            Q(product_participation__parent_event__etat_event=Event.EtatEventChoices.PREBUCQUAGE)
+        )
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    ### /bucquage/ ###
+    # POST : Prends une liste de Bucquage format: [{id_participation:<id>, (optionel) negats:<True|False>}, ... ] ou
+    # simplement {id_participation:<id>, (optionel) negats:<True|False>}
+    @action(methods=['POST'], detail=False)
+    def bucquage(self, request):
+        user = Utilisateur.objects.get(pk=request.user.pk)
+        success = []
+        errors = []
+
+        if type(request.data) is QueryDict or type(request.data) is dict:
+            datas = [request.data]
+        else:
+            datas = request.data
+        serializer = self.get_serializer(data=datas, many=True, context={'request': request})
 
         if serializer.is_valid():
-            debucquage = participation.debucquage(user, serializer.validated_data.get("negatss"))
-            if debucquage is True:
-                return Response({'status': 'Participation débucquée'}, status=status.HTTP_200_OK)
-            else:
-                return Response({debucquage}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            def message_bucquage_valide(cible_participation_id, product_participation_id):
+                return {"cible_participation_id": cible_participation_id, "product_participation_id": product_participation_id, "status": "Participation bucquée"}
+            def message_bucquage_non_valide(cible_participation_id, product_participation_id, error):
+                return {"cible_participation_id": cible_participation_id, "product_participation_id": product_participation_id, "error": error}
 
-    # TODO : Delete ou pas de création si quantité = 0
-    ### /bucquage/ ###
-    # POST : Prends une liste de Debucquage format: [{id_participation:<id>, (optionel) negats:<True|False>}, ... ]
+            #TODO: vérification du solde de chaque consommateur par rapport au total des buquages
+
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        else:
+            errors = []
+            liste_ids = [(p_data.get("cible_participation"),p_data.get("product_participation")) for p_data in datas]
+            for index in range(len(liste_ids)):
+                err = serializer.errors[index]
+                if err != {}:
+                    errors.append({"cible_participation": liste_ids[index][0],
+                                   "product_participation": liste_ids[index][1],
+                                   "error(s)": err})
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # GET : Affiche la liste
+    @bucquage.mapping.get
+    def bucquage_list(self, request):
+        queryset = ParticipationEvent.objects.filter(
+            Q(product_participation__parent_event__etat_event=Event.EtatEventChoices.BUCQUAGE)
+        )
+        if not self.request.user.has_perm("appevents.event_super_manager"):
+            consommateur = Consommateur.objects.get(consommateur=self.request.user)
+            queryset = queryset.filter(product_participation__parent_event__managers=consommateur)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    ### /debucquage/ ###
+    # POST : Prends une liste de Debucquage format: [{id_participation:<id>, (optionel) negats:<True|False>}, ... ] ou
+    # simplement {id_participation:<id>, (optionel) negats:<True|False>}
     @action(methods=['POST'], detail=False)
     def debucquage(self, request):
         user = Utilisateur.objects.get(pk=request.user.pk)
         success = []
         errors = []
 
-        serializer = DebucquageEventSerializer(data=request.data, many=True)
+        if type(request.data) is QueryDict or type(request.data) is dict:
+            datas = [request.data]
+        else:
+            datas = request.data
+
+        serializer = DebucquageEventSerializer(data=datas, many=True, context={'request': request})
 
         if serializer.is_valid():
-            for p in serializer.validated_data:
-                participation_id = p.get("participation_id")
-                if participation_id == -1:
-                    return Response({"All participation_id must be specified"}, status=status.HTTP_400_BAD_REQUEST)
+            def message_debucquage_valide(participation_id):
+                return {"participation_id": participation_id, "status": "Participation débucquée"}
+            def message_debucquage_non_valide(participation_id, error):
+                return {"participation_id": participation_id, "error": error}
 
-                try:
-                    participation = ParticipationEvent.objects.get(pk=participation_id)
-                except ParticipationEvent.DoesNotExist:
-                    errors.append({
-                        "participation_id": participation_id,
-                        "error": "Cannot resolve participation"
-                    })
-                    continue
+            # on traite les participations à débucquer par consommateur
+            participations_request = {p_data.get("id"): p_data.get("negatss") for p_data in serializer.validated_data}
+            participations = ParticipationEvent.objects.filter(pk__in=participations_request.keys())
+            consommateurs = {p.cible_participation for p in participations}
+            for consommateur in consommateurs:
+                # on sépare les participations qu'on autorise à débucquer en négatif des autres
+                participations_filter = participations.filter(cible_participation=consommateur)
+                participations_non_negats = participations_filter.filter(pk__in=[p.pk for p in participations_filter if not participations_request[p.pk]])
+                participations_negats = participations_filter.filter(pk__in=[p.pk for p in participations_filter if participations_request[p.pk]])
 
-
-                debucquage = participation.debucquage(user, p.get("negatss"))
-                if debucquage is True:
-                    success.append({
-                        "participation_id": participation_id,
-                        "status": "Participation débucquée"
-                    })
+                # pour les participations qui ne seront pas débucqués en négatif, on regarde si ensemble, elles font passer le consommateur en négatif
+                cout_non_negats = sum([participation.prix_total for participation in participations_non_negats])
+                if consommateur.testdebit(cout_non_negats):
+                    for participation in participations_non_negats:
+                        debucquage = participation.debucquage(user, False)
+                        if debucquage is True:
+                            success.append(message_debucquage_valide(participation.id))
+                        else:
+                            errors.append(message_debucquage_non_valide(participation.id, debucquage))
                 else:
-                    errors.append({
-                        "participation_id": participation_id,
-                        "error": debucquage
-                    })
+                    errors.extend([message_debucquage_non_valide(p.pk, "Le consommateur n'a pas assez d'argent") for p in participations_non_negats])
 
-            return Response({"success": success, "errors": errors})
+                # on débucque ensuite les participations du consommateur qu'on autorise à être débucquée en négatif.
+                for participation in participations_negats:
+                    debucquage = participation.debucquage(user, True)
+                    if debucquage is True:
+                        success.append(message_debucquage_valide(participation.id))
+                    else:
+                        errors.append(message_debucquage_non_valide(participation.id, debucquage))
+
+            if len(errors) > 0:
+                resp_status = status.HTTP_400_BAD_REQUEST
+            else:
+                resp_status = status.HTTP_200_OK
+            return Response({"success_count": len(success), "errors_count": len(errors), "success": success,
+                             "errors": errors}, status=resp_status)
 
         else:
+            errors=[]
+            liste_id = [p_data.get("participation_id") for p_data in datas]
+            for index in range(len(liste_id)):
+                err = serializer.errors[index]
+                if err != {}:
+                    errors.append({"participation_id": liste_id[index], "status": err})
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # GET : Affiche la liste
     @debucquage.mapping.get
     def debucquage_list(self, request):
         queryset = ParticipationEvent.objects.filter(
-            Q(participation_debucquee=True)
-            & Q(product_participation__parent_event__ended=False)
+            Q(product_participation__parent_event__etat_event=Event.EtatEventChoices.DEBUCQUAGE)
         )
-        serializer = ParticipationEventSerializer(instance=queryset, many=True)
+        # pas de filtre supplémentaire car il faut la permission appevents.event_super_manager pour cet endpoint
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
     # Affiche la liste des participations de l'utilisateur connecté
@@ -428,7 +561,7 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
 
         myparticipations = ParticipationEvent.objects.filter(
             Q(cible_participation=consommateur)
-            & Q(product_participation__parent_event__ended=False)
+            & Q(product_participation__parent_event__etat_event__lt=Event.EtatEventChoices.TERMINE)
         )
 
         finss_id = request.query_params.get("finss", None)
@@ -438,5 +571,5 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
             if finss_id.isdigit():
                 myparticipations = myparticipations.filter(product_participation__parent_event__pk=finss_id)
 
-        serializer = ParticipationEventSerializer(instance=myparticipations, many=True)
+        serializer = self.get_serializer(myparticipations, many=True)
         return Response(serializer.data)

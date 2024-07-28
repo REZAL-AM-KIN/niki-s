@@ -278,8 +278,7 @@ class EventSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Event
-        fields = ("id", "titre", "description", "can_subscribe", "date_event", "ended", "can_manage", "is_prebucque",
-                  "managers")
+        fields = ("id", "titre", "description", "date_event", "can_manage", "is_prebucque", "etat_event", "managers")
 
     # Regarde si l'utilisateur qui fait la requete est dans la liste des managers
     def get_can_manage(self, obj):
@@ -342,6 +341,11 @@ class ProductEventSerializer(serializers.HyperlinkedModelSerializer):
             return None
         return str(round(product.getPrixUnitaire(), 2))
 
+    def validate(self, data):
+        if data["parent_event"].etat_event > Event.EtatEventChoices.BUCQUAGE:
+            raise serializers.ValidationError("Vous ne pouvez plus modifier les produits de cet event")
+        return data
+
 
 class ParticipationEventSerializer(serializers.HyperlinkedModelSerializer):
     cible_participation = serializers.PrimaryKeyRelatedField(queryset=Consommateur.objects.all())
@@ -363,9 +367,14 @@ class ParticipationEventSerializer(serializers.HyperlinkedModelSerializer):
 
 
 # Serializer pour les débucquages
-class DebucquageEventSerializer(serializers.Serializer):
-    participation_id = serializers.IntegerField(default=-1)
-    negatss = serializers.BooleanField(default=False)
+class DebucquageEventSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=False)
+    negatss = serializers.BooleanField(default=False, write_only=True)
+
+    class Meta:
+        model = ParticipationEvent
+        fields = ("id", "cible_participation", "product_participation", "prebucque_quantity", "quantity", "participation_bucquee", "participation_debucquee", "negatss")
+        read_only_fields = ["cible_participation", "product_participation", "prebucque_quantity", "quantity", "participation_bucquee", "participation_debucquee"]
 
     def update(self, instance, validated_data):
         pass
@@ -373,9 +382,108 @@ class DebucquageEventSerializer(serializers.Serializer):
     def create(self, validated_data):
         pass
 
+    def validate_id(self, value):
+        try:
+            participation = ParticipationEvent.objects.get(pk=value)
+        except ParticipationEvent.DoesNotExist:
+            raise serializers.ValidationError(f"L'id {value} ne correspond à aucune participation.")
+        return value
+
+    def validate(self, data):
+        participation = ParticipationEvent.objects.get(pk=data["id"])
+        res_test = participation.test_debucquage(self.context.get("request").user, data["negatss"])
+        if res_test is not True:
+            raise serializers.ValidationError({data["id"]: res_test})
+        return data
+
+
+# Serializer pour les débucquages
+class BucquageEventSerializer(serializers.ModelSerializer):
+    quantity = serializers.IntegerField(min_value=0)
+    cible_participation = serializers.PrimaryKeyRelatedField(queryset=Consommateur.objects.all())
+    product_participation = serializers.PrimaryKeyRelatedField(queryset=ProductEvent.objects.all())
+
+    class Meta:
+        model = ParticipationEvent
+        fields = ("cible_participation", "product_participation", "prebucque_quantity", "quantity", "participation_bucquee", "participation_debucquee")
+        read_only_fields = ["prebucque_quantity", "participation_bucquee", "participation_debucquee"]
+
+    def update(self, instance, validated_data):
+        pass
+
+    def create(self, validated_data):
+        pass
+
+    def validate_product_participation(self, value):
+        if value.parent_event.etat_event != Event.EtatEventChoices.BUCQUAGE:
+            raise serializers.ValidationError("L'event de ce produit n'est pas en mode bucquage")
+        return value
+
+    def validate_cible_participation(self, value):
+        if not value.activated:
+            raise serializers.ValidationError("Le consommateur n'est pas activé")
+        return value
+
+    def validate(self, data):
+        if data["product_participation"].obligatoire and data["quantity"] == 0:
+            raise serializers.ValidationError({"quantity": "Ce produit est obligatoire (quantité >= 1)"})
+
+        requester_user = self.context['request'].user
+        if not requester_user.has_perm("appevents.event_super_manager") and not requester_user.is_superuser:
+            if requester_user not in data["product_participation"].parent_event.managers.all():
+                raise serializers.ValidationError({"product_participation": "Vous ne pouvez gérer les bucquages du produit " + str(
+                    data.get("product_participation"))})
+        return data
+
+    def create(self, validated_data):
+        validated_data["participation_bucquee"] = True
+        participation, created = ParticipationEvent.objects.update_or_create(
+            cible_participation=validated_data.get("cible_participation"),
+            product_participation=validated_data.get("product_participation"), defaults=validated_data)
+        return participation
+
+
+class PrebucquageEventSerializer(serializers.ModelSerializer):
+    cible_participation = serializers.PrimaryKeyRelatedField(queryset=Consommateur.objects.all())
+    product_participation = serializers.PrimaryKeyRelatedField(queryset=ProductEvent.objects.all())
+    prebucque_quantity = serializers.IntegerField(min_value=0)
+
+    class Meta:
+        model = ParticipationEvent
+        fields = ("id", "cible_participation", "product_participation", "prebucque_quantity")
+
+    def validate(self, data):
+        print(data)
+        user = self.context['request'].user
+        if not user.has_perm("appevents.event_super_manager") and not user.is_superuser:
+            if data.get("cible_participation") != user:
+                raise serializers.ValidationError({"cible_participation": "Vous ne pouvez gérer les participation du consommateur " + str(
+                    data.get("cible_participation"))})
+
+        if data.get("product_participation").parent_event.etat_event != Event.EtatEventChoices.PREBUCQUAGE:
+            raise serializers.ValidationError({"product_participation": "Les prébucquages sont fermés pour le produit " + str(
+                data.get("product_participation").nom)})
+        return data
+
+    def create(self, validated_data):
+        print(validated_data)
+        if validated_data["prebucque_quantity"] == 0:
+            try:
+                participation = ParticipationEvent.objects.get(cible_participation=validated_data.get("cible_participation"),
+                                                               product_participation=validated_data.get("product_participation"))
+                participation.delete()
+            except ParticipationEvent.DoesNotExist:
+                pass
+            return ParticipationEvent.objects.none()
+
+        participation, created = ParticipationEvent.objects.update_or_create(
+            cible_participation=validated_data.get("cible_participation"),
+            product_participation=validated_data.get("product_participation"), defaults=validated_data)
+        return participation
+
 
 # Serializer pour l'affichage des bucquages classés par consommateur
-class BucquageEventSerializer(ConsommateurSerializer):
+class BucquageEventDefaultSerializer(ConsommateurSerializer):
     consommateur_id = serializers.IntegerField(source="id", read_only=True)
     consommateur_bucque = serializers.CharField(source="consommateur.bucque", read_only=True)
     consommateur_nom = serializers.CharField(source="consommateur.last_name", read_only=True)
@@ -391,7 +499,7 @@ class BucquageEventSerializer(ConsommateurSerializer):
         request = self.context.get("request")
         queryset = ParticipationEvent.objects.filter(
             Q(cible_participation=consommateur)
-            & Q(product_participation__parent_event__ended=False)
+            & ~Q(product_participation__parent_event__etat_event=Event.EtatEventChoices.TERMINE)
         )
 
         # Dans le cas ou l'utilisateur n'est pas superuser ou supermanager, il faut que les participations affichées
@@ -402,6 +510,8 @@ class BucquageEventSerializer(ConsommateurSerializer):
             managed_events = Event.objects.filter(managers=requester_consom)
             if managed_events.count() != 0:
                 queryset = queryset.filter(product_participation__parent_event__in=managed_events)
+            else:
+                queryset = queryset.none()
 
         finss_id = request.query_params.get("finss", None)
 
