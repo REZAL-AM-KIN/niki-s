@@ -3,12 +3,13 @@ from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
+from datetime import timedelta
+from django.utils import timezone
 
 from api.serializers import *
 
 from api.permissions import AllowedIP, AllowedIPEvenSaveMethods, get_client_ip, EditEventPermission, \
     EditProductEventPermission, BucquageEventPermission, RequiersConsommateur, ProduitPermission
-
 
 
 ########################
@@ -95,7 +96,6 @@ class ProduitByEntityViewSet(viewsets.ModelViewSet):
         return Response(data=serializer.data)
 
 
-
 # GET : recuperer les groupes (catégories)
 class EntiteViewSet(viewsets.ModelViewSet):
     queryset = Entity.objects.all()
@@ -110,6 +110,34 @@ class ConsommateurViewSet(viewsets.ModelViewSet):
     serializer_class = ConsommateurSerializer
     http_method_names = ["get", "options"]
     permission_classes = (permissions.DjangoModelPermissions, RequiersConsommateur,)
+
+    @action(methods=['POST'], detail=True)
+    def annulerDernierDebucquage(self, request, pk=None):
+        request_user = Utilisateur.objects.get(pk=request.user.pk)
+        try:
+            consommateur = Consommateur.objects.get(pk=pk)
+        except Consommateur.DoesNotExist:
+            return Response({"Cannot resolve consommateur"}, status=status.HTTP_400_BAD_REQUEST)
+
+        last_debucquage = consommateur.getDernierDebucquage()
+
+        if last_debucquage is None:
+            return Response({"detail": "Aucun débucquage pour ce consommateur"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if timezone.now() - last_debucquage.date > timedelta(minutes=5):
+            return Response({"detail": "Vous ne pouvez annuler un débucquage exécuté il y a plus de 5 minutes"},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        # TODO? perm pour bypass
+        if last_debucquage.initiateur_evenement != request_user:
+            return Response({"detail": "Vous ne pouvez pas annuler un débucquage executé par un autre utilisateur"},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        res, message = last_debucquage.annuler()
+        if res:
+            return Response({"detail": "Débucquage '" + str(message) + "' annulé"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"detail": message}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # GET : récupérer toutes les recharges pour tous les utilisateurs ou pour un en particulier
