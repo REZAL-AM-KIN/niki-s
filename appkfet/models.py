@@ -36,6 +36,11 @@ class Consommateur(models.Model):
         self.totaldep += montant
         self.save()
 
+    def getDernierDebucquage(self):
+        """Renvoie le dernier bucquage effectué pour ce consommateur"""
+        return Bucquage.objects.filter(cible_bucquage=self).order_by("-date").first()
+
+
 
 # Model utilisé pour stocker les entités disponible sur le site kfet
 class Entity(models.Model):
@@ -130,6 +135,37 @@ class Bucquage(models.Model):
                 date_evenement=self.date,
                 initiateur_evenement=self.initiateur_evenement,
             )
+
+    def annuler(self):
+        """Annulation du bucquage, avec recréditation du solde du consommateur, incrémentation du stock (si besoin),
+        modification de l'historique et enfin suppression de l'objet bucquage"""
+        try:
+            produit = Produit.objects.get(nom=self.nom_produit, entite=Entity.objects.get(nom=self.entite_produit))  # peut poser problème si le couple (nom, entite) n'est pas unique
+        except Produit.DoesNotExist:
+            return False, "le produit n'existe pas"
+
+        num_rows_matched = History.objects.filter(
+            cible_evenement=self.cible_bucquage,
+            nom_evenement=self.nom_produit,
+            prix_evenement=self.prix_produit,
+            entite_evenement=self.entite_produit,
+            date_evenement=self.date,
+            initiateur_evenement=self.initiateur_evenement,
+        ).update(
+            nom_evenement="annulé - " + str(self.nom_produit)
+        )
+        # on s'assure qu'il y aura une entrée dans l'historique pour log l'annulation avant de supprimer l'objet Bucquage
+        if num_rows_matched == 0:
+            return False, "aucune entrée dans l'historique trouvé"
+
+        Consommateur.credit(self.cible_bucquage, self.prix_produit)
+        if produit.suivi_stock:
+            produit.stock += 1
+            produit.save()
+
+        nom_produit = str(self.nom_produit)
+        self.delete()
+        return True, nom_produit
 
     def __unicode__(self):
         return self.pk
