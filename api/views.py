@@ -12,7 +12,6 @@ from api.permissions import AllowedIP, AllowedIPEvenSaveMethods, get_client_ip, 
     EditProductEventPermission, BucquageEventPermission, RequiersConsommateur, ProduitPermission
 
 
-
 ########################
 #         KFET         #
 ########################
@@ -97,7 +96,6 @@ class ProduitByEntityViewSet(viewsets.ModelViewSet):
         return Response(data=serializer.data)
 
 
-
 # GET : recuperer les groupes (catégories)
 class EntiteViewSet(viewsets.ModelViewSet):
     queryset = Entity.objects.all()
@@ -127,18 +125,19 @@ class ConsommateurViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Aucun débucquage pour ce consommateur"}, status=status.HTTP_400_BAD_REQUEST)
 
         if timezone.now() - last_debucquage.date > timedelta(minutes=5):
-            return Response({"detail": "Vous ne pouvez annuler un débucquage exécuté il y a plus de 5 minutes"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Vous ne pouvez annuler un débucquage exécuté il y a plus de 5 minutes"},
+                            status=status.HTTP_403_FORBIDDEN)
 
         # TODO? perm pour bypass
         if last_debucquage.initiateur_evenement != request_user:
-            return Response({"detail": "Vous ne pouvez pas annuler un débucquage executé par un autre utilisateur"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Vous ne pouvez pas annuler un débucquage executé par un autre utilisateur"},
+                            status=status.HTTP_403_FORBIDDEN)
 
         res, message = last_debucquage.annuler()
         if res:
-            return Response({"detail": "Débucquage '"+str(message)+"' annulé"}, status=status.HTTP_200_OK)
+            return Response({"detail": "Débucquage '" + str(message) + "' annulé"}, status=status.HTTP_200_OK)
         else:
             return Response({"detail": message}, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 # GET : récupérer toutes les recharges pour tous les utilisateurs ou pour un en particulier

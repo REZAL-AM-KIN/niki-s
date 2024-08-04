@@ -41,7 +41,6 @@ class Consommateur(models.Model):
         return Bucquage.objects.filter(cible_bucquage=self).order_by("-date").first()
 
 
-
 # Model utilisé pour stocker les entités disponible sur le site kfet
 class Entity(models.Model):
     nom = models.CharField(max_length=50, unique=True)
@@ -50,6 +49,7 @@ class Entity(models.Model):
 
     def __str__(self):
         return self.nom
+
 
 class Produit(models.Model):
     nom = models.CharField(max_length=50)
@@ -140,7 +140,8 @@ class Bucquage(models.Model):
         """Annulation du bucquage, avec recréditation du solde du consommateur, incrémentation du stock (si besoin),
         modification de l'historique et enfin suppression de l'objet bucquage"""
         try:
-            produit = Produit.objects.get(nom=self.nom_produit, entite=Entity.objects.get(nom=self.entite_produit))  # peut poser problème si le couple (nom, entite) n'est pas unique
+            produit = Produit.objects.get(nom=self.nom_produit, entite=Entity.objects.get(
+                nom=self.entite_produit))  # peut poser problème si le couple (nom, entite) n'est pas unique
         except Produit.DoesNotExist:
             return False, "le produit n'existe pas"
 
@@ -181,7 +182,6 @@ class History(models.Model):
 
     def __unicode__(self):
         return self.pk
-
 
 
 class AuthorizedIP(models.Model):
