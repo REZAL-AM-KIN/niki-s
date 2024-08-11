@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import datetime
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -12,7 +13,7 @@ from appuser.models import Utilisateur
 class Event(models.Model):
     titre = models.CharField(max_length=50)
     description = models.CharField(max_length=200)
-    date_event = models.DateTimeField()
+    date_event = models.DateField()
     created_by = models.ForeignKey(
         User, on_delete=CASCADE, editable=False, verbose_name="Créé par", related_name="created_by"
     )
@@ -96,27 +97,6 @@ class ParticipationEvent(models.Model):
     def __unicode__(self):
         return self.pk
 
-    """
-    def save(self, *args, **kwargs):http://localhost:8000/api/bucquagevent/3/
-        if self.participation_ok is True and self.participation_bucquee is False:
-            prix_total = Decimal(self.number) * self.product_participation.prix
-            if Consommateur.testdebit(self.cible_participation, prix_total):
-                self.participation_bucquee = True
-                super(ParticipationEvent, self).save(*args, **kwargs)
-                Consommateur.debit(self.cible_participation, prix_total)
-                History.objects.update_or_create(
-                    cible_evenement=self.cible_participation,
-                    nom_evenement=f"{self.number}x {self.product_participation.parent_event.titre} - "
-                    f"{self.product_participation.nom}",
-                    prix_evenement=prix_total,
-                    entite_evenement="Evènement",
-                    date_evenement=self.product_participation.parent_event.date_event,
-                )
-            else:
-                super(ParticipationEvent, self).save(*args, **kwargs)
-        else:
-            super(ParticipationEvent, self).save(*args, **kwargs)"""
-
     @property
     def prix_total(self):
         return self.product_participation.getPrixUnitaire()*Decimal(self.quantity)
@@ -162,7 +142,7 @@ class ParticipationEvent(models.Model):
                               f"{self.product_participation.parent_event.titre}",
                 prix_evenement=prix_total,
                 entite_evenement="Evènement",
-                date_evenement=self.product_participation.parent_event.date_event,
+                date_evenement=datetime.now(),
             )
             return True
         return "Le consommateur n'a pas assez d'argent pour ce produit"

@@ -428,8 +428,8 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     ### /bucquage/ ###
-    # POST : Prends une liste de Bucquage format: [{id_participation:<id>, (optionel) negats:<True|False>}, ... ] ou
-    # simplement {id_participation:<id>, (optionel) negats:<True|False>}
+    # POST : Prends une liste de Bucquage format: [{cible_participation:<id>, product_participation:<id>, quantity:<int>}, ... ] ou
+    # simplement {cible_participation:<id>, product_participation:<id>, quantity:<int>}
     @action(methods=['POST'], detail=False)
     def bucquage(self, request):
         user = Utilisateur.objects.get(pk=request.user.pk)
@@ -478,7 +478,7 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
 
     ### /debucquage/ ###
     # POST : Prends une liste de Debucquage format: [{id_participation:<id>, (optionel) negats:<True|False>}, ... ] ou
-    # simplement {id_participation:<id>, (optionel) negats:<True|False>}
+    # simplement {id_participation:<id>, (optionnel) negats:<True|False>}
     @action(methods=['POST'], detail=False)
     def debucquage(self, request):
         user = Utilisateur.objects.get(pk=request.user.pk)
