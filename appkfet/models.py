@@ -121,6 +121,7 @@ class Bucquage(models.Model):
     nom_produit = models.CharField(max_length=50)
     prix_produit = models.DecimalField(max_digits=5, decimal_places=2)
     entite_produit = models.CharField(max_length=50)
+    produit = models.ForeignKey(Produit, on_delete=models.SET_NULL, null=True)
     initiateur_evenement = models.ForeignKey("appuser.Utilisateur", on_delete=CASCADE)
 
     def save(self, *args, **kwargs):
@@ -139,11 +140,8 @@ class Bucquage(models.Model):
     def annuler(self):
         """Annulation du bucquage, avec recréditation du solde du consommateur, incrémentation du stock (si besoin),
         modification de l'historique et enfin suppression de l'objet bucquage"""
-        try:
-            produit = Produit.objects.get(nom=self.nom_produit, entite=Entity.objects.get(
-                nom=self.entite_produit))  # peut poser problème si le couple (nom, entite) n'est pas unique
-        except Produit.DoesNotExist:
-            return False, "le produit n'existe pas"
+        if self.produit is None:
+            return False, "le produit n'existe plus"
 
         num_rows_matched = History.objects.filter(
             cible_evenement=self.cible_bucquage,
@@ -160,9 +158,9 @@ class Bucquage(models.Model):
             return False, "aucune entrée dans l'historique trouvé"
 
         Consommateur.credit(self.cible_bucquage, self.prix_produit)
-        if produit.suivi_stock:
-            produit.stock += 1
-            produit.save()
+        if self.produit.suivi_stock:
+            self.produit.stock += 1
+            self.produit.save()
 
         nom_produit = str(self.nom_produit)
         self.delete()

@@ -186,6 +186,7 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
             validated_data["nom_produit"] = produit.nom
             validated_data["prix_produit"] = produit.prix
             validated_data["entite_produit"] = produit.entite
+            validated_data["produit"] = produit
             validated_data["initiateur_evenement"] = Utilisateur.objects.get(id=request.user.pk)
             produit.bucquage()
             return Bucquage.objects.create(**validated_data)
