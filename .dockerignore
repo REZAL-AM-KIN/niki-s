@@ -1,6 +1,8 @@
 .github
 Dockerfile
 docker-compose.yml
+docker-compose-dev.yml
+docker-compose-ldap.yml
 Procfile
 venv
 .venv
@@ -8,3 +10,5 @@ venv
 .gitignore
 *.md
 *.sqlite3
+.cache
+ldap_data

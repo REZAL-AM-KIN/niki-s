@@ -2,7 +2,7 @@ from django.contrib.auth import views as auth_views
 from django.urls import path
 
 from . import views
-from .forms import CustomLoginForm, CustomPasswordResetForm
+from .forms import CustomLoginForm, CustomPasswordResetForm, CustomSetPasswordForm, CustomPasswordChangeForm
 
 urlpatterns = [
     path(
@@ -20,7 +20,8 @@ urlpatterns = [
     path(
         "password_change/",
         auth_views.PasswordChangeView.as_view(
-            template_name="registration/password_change.html"
+            template_name="registration/password_change.html",
+            form_class=CustomPasswordChangeForm
         ),
         name="password_change",
     ),
@@ -41,7 +42,7 @@ urlpatterns = [
     ),
     path(
         "password_reset_confirm/(<uidb64>[0-9A-Za-z_\-]+)/(<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/",
-        auth_views.PasswordResetConfirmView.as_view(),
+        auth_views.PasswordResetConfirmView.as_view(form_class=CustomSetPasswordForm),
         name="password_reset_confirm",
     ),
     path(

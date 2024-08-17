@@ -1,0 +1,117 @@
+name: niki-dev
+
+services:
+  niki:
+    container_name: "niki"
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    networks:
+      - external
+      - niki-internal
+    env_file:
+      - .env
+    volumes:
+      - ./db.sqlite3:/niki/db.sqlite3
+    depends_on:
+      - rabbitMQ
+      - openldap
+
+  celery:
+    container_name: "celery"
+    build: .
+    restart: unless-stopped
+    command: celery -A niki worker -l info
+    healthcheck:
+      test: ["CMD-SHELL", "celery inspect ping --destination celery@$$HOSTNAME"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    env_file:
+      - .env
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitMQ:5672
+    depends_on:
+      rabbitMQ:
+        condition: service_started
+      niki:
+          condition: service_healthy
+    networks:
+      - niki-internal
+
+  celery-beat:
+    container_name: "celery-beat"
+    build: .
+    restart: unless-stopped
+    command: celery -A niki beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    healthcheck:
+      disable: true
+    env_file:
+      - .env
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitMQ:5672
+    volumes:
+      - ./db.sqlite3:/niki/db.sqlite3
+    depends_on:
+      rabbitMQ:
+        condition: service_started
+      niki:
+          condition: service_healthy
+    networks:
+      - niki-internal
+
+  rabbitMQ:
+    container_name: "rabbitMQ"
+    image: "rabbitmq:3-management"
+    restart: unless-stopped
+    networks:
+      - niki-internal
+
+  openldap:
+    container_name: "niki-ldap"
+    image: osixia/openldap
+    restart: unless-stopped
+    command:
+      - "--copy-service"
+    networks:
+      - niki-internal
+    environment:
+      - LDAP_DOMAIN=${LDAP_DOMAIN}
+      - LDAP_BASE_DN=${LDAP_BASE_DN}
+      - LDAP_ADMIN_PASSWORD=${LDAP_ADMIN_PASSWORD}
+    volumes:
+      - ./ldap_data/ldap/:/var/lib/ldap
+      - ./ldap_data/sldap.d/:/etc/ldap/slapd.d
+      - ./docs/basedn.ldif:/container/service/slapd/assets/config/bootstrap/ldif/basedn.ldif
+    expose:
+      - 389
+    hostname: ${LDAP_ADDR}
+    healthcheck:
+      test: ["CMD-SHELL", "ldapsearch -x -H ldap://localhost:389 -b $LDAP_BASE_DN cn || test $$? -eq 32 || exit 1"]
+      start_period: 10s
+      interval: 60s
+      timeout: 5s
+      retries: 5
+
+  phpldapadmin:
+    image: osixia/phpldapadmin:latest
+    container_name: phpldapadmin
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: "openldap"
+      PHPLDAPADMIN_HTTPS: "false"
+    ports:
+      - "8080:80"
+    depends_on:
+      - openldap
+    networks:
+      - niki-internal
+      - external
+
+networks:
+  niki-internal:
+    driver: bridge
+    internal: true
+  external:
+    driver: bridge

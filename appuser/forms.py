@@ -1,8 +1,8 @@
 from captcha.fields import CaptchaField, CaptchaTextInput
 from django import forms
-from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
+from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm, SetPasswordForm, PasswordChangeForm
 
-from .models import Utilisateur, Groupe
+from .models import Utilisateur
 
 
 class CustomLoginForm(AuthenticationForm):
@@ -91,3 +91,25 @@ class CustomPasswordResetForm(PasswordResetForm):
     )
 
 
+class CustomSetPasswordForm(SetPasswordForm):
+    """
+    Surcharge du form fournis par la bibliothèque Django pour utiliser l'objet Utilisateur plutôt que User
+    """
+    def save(self, commit=True):
+        user = Utilisateur.objects.get(pk=self.user.pk)
+        # on met à jour le mot de passe de l'objet Utilisateur et de l'objet user parce que sinon la mise à jour de la
+        # session ne marche pas correctement et l'utilisateur est déconnecté
+        password = self.cleaned_data["new_password1"]
+        user.set_password(password)
+        self.user.set_password(password)
+        if commit:
+            user.save()
+            self.user.save()
+        return self.user
+
+
+class CustomPasswordChangeForm(CustomSetPasswordForm, PasswordChangeForm):
+    """
+    Redéfinition de PasswordChangeForm avec la class surchargée définit précedement
+    """
+    pass
