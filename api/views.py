@@ -117,7 +117,7 @@ class ConsommateurViewSet(viewsets.ModelViewSet):
         try:
             consommateur = Consommateur.objects.get(pk=pk)
         except Consommateur.DoesNotExist:
-            return Response({"Cannot resolve consommateur"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Consommateur non trouvé"}, status=status.HTTP_404_NOT_FOUND)
 
         last_debucquage = consommateur.getDernierDebucquage()
 
