@@ -16,6 +16,7 @@
 				<th class = "center aligned single line">Demandeur</th>
 				<th class = "center aligned single line">Descriptif</th>
 				<th class = "center aligned single line">Adresse MAC</th>
+				<th class = "center aligned single line">Vendor</th>
 				<th class = "center aligned single line">Accepter</th>
 				<th class = "center aligned single line">Refuser</th>
 			<tr>
@@ -25,6 +26,7 @@
 					<td class = "center aligned single line">{{ mac.proprietaire }}</td>
 					<td class = "center aligned single line">{{ mac.nom }}</td>
 					<td class = "center aligned single line">{{ mac.mac }}</td>
+					<td class = "center aligned single line">{{ mac.vendor }}</td>
 					<td class = "center aligned single line"><a class = "ui green button" href="{% url "activatedevice" mac.pk %}">Accepter</a></td>
 					<td class = "center aligned single line"><a class = "ui red button" href="{% url "deletedevice" mac.pk %}">Refuser</a></td>
 				</tr>

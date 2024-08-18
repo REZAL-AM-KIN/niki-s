@@ -501,7 +501,7 @@ docker ps
 
 Installer les requierements pour la production
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-prod.txt
 ```
 
 dans le dotenv
@@ -570,6 +570,36 @@ Il est possible d'installer un serveur LDAP sur sa propre machine de test. Pour 
 - Définir un mot de passe administrateur pour le serveur
 - Définir le schéma et le premier utilisateur : `sudo ldapadd -x -D cn=admin,dc=example,dc=com -W -f basedn.ldif`. Le
   fichier basedn.ldif est disponible dans le répertoire docs de ce repository
+
+## Celery
+
+Peut servir en dev pour tester l'implémentation de tâches.
+Nécessaire en prod (pour désactiver les utilisateur dont la cotiz n'est plus à jour par exemple).
+
+En réalité, celery n'execute pas les tâches. C'est le bordel et je ne sais pas exectement comment ça marche.
+Mais ce qui est sûr c'est qu'on a besoin d'un Broker pour que ça marche. On utilise RabbitMQ.
+
+Pour l'installation de RabbitMQ : [rabbitmq.com/docs/install-debian](https://www.rabbitmq.com/docs/install-debian).
+Normalement, après l'installation, le service tourne en tant que daemon "rabbitmq-server".
+On utilise les identifiants par défaut pour se connecter : `guest:guest`.
+(Ils ne fonctionnent que si la connection est faite en localhost).
+
+Techniquement, il n'y a pas besoin de rajouter de config dans le .env car on utilise les valeurs par défaut.
+Sinon, le format est `CELERY_BROKER_URL="amqp://user:password@localhost:port/vmname"`
+
+### En prod
+On utilise supervisorctl.
+Allez en brasser avec Simond Galand, je comprends pas commen il a installé et config
+
+### En dev
+supervisorctl permet de lancer les 3 programmes dont on a besoin tout seul.
+Comme je sais pas l'installer, il existe toujours la solution à la mano:
+On lance un worker celery avec la commande `celery -A niki worker -l info`.
+Dans un autre terminal, on lance un beat celery avec la commande `celery -A niki beat -l info`.
+Et on peut lancer le serveur django dans une 3ème terminal !
+
+On peut aussi faire tourner RabbitMQ dans un shell avec la commande `sudo rabbitmq-server`, et il faut dans ce cas arêter le daemon.
+
 
 ## Mails
 
