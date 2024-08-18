@@ -108,10 +108,10 @@ class EntiteViewSet(viewsets.ModelViewSet):
 class ConsommateurViewSet(viewsets.ModelViewSet):
     queryset = Consommateur.objects.filter(activated=True)
     serializer_class = ConsommateurSerializer
-    http_method_names = ["get", "options"]
+    http_method_names = ["get", "options", "patch"]
     permission_classes = (permissions.DjangoModelPermissions, RequiersConsommateur,)
 
-    @action(methods=['POST'], detail=True)
+    @action(methods=['PATCH'], detail=True)
     def annulerDernierDebucquage(self, request, pk=None):
         request_user = Utilisateur.objects.get(pk=request.user.pk)
         try:
@@ -139,6 +139,8 @@ class ConsommateurViewSet(viewsets.ModelViewSet):
         else:
             return Response({"detail": message}, status=status.HTTP_400_BAD_REQUEST)
 
+    def create(self, request, *args, **kwargs):
+        return Response({"detail": "Create non autorisée"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 # GET : récupérer toutes les recharges pour tous les utilisateurs ou pour un en particulier
 # POST : créer une recharge. Seuls les utilisateurs ayant été déclaré avec le droit appkfet|recharge|can add recharge
