@@ -1,5 +1,6 @@
 from decimal import Decimal
 from datetime import datetime
+import decimal
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -7,7 +8,6 @@ from django.db.models import Q
 from django.db.models.deletion import CASCADE
 
 from appkfet.models import Consommateur, History
-from appuser.models import Utilisateur
 
 
 class Event(models.Model):
@@ -63,7 +63,7 @@ class ProductEvent(models.Model):
     nom = models.CharField(max_length=50)
     description = models.CharField(max_length=200, default=None, blank=True)
     prix_total = models.DecimalField(max_digits=6, decimal_places=2, default=0, blank=True)
-    prix_min = models.DecimalField(max_digits=5, decimal_places=2, default=0, blank=True)
+    solde_requis = models.DecimalField(max_digits=5, decimal_places=2, default=0, blank=True)
     obligatoire = models.BooleanField(default=False)
 
     def __str__(self):
@@ -79,8 +79,7 @@ class ProductEvent(models.Model):
             return None
 
         prix_unitaire = self.prix_total / nb_participations
-
-        return max(prix_unitaire, self.prix_min)
+        return prix_unitaire.quantize(decimal.Decimal('.01'), rounding=decimal.ROUND_UP)
 
 
 

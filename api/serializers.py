@@ -315,11 +315,11 @@ class ProductEventSerializer(serializers.HyperlinkedModelSerializer):
     parent_event = serializers.PrimaryKeyRelatedField(queryset=Event.objects.all())
     prix_unitaire = serializers.SerializerMethodField(read_only=True)
     prix_total = serializers.DecimalField(max_digits=6, decimal_places=2, min_value=0)
-    prix_min = serializers.DecimalField(max_digits=5, decimal_places=2, min_value=0)
+    solde_requis = serializers.DecimalField(max_digits=5, decimal_places=2, min_value=0)
 
     class Meta:
         model = ProductEvent
-        fields = ("id", "parent_event", "nom", "description", "prix_total", "prix_min", "obligatoire", "quantite_prebucque", "quantite_bucque", "prix_unitaire")
+        fields = ("id", "parent_event", "nom", "description", "prix_total", "solde_requis", "obligatoire", "quantite_prebucque", "quantite_bucque", "prix_unitaire")
 
     def get_quantite_prebucque(self, product):
         qts = 0
@@ -339,7 +339,7 @@ class ProductEventSerializer(serializers.HyperlinkedModelSerializer):
         prix = product.getPrixUnitaire()
         if prix is None:
             return None
-        return str(round(product.getPrixUnitaire(), 2))
+        return str(prix)
 
     def validate(self, data):
         if data["parent_event"].etat_event > Event.EtatEventChoices.BUCQUAGE:

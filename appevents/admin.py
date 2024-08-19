@@ -69,7 +69,7 @@ class AdminEvent(admin.ModelAdmin):
 
 @admin.register(ProductEvent)
 class AdminProductEvent(admin.ModelAdmin):
-    list_display = ("parent_event", "nom", "prix_min")
+    list_display = ("parent_event", "nom", "solde_requis")
 
     # ajout d'un filtre sur la page de création/édition d'un product_event permettant d'afficher dans la dropdown
     # uniquement les events non terminés et que j'ai créé
