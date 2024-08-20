@@ -38,6 +38,7 @@ class PermissionsViewSet(viewsets.ModelViewSet):
         data["entities"] = user.entities.all()
         data["entities_manageable"] = user.entities_manageable.all()
         data["recharge"] = user.has_perm("appkfet.add_recharge")
+        data["event_debucquage_negats"] = user.has_perm("appevent.event_debucquage_negats")
         serializer = self.get_serializer(data)
         return Response(serializer.data)
 

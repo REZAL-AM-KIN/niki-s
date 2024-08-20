@@ -38,6 +38,7 @@ class PermissionsSerializer(serializers.Serializer):
     )
     # = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     recharge = serializers.BooleanField()
+    event_debucquage_negats = serializers.BooleanField()
 
 
 ########################
@@ -430,7 +431,8 @@ class BucquageEventSerializer(serializers.ModelSerializer):
 
         requester_user = self.context['request'].user
         if not requester_user.has_perm("appevents.event_super_manager") and not requester_user.is_superuser:
-            if requester_user not in data["product_participation"].parent_event.managers.all():
+            consommateur = Consommateur.objects.get(consommateur=requester_user)
+            if consommateur not in data["product_participation"].parent_event.managers.all():
                 raise serializers.ValidationError({"product_participation": "Vous ne pouvez gérer les bucquages du produit " + str(
                     data.get("product_participation"))})
         return data
