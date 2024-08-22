@@ -258,7 +258,7 @@ TINYMCE_DEFAULT_CONFIG = {
 # Maclookup defined in settings to update the vendor list
 BaseMacLookup.cache_path = "./.cache/mac-vendors.txt"
 MACLOOKUP = MacLookup()
-MACLOOKUP.update_vendors()
+MACLOOKUP.load_vendors()
 
 
 # Celery settings
@@ -288,7 +288,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     "update_maclookup_vendors_list_task": {
         "task": "appmacgest.tasks.update_maclookup_vendors_list_task",
-        "schedule": crontab(minute=32, hour=0),
+        "schedule": crontab(minute=32, hour=0, day_of_week="tue,fri"),
     },
 
 }
