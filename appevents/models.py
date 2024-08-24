@@ -1,4 +1,6 @@
 from decimal import Decimal
+from datetime import datetime
+import decimal
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -6,20 +8,25 @@ from django.db.models import Q
 from django.db.models.deletion import CASCADE
 
 from appkfet.models import Consommateur, History
-from appuser.models import Utilisateur
 
 
 class Event(models.Model):
     titre = models.CharField(max_length=50)
     description = models.CharField(max_length=200)
-    can_subscribe = models.BooleanField(
-        default=True, verbose_name="Ouvert au pré-bucquage"
-    )
-    date_event = models.DateTimeField()
+    date_event = models.DateField()
     created_by = models.ForeignKey(
         User, on_delete=CASCADE, editable=False, verbose_name="Créé par", related_name="created_by"
     )
-    ended = models.BooleanField(default=False, verbose_name="Evènement terminé")
+
+    class EtatEventChoices(models.IntegerChoices):
+        PREBUCQUAGE = 1, "Prébucquage"
+        BUCQUAGE = 2, "Bucquage"
+        DEBUCQUAGE = 3, "Débucquage"
+        TERMINE = 4, "Terminé"
+
+    etat_event = models.PositiveSmallIntegerField(
+        choices=EtatEventChoices.choices, default=EtatEventChoices.PREBUCQUAGE, verbose_name="Etat de l'évènement", editable=False
+    )
 
     # Les managers sont des consommateurs plutôt que des User car les user sans consommateur ne peuvent pas intéragir
     # avec le front kfet
@@ -31,10 +38,23 @@ class Event(models.Model):
     class Meta:
         permissions = [
             ("event_super_manager", "Autorise l'administration de tous les évenements."),
+            ("event_debucquage_negats", "Autorise le débucquage des produits d'un évenement en négatif."),
         ]
 
     def end(self, *args, **kwargs):
-        self.ended = True
+        self.etat_event = self.EtatEventChoices.TERMINE
+        self.save()
+
+    def mode_bucquage(self, *args, **kwargs):
+        self.etat_event = self.EtatEventChoices.BUCQUAGE
+        self.save()
+
+    def mode_debucquage(self, *args, **kwargs):
+        self.etat_event = self.EtatEventChoices.DEBUCQUAGE
+        self.save()
+
+    def mode_prebucquage(self, *args, **kwargs):
+        self.etat_event = self.EtatEventChoices.PREBUCQUAGE
         self.save()
 
 
@@ -43,7 +63,7 @@ class ProductEvent(models.Model):
     nom = models.CharField(max_length=50)
     description = models.CharField(max_length=200, default=None, blank=True)
     prix_total = models.DecimalField(max_digits=6, decimal_places=2, default=0, blank=True)
-    prix_min = models.DecimalField(max_digits=5, decimal_places=2, default=0, blank=True)
+    solde_requis = models.DecimalField(max_digits=5, decimal_places=2, default=0, blank=True)
     obligatoire = models.BooleanField(default=False)
 
     def __str__(self):
@@ -59,8 +79,7 @@ class ProductEvent(models.Model):
             return None
 
         prix_unitaire = self.prix_total / nb_participations
-
-        return max(prix_unitaire, self.prix_min)
+        return prix_unitaire.quantize(decimal.Decimal('.01'), rounding=decimal.ROUND_UP)
 
 
 
@@ -77,46 +96,39 @@ class ParticipationEvent(models.Model):
     def __unicode__(self):
         return self.pk
 
-    """
-    def save(self, *args, **kwargs):
-        if self.participation_ok is True and self.participation_bucquee is False:
-            prix_total = Decimal(self.number) * self.product_participation.prix
-            if Consommateur.testdebit(self.cible_participation, prix_total):
-                self.participation_bucquee = True
-                super(ParticipationEvent, self).save(*args, **kwargs)
-                Consommateur.debit(self.cible_participation, prix_total)
-                History.objects.update_or_create(
-                    cible_evenement=self.cible_participation,
-                    nom_evenement=f"{self.number}x {self.product_participation.parent_event.titre} - "
-                    f"{self.product_participation.nom}",
-                    prix_evenement=prix_total,
-                    entite_evenement="Evènement",
-                    date_evenement=self.product_participation.parent_event.date_event,
-                )
-            else:
-                super(ParticipationEvent, self).save(*args, **kwargs)
+    @property
+    def prix_total(self):
+        return self.product_participation.getPrixUnitaire()*Decimal(self.quantity)
+
+
+    def test_debucquage(self, debucqueur, negats=False):
+        if self.product_participation.parent_event.etat_event != Event.EtatEventChoices.DEBUCQUAGE:
+            return "L'event n'est pas en mode débucquage"
+        if not self.participation_bucquee:
+            return "La participation n'est pas bucquée"
+        if self.participation_debucquee:
+            return "La participation est déjà débucquée"
+        if self.cible_participation.activated is False:
+            return "Consommateur désactivé"
+        if negats and not debucqueur.has_perm("appevents.event_debucquage_negats"):
+            return "Vous n'avez pas la permission de débucquer en négatif"
+        if negats or Consommateur.testdebit(self.cible_participation, self.prix_total):
+            return True
         else:
-            super(ParticipationEvent, self).save(*args, **kwargs)"""
+            return "Le consommateur n'a pas assez d'argent pour ce produit"
+
 
     def debucquage(self, debucqueur, negats=False):
+        res = self.test_debucquage(debucqueur, negats)
+        if res is not True:
+            return res
+
         if self.quantity == 0:
-            return "Nothing to debucque"
+            self.participation_debucquee = True
+            self.save()
+            return True
 
-        if self.participation_bucquee is False:
-            return "Participation is not bucquée"
-        if self.participation_debucquee:
-            return "Participation already débucquée"
-
-        if self.cible_participation.activated is False:
-            return "Consommateur is not activated"
-
-        #TODO : vérifiction de permission de débucquage negat'ss
-
-
-        produit = self.product_participation
-
-
-        prix_total = produit.getPrixUnitaire()*Decimal(self.quantity)
+        prix_total = self.prix_total
 
         if Consommateur.testdebit(self.cible_participation, prix_total) or negats:
             self.participation_debucquee = True
@@ -129,8 +141,8 @@ class ParticipationEvent(models.Model):
                               f"{self.product_participation.parent_event.titre}",
                 prix_evenement=prix_total,
                 entite_evenement="Evènement",
-                date_evenement=self.product_participation.parent_event.date_event,
+                date_evenement=datetime.now(),
             )
             return True
-        return "Consommateur has not enough money"
+        return "Le consommateur n'a pas assez d'argent pour ce produit"
 
