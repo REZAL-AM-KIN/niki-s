@@ -304,7 +304,9 @@ if PROD:
         "handlers": {
             "error_file": {
                 "level": "WARNING",
-                "class": "logging.FileHandler",
+                "class": "logging.handlers.RotatingFileHandler",
+                "backupCount": 10,
+                "maxBytes": 10*1024*1024,  # 10*1024*1024 bytes (10MB)
                 "filename": "/var/log/niki/error.log",
                 "formatter": "app",
             },
