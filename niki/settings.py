@@ -292,3 +292,39 @@ CELERY_BEAT_SCHEDULE = {
     },
 
 }
+
+if PROD:
+    LOGGING = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "root": {
+            "handlers": ["error_file"],
+            "level": "WARNING",
+        },
+        "handlers": {
+            "error_file": {
+                "level": "WARNING",
+                "class": "logging.handlers.RotatingFileHandler",
+                "backupCount": 10,
+                "maxBytes": 10*1024*1024,  # 10*1024*1024 bytes (10MB)
+                "filename": "/var/log/niki/error.log",
+                "formatter": "app",
+            },
+        },
+        "loggers": {
+            "django": {
+                "handlers": ["error_file"],
+                "level": "WARNING",
+                "propagate": True,
+            },
+        },
+        'formatters': {
+            'app': {
+                'format': (
+                    u"%(asctime)s [%(levelname)-8s] "
+                    "(%(module)s.%(funcName)s) %(message)s"
+                ),
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+            },
+        },
+    }
