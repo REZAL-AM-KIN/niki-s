@@ -2,6 +2,7 @@ from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework import filters
 from datetime import timedelta
 from django.utils import timezone
 
@@ -111,6 +112,8 @@ class ConsommateurViewSet(viewsets.ModelViewSet):
     serializer_class = ConsommateurSerializer
     http_method_names = ["get", "options", "patch"]
     permission_classes = (permissions.DjangoModelPermissions, RequiersConsommateur,)
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["consommateur__first_name", "consommateur__last_name", "consommateur__bucque", "consommateur__fams", "consommateur__proms"]
 
     @action(methods=['PATCH'], detail=True)
     def annulerDernierDebucquage(self, request, pk=None):
