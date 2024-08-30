@@ -284,7 +284,7 @@ class EventViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action in ["fermeture_prebucquage", "fermeture_bucquage", "fermeture_debucquage"]:
             # On n'a besoin d'aucune donnée dans champ data de la requête
-            return serializers.Serializer
+            return serializers.BaseSerializer
         return EventSerializer
 
     def get_queryset(self):

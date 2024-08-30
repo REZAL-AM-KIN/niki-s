@@ -29,14 +29,14 @@ class PermissionsSerializer(serializers.Serializer):
     groupes = serializers.ListField(
         child=serializers.CharField()
     )
-    entities = serializers.ListField(
-        child=serializers.CharField()
-    )
-    #entities = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    entities_manageable = serializers.ListField(
-        child=serializers.CharField()
-    )
-    # = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    # entities = serializers.ListField(
+    #     child=serializers.CharField()
+    # )
+    entities = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    # entities_manageable = serializers.ListField(
+    #     child=serializers.CharField()
+    # )
+    entities_manageable = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     recharge = serializers.BooleanField()
     event_debucquage_negats = serializers.BooleanField()
 
