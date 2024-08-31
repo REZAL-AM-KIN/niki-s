@@ -18,6 +18,23 @@ from django.db.models.functions import Lower
 #         KFET         #
 ########################
 
+
+class CaseInsensitiveOrderingFilter(filters.OrderingFilter):
+    def filter_queryset(self, request, queryset, view):
+        ordering = self.get_ordering(request, queryset, view)
+        if ordering is not None:
+            for item in ordering:
+                field_name = item.lstrip('-')
+                field = queryset.model._meta.get_field(field_name)
+                if isinstance(field, (models.IntegerField, models.FloatField, models.DecimalField)):
+                    queryset = queryset.order_by(field_name)
+                else:
+                    queryset = queryset.order_by(Lower(field_name))
+                if item.startswith('-'):
+                    queryset = queryset.reverse()
+        return queryset
+
+
 # authentification nécessaire pour tous les appels de l'API KFET
 
 # GET : recupère les permissions de l'utilisateur
@@ -76,10 +93,15 @@ class ProduitByEntityViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.DjangoModelPermissions, RequiersConsommateur,)
     serializer_class = ProduitSerializer
     lookup_field = "cible_entity"
+    filter_backends = [filters.SearchFilter, CaseInsensitiveOrderingFilter]
+    ordering_fields = ["nom", "prix", "raccourci", "stock"]
+    search_fields = ["raccourci", "nom"]
 
     def get_queryset(self):
-        if "cible_entity" in self.kwargs:
-            entite_id = self.kwargs["cible_entity"]
+        if "cible_entity" in self.kwargs or "cible_entity" in self.request.query_params:
+            entite_id = self.request.query_params.get("cible_entity", None)
+            if entite_id is None:
+                entite_id = self.kwargs["cible_entity"]
             if not entite_id.isdigit():
                 queryset = Produit.objects.none()
             else:
@@ -112,6 +134,8 @@ class MesEntitesViewSet(viewsets.ModelViewSet):
     serializer_class = EntiteSerializer
     http_method_names = ["get", "options"]
     permission_classes = (permissions.DjangoModelPermissions, RequiersConsommateur,)
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["nom"]
 
     def get_queryset(self):
         user = Utilisateur.objects.get(pk=self.request.user.pk)
@@ -119,6 +143,19 @@ class MesEntitesViewSet(viewsets.ModelViewSet):
             return Entity.objects.all().order_by(Lower("nom").asc())
         queryset = user.entities.all() | user.entities_manageable.all()
         return queryset.order_by(Lower("nom").asc())
+
+
+# GET : recuperer les entités que l'utilisateur peut gérer
+class MesEntitesManageablesViewSet(viewsets.ModelViewSet):
+    serializer_class = EntiteSerializer
+    http_method_names = ["get", "options"]
+    permission_classes = (permissions.DjangoModelPermissions, RequiersConsommateur,)
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["nom"]
+
+    def get_queryset(self):
+        user = Utilisateur.objects.get(pk=self.request.user.pk)
+        return user.entities_manageable.all().order_by(Lower("nom").asc())
 
 
 # GET : récupérer tous les consommateurs
