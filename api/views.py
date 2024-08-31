@@ -12,6 +12,7 @@ from api.permissions import AllowedIP, AllowedIPEvenSaveMethods, get_client_ip, 
     EditProductEventPermission, BucquageEventPermission, RequiersConsommateur, ProduitPermission
 
 from django.http.request import QueryDict
+from django.db.models.functions import Lower
 
 ########################
 #         KFET         #
@@ -114,7 +115,10 @@ class MesEntitesViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = Utilisateur.objects.get(pk=self.request.user.pk)
-        return user.entities.all().union(user.entities_manageable.all())
+        if user.has_perm("appkfet.produit_super_manager"):
+            return Entity.objects.all().order_by(Lower("nom").asc())
+        queryset = user.entities.all() | user.entities_manageable.all()
+        return queryset.order_by(Lower("nom").asc())
 
 
 # GET : récupérer tous les consommateurs
@@ -235,8 +239,10 @@ class HistoryViewSet(viewsets.ModelViewSet):
     lookup_field = "cible_evenement"
 
     def get_queryset(self):
-        if "cible_evenement" in self.kwargs:
-            user_id = self.kwargs["cible_evenement"]
+        if "cible_evenement" in self.kwargs or "cible_evenement" in self.request.query_params:
+            user_id = self.request.query_params.get("cible_evenement", None)
+            if user_id is None:
+                user_id = self.kwargs["cible_evenement"]
             consommateur = Consommateur.objects.filter(pk=user_id)
             if consommateur.count() == 1:
                 queryset = History.objects.filter(
