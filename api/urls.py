@@ -9,6 +9,7 @@ router.register(r"utilisateur", views.CurrentUserViewSet, basename="utilisateur"
 router.register(r"produits", views.ProduitViewSet)
 router.register(r"produitsDansEntite", views.ProduitByEntityViewSet, basename="produitsDansEntite")
 router.register(r"entites", views.EntiteViewSet)
+router.register(r"mesentites", views.MesEntitesViewSet, basename="mesEntites")
 router.register(r"consommateurs", views.ConsommateurViewSet)
 router.register(r"recharges", views.RechargeViewSet, basename="recharges")
 router.register(r"bucquages", views.BucquageViewSet, basename="bucquages")

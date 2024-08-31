@@ -106,6 +106,17 @@ class EntiteViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.DjangoModelPermissions, RequiersConsommateur,)
 
 
+# GET : recuperer les entités que l'utilisateur peut débucquer/gérer
+class MesEntitesViewSet(viewsets.ModelViewSet):
+    serializer_class = EntiteSerializer
+    http_method_names = ["get", "options"]
+    permission_classes = (permissions.DjangoModelPermissions, RequiersConsommateur,)
+
+    def get_queryset(self):
+        user = Utilisateur.objects.get(pk=self.request.user.pk)
+        return user.entities.all().union(user.entities_manageable.all())
+
+
 # GET : récupérer tous les consommateurs
 class ConsommateurViewSet(viewsets.ModelViewSet):
     queryset = Consommateur.objects.filter(activated=True)
