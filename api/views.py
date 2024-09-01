@@ -334,6 +334,9 @@ class RechargeLydiaViewSet(viewsets.ModelViewSet):
 class EventViewSet(viewsets.ModelViewSet):
     permission_classes = (RequiersConsommateur, EditEventPermission,)  #On combine les permissions de bases et la perm custom pour overide uniquement les permissions de modification d'objet
     http_method_names = ["get", "options", "post", "patch", "put", "delete"]
+    filter_backends = [filters.SearchFilter, CaseInsensitiveOrderingFilter]
+    ordering_fields = ["titre", "date_event"]
+    search_fields = ["titre", "description", "date_event"]
 
     def get_serializer_class(self):
         if self.action in ["fermeture_prebucquage", "fermeture_bucquage", "fermeture_debucquage"]:
