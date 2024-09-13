@@ -82,9 +82,6 @@ class ProductEvent(models.Model):
         return prix_unitaire.quantize(decimal.Decimal('.01'), rounding=decimal.ROUND_UP)
 
 
-
-
-
 class ParticipationEvent(models.Model):
     cible_participation = models.ForeignKey(Consommateur, on_delete=CASCADE, related_name="participation_event")
     product_participation = models.ForeignKey(ProductEvent, on_delete=CASCADE)

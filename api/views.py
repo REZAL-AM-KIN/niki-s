@@ -198,6 +198,7 @@ class ConsommateurViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         return Response({"detail": "Create non autorisée"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+
 # GET : récupérer toutes les recharges pour tous les utilisateurs ou pour un en particulier
 # POST : créer une recharge. Seuls les utilisateurs ayant été déclaré avec le droit appkfet|recharge|can add recharge
 #        peuvent effectuer cette action
@@ -381,6 +382,31 @@ class EventViewSet(viewsets.ModelViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
         event.end()
         return Response({'status': 'Débucquage fermé pour "'+event.titre+'"'}, status=status.HTTP_200_OK)
+
+    @action(methods=['GET'], detail=True)
+    def progression_bucquage(self, request, pk=None):
+        event = self.get_object()
+        prebucquees = Consommateur.objects.filter(
+            participation_event__product_participation__parent_event=event,
+            participation_event__prebucque_quantity__gt=0
+        ).distinct()
+        if event.etat_event < Event.EtatEventChoices.BUCQUAGE:
+            nb_bucquees_et_prebucquees = 0
+        else:
+            # il faut quelqu'un relise ce calcul
+            # j'essaye d'avoir seulement le nombre de consommateur prébucqué qui ont toutes leur participations bucquées
+            nb_bucquees_et_prebucquees = prebucquees.filter(
+                participation_event__product_participation__parent_event=event,
+                participation_event__participation_bucquee=True,
+                participation_event__prebucque_quantity__gt=0,
+                participation_event__quantity__gt=0
+            ).distinct().count() - prebucquees.filter(
+                participation_event__product_participation__parent_event=event,
+                participation_event__prebucque_quantity__gt=0,
+                participation_event__quantity=0
+            ).distinct().count()
+
+        return Response({'prebucquees': prebucquees.count(), 'bucquees': nb_bucquees_et_prebucquees}, status=status.HTTP_200_OK)
 
 
 # GET : renvoi tous les produits dont l'utilisateur peut gérer le fin'ss.

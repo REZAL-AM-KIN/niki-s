@@ -113,7 +113,7 @@ class ConsommateurSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Consommateur
-        fields = ("id", "prenom", "commentaire", "bucque", "fams", "proms", "nom", "solde", "totaldep")
+        fields = ("id", "nom", "prenom", "bucque", "fams", "proms", "commentaire", "solde", "totaldep")
 
 
 class RechargeSerializer(serializers.HyperlinkedModelSerializer):
@@ -352,11 +352,12 @@ class ProductEventSerializer(serializers.HyperlinkedModelSerializer):
 class ParticipationEventSerializer(serializers.HyperlinkedModelSerializer):
     cible_participation = serializers.PrimaryKeyRelatedField(queryset=Consommateur.objects.all())
     product_participation = serializers.PrimaryKeyRelatedField(queryset=ProductEvent.objects.all())
-    participation_debucquee = serializers.BooleanField(read_only=True)
+    is_bucquee = serializers.BooleanField(source="participation_bucquee", read_only=True)
+    is_debucquee = serializers.BooleanField(source="participation_debucquee", read_only=True)
 
     class Meta:
         model = ParticipationEvent
-        fields = ("id", "cible_participation", "product_participation", "prebucque_quantity", "quantity", "participation_bucquee", "participation_debucquee")
+        fields = ("id", "cible_participation", "product_participation", "prebucque_quantity", "quantity", "is_bucquee", "is_debucquee")
 
     # On surcharge create pour faire une update si a participation existe déjà
     def create(self, validated_data):
@@ -488,15 +489,11 @@ class PrebucquageEventSerializer(serializers.ModelSerializer):
 # Serializer pour l'affichage des bucquages classés par consommateur
 class BucquageEventDefaultSerializer(ConsommateurSerializer):
     consommateur_id = serializers.IntegerField(source="id", read_only=True)
-    consommateur_bucque = serializers.CharField(source="consommateur.bucque", read_only=True)
-    consommateur_nom = serializers.CharField(source="consommateur.last_name", read_only=True)
-    consommateur_fams = serializers.CharField(source="consommateur.fams", read_only=True)
     participation_event = serializers.SerializerMethodField()
 
     class Meta:
         model = Consommateur
-        fields = (
-        "consommateur_id", "consommateur_bucque", "consommateur_nom", "consommateur_fams", "participation_event")
+        fields = ("consommateur_id", "nom", "prenom", "bucque", "fams", "proms", "solde", "participation_event")
 
     def get_participation_event(self, consommateur):
         request = self.context.get("request")
