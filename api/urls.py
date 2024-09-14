@@ -19,6 +19,9 @@ router.register(r"rechargeslydia", views.RechargeLydiaViewSet, basename="recharg
 router.register(r"event", views.EventViewSet, basename="event")
 router.register(r"productevent", views.ProductEventViewSet, basename="productevent")
 router.register(r"bucquageevent", views.BucqageEventViewSet, basename="bucqageevent")
+router.register(r"event_prebucquage", views.EventPrebucqagesViewSet, basename="event_prebucquage")
+router.register(r"event_bucquage", views.EventBucqagesViewSet, basename="event_bucquage",)
+router.register(r"event_debucquage", views.EventBucqagesViewSet, basename="event_debucquage")
 
 urlpatterns = [
     path("", include(router.urls)),

@@ -20,19 +20,38 @@ from django.db.models.functions import Lower
 
 
 class CaseInsensitiveOrderingFilter(filters.OrderingFilter):
+    """Permet de trier les résultats de la requête en ignorant la casse des champs définit dans ordering_case_insensitive_fields,
+    et d'avoir des alias pour les champs de tri dans replace_ordering_fields.
+    replace_ordering_fields est 'appliqué' en premier, puis ordering_case_insensitive_fields"""
     def filter_queryset(self, request, queryset, view):
         ordering = self.get_ordering(request, queryset, view)
-        if ordering is not None:
-            for item in ordering:
-                field_name = item.lstrip('-')
-                field = queryset.model._meta.get_field(field_name)
-                if isinstance(field, (models.IntegerField, models.FloatField, models.DecimalField)):
-                    queryset = queryset.order_by(field_name)
+        insensitive_ordering = getattr(view, 'ordering_case_insensitive_fields', ())
+
+        if ordering:
+            new_ordering = []
+            for field in ordering:
+                if field in insensitive_ordering:
+                    new_ordering.append(Lower(field[1:]).desc() if field.startswith('-') else Lower(field).asc())
                 else:
-                    queryset = queryset.order_by(Lower(field_name))
-                if item.startswith('-'):
-                    queryset = queryset.reverse()
+                    new_ordering.append(field)
+            return queryset.order_by(*new_ordering)
+
         return queryset
+
+    def get_ordering(self, request, queryset, view):
+        ordering = super(CaseInsensitiveOrderingFilter, self).get_ordering(request, queryset, view)
+        fields_to_replace = getattr(view, 'replace_ordering_fields', None)
+        if fields_to_replace and ordering:
+            new_ordering = []
+            for ordering_field in ordering:
+                reverse = ordering_field.startswith('-')
+                field = ordering_field[1:] if reverse else ordering_field
+                if fields_to_replace.get(field):
+                    new_ordering.append(("-" if reverse else "")+fields_to_replace[field])
+                else:
+                    new_ordering.append(ordering_field)
+            return new_ordering
+        return ordering
 
 
 # authentification nécessaire pour tous les appels de l'API KFET
@@ -95,6 +114,7 @@ class ProduitByEntityViewSet(viewsets.ModelViewSet):
     lookup_field = "cible_entity"
     filter_backends = [filters.SearchFilter, CaseInsensitiveOrderingFilter]
     ordering_fields = ["nom", "prix", "raccourci", "stock"]
+    ordering_case_insensitive_fields = ["nom", "raccourci"]
     search_fields = ["raccourci", "nom"]
 
     def get_queryset(self):
@@ -337,6 +357,7 @@ class EventViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "options", "post", "patch", "put", "delete"]
     filter_backends = [filters.SearchFilter, CaseInsensitiveOrderingFilter]
     ordering_fields = ["titre", "date_event"]
+    ordering_case_insensitive_fields = ["titre"]
     search_fields = ["titre", "description", "date_event"]
 
     def get_serializer_class(self):
@@ -434,12 +455,36 @@ class ProductEventViewSet(viewsets.ModelViewSet):
         return self.queryset.filter(parent_event__pk=finss_id)
 
 
-
 # GET : renvoi toutes les participations classées par Consommateur :
-#                                  [{consommateur_id:id, participation:[liste des participations de l'utilisateur}, ...]
+#                                  [{ consommateur_id, nom, prenom, bucque, fams, proms, solde,
+#                                     participation:[liste des participations de l'utilisateur
+#                                   },
+#                                   ...]
 # Filter : finss=<id finss> --> filtre les participations qui ne concernent que le finss id finss
+# On peut créer/éditer directement des produits en POST/PATCH/PUT
+# Cet endpoint sert surtout pour "éditer" les participations d'un finss
+# l'action /prebucquage/ permet de créer/éditer des prébucquages avec comme champs
+#     {
+#         "cible_participation": <id Consommateur>,
+#         "product_participation": <id ProductEvent>,
+#         "prebucque_quantity": <int>
+#     }
+# l'action /bucquage/ permet de créer/éditer des bucquages avec comme champs
+#     {
+#         "cible_participation": <id Consommateur>,
+#         "product_participation": <id ProductEvent>,
+#         "quantity": <int>
+#     }
+# l'action /debucquage/ permet de débucquer des participations avec comme champs
+#     {
+#         "id": <id ParticipationEvent>,
+#         "negatss": <bool> - optionnal. si True, on peut débucquer en Négatif (si l'utilisateur a la permission appevents.event_debucquage_negats)
+#     }
+# ces 3 actions renvoie en GET une liste des participations qui peuvent être éditées par l'action
+
 class BucqageEventViewSet(viewsets.ModelViewSet):
     permission_classes = (RequiersConsommateur, BucquageEventPermission,)
+    http_method_names = ["get", "options", "post", "patch", "put"]
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -690,3 +735,86 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(myparticipations, many=True)
         return Response(serializer.data)
+
+
+# Le paramètre finss est obligatoire et correspond à l'id de l'event
+# On peut filtrer/trier les participations par nom, prénom, bucque, fams, proms
+# Renvoi toutes les participations classées par Consommateur :
+#                                  [{ consommateur_id, nom, prenom, bucque, fams, proms, solde,
+#                                     participation:[liste des participations de l'utilisateur
+#                                   },
+#                                   ...]
+
+class EventParticipationByConsommateurEmptyViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = (RequiersConsommateur, BucquageEventPermission,)
+    http_method_names = ["get", "options"]
+    filter_backends = [filters.SearchFilter, CaseInsensitiveOrderingFilter]
+    search_fields = ["consommateur__first_name", "consommateur__last_name", "consommateur__bucque", "consommateur__fams", "consommateur__proms"]
+    ordering_fields = ["prenom", "nom", "bucque", "fams", "proms"]
+    ordering_case_insensitive_fields = ["consommateur__first_name", "consommateur__last_name", "consommateur__bucque", "consommateur__proms"]
+    replace_ordering_fields = {"nom": "consommateur__last_name",
+                               "prenom": "consommateur__first_name",
+                               "fams": "consommateur__fams",
+                               "proms": "consommateur__proms",
+                               "bucque": "consommateur__bucque"}
+
+
+# Endpoint pour récupérer les participations prébuquées, par utilisateur, pour un finss donné
+class EventPrebucqagesViewSet(EventParticipationByConsommateurEmptyViewSet):
+    serializer_class = EventPrebucqagesSerializer
+
+    def get_queryset(self):
+        finss_id = self.request.query_params.get("finss", None)
+        if finss_id is None:
+            return Consommateur.objects.none()
+        if not finss_id.isdigit():
+            return Consommateur.objects.none()
+
+        return Consommateur.objects.filter(
+            participation_event__product_participation__parent_event__pk=finss_id,
+            participation_event__prebucque_quantity__gt=0
+        ).distinct()
+
+
+# Endpoint pour récupérer les participations buquées, par utilisateur, pour un finss donné
+class EventBucqagesViewSet(EventParticipationByConsommateurEmptyViewSet):
+    serializer_class = EventBucquagesSerializer
+
+    def get_queryset(self):
+        finss_id = self.request.query_params.get("finss", None)
+        if finss_id is None:
+            return Consommateur.objects.none()
+        if not finss_id.isdigit():
+            return Consommateur.objects.none()
+
+        return Consommateur.objects.filter(
+            participation_event__product_participation__parent_event__pk=finss_id,
+            participation_event__participation_bucquee=True
+        ).distinct()
+
+
+# Endpoint pour récupérer les participations débucquée/à débucquée, par utilisateur, pour un finss donné
+class EventDebucqagesViewSet(EventParticipationByConsommateurEmptyViewSet):
+    serializer_class = EventDebucquagesSerializer
+
+    def get_queryset(self):
+        finss_id = self.request.query_params.get("finss", None)
+        if finss_id is None:
+            return Consommateur.objects.none()
+        if not finss_id.isdigit():
+            return Consommateur.objects.none()
+
+        display_debucquee = self.request.query_params.get("displayDebucquee", False)
+
+        queryset = Consommateur.objects.filter(
+            participation_event__product_participation__parent_event__pk=finss_id,
+            participation_event__participation_bucquee=True
+        )
+
+        if not display_debucquee:
+            queryset = queryset.filter(
+                participation_event__participation_debucquee=False,
+                participation_event__quantity__gt=0
+            )
+
+        return queryset.distinct()

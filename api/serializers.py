@@ -524,3 +524,67 @@ class BucquageEventDefaultSerializer(ConsommateurSerializer):
 
         serializer = ParticipationEventSerializer(instance=queryset, many=True)
         return serializer.data
+
+
+# Serializer pour l'affichage des participations prébucquées, regroupées par consommateur
+class EventPrebucqagesSerializer(BucquageEventDefaultSerializer):
+    def get_participation_event(self, consommateur):
+        request = self.context.get("request")
+        finss_id = request.query_params.get("finss", None)
+
+        if finss_id is None:
+            queryset = ParticipationEvent.objects.none()
+        elif not finss_id.isdigit():
+            queryset = ParticipationEvent.objects.none()
+        else:
+            queryset = ParticipationEvent.objects.filter(
+                cible_participation=consommateur,
+                product_participation__parent_event__pk=finss_id,
+                prebucque_quantity__gt=0
+            )
+
+        serializer = ParticipationEventSerializer(instance=queryset, many=True)
+        return serializer.data
+
+
+# Serializer pour l'affichage des participations bucquées, regroupées par consommateur
+class EventBucquagesSerializer(BucquageEventDefaultSerializer):
+    def get_participation_event(self, consommateur):
+        request = self.context.get("request")
+        finss_id = request.query_params.get("finss", None)
+
+        if finss_id is None:
+            queryset = ParticipationEvent.objects.none()
+        else:
+            if not finss_id.isdigit():
+                queryset = ParticipationEvent.objects.none()
+            else:
+                queryset = ParticipationEvent.objects.filter(
+                    cible_participation=consommateur,
+                    product_participation__parent_event__pk=finss_id
+                )
+
+        serializer = ParticipationEventSerializer(instance=queryset, many=True)
+        return serializer.data
+
+
+# Serializer pour l'affichage des participations bucquées, regroupées par consommateur
+class EventDebucquagesSerializer(BucquageEventDefaultSerializer):
+    def get_participation_event(self, consommateur):
+        request = self.context.get("request")
+        finss_id = request.query_params.get("finss", None)
+
+        if finss_id is None:
+            queryset = ParticipationEvent.objects.none()
+        else:
+            if not finss_id.isdigit():
+                queryset = ParticipationEvent.objects.none()
+            else:
+                queryset = ParticipationEvent.objects.filter(
+                    cible_participation=consommateur,
+                    product_participation__parent_event__pk=finss_id,
+                    participation_bucquee=True
+                )
+
+        serializer = ParticipationEventSerializer(instance=queryset, many=True)
+        return serializer.data
