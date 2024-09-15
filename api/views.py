@@ -26,11 +26,10 @@ class CaseInsensitiveOrderingFilter(filters.OrderingFilter):
     def filter_queryset(self, request, queryset, view):
         ordering = self.get_ordering(request, queryset, view)
         insensitive_ordering = getattr(view, 'ordering_case_insensitive_fields', ())
-
         if ordering:
             new_ordering = []
             for field in ordering:
-                if field in insensitive_ordering:
+                if (field[1:] if field.startswith('-') else field) in insensitive_ordering:
                     new_ordering.append(Lower(field[1:]).desc() if field.startswith('-') else Lower(field).asc())
                 else:
                     new_ordering.append(field)
@@ -503,11 +502,29 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
     # Sinon on retourne l'ensemble des Participations.
     def get_queryset(self):
         if self.action == "list":
-            consommateur = Consommateur.objects.get(consommateur=self.request.user)
+            request_consommateur = Consommateur.objects.get(consommateur=self.request.user)
+
+            finss_id = self.request.query_params.get("finss", None)
+            consommateur_id = self.request.query_params.get("consommateur_id", None)
+            # Si finss_id est spécifié, on récupère les Consommateurs qui ont des participations sur ce fin'ss,
+            # indépendament de si le fin'ss est terminé ou non. Il faut cepandant que l'utilisateur puisse manager ce fin'ss.
+            # Si finss_id n'est pas spécifié, consommateur_id n'est pas utilisé.
+            if finss_id is not None and finss_id.isdigit():
+                if (not (self.request.user.has_perm("appevents.event_super_manager") or self.request.user.is_superuser)
+                        and request_consommateur not in Event.objects.get(pk=finss_id).managers.all()):
+                    return Consommateur.objects.none()
+                if consommateur_id is not None and consommateur_id.isdigit():
+                    return Consommateur.objects.filter(
+                        participation_event__product_participation__parent_event__pk=finss_id,
+                        pk=consommateur_id
+                    ).distinct()
+                return Consommateur.objects.filter(
+                    participation_event__product_participation__parent_event__pk=finss_id,
+                ).distinct()
+
             # Si superuser ou supermanagers on sélectionne tous les consommateurs qui ont des participations
             # sur un fin'ss en cours
-            if self.request.user.has_perm("appevents.event_super_manager") \
-                    or self.request.user.is_superuser:
+            if self.request.user.has_perm("appevents.event_super_manager") or self.request.user.is_superuser:
                 obj = Consommateur.objects.filter(
                     participation_event__product_participation__parent_event__etat_event__lt=Event.EtatEventChoices.TERMINE
                     ).distinct()
@@ -515,10 +532,10 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
 
             # Si utilisateur manager d'un fin'ss, on récupère tous les Consommateurs qui ont des participations
             # sur un fin'ss en cours managé par l'utilisateur
-            if Event.objects.filter(managers=consommateur).count() != 0:
+            if Event.objects.filter(managers=request_consommateur).count() != 0:
                 return Consommateur.objects.filter(
                     Q(participation_event__product_participation__parent_event__etat_event__lt=Event.EtatEventChoices.TERMINE) &
-                    Q(participation_event__product_participation__parent_event__managers=consommateur)
+                    Q(participation_event__product_participation__parent_event__managers=request_consommateur)
                 ).distinct()
             return Consommateur.objects.none()
 
@@ -690,15 +707,11 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
                     else:
                         errors.append(message_debucquage_non_valide(participation.id, debucquage))
 
-            if len(errors) > 0:
-                resp_status = status.HTTP_400_BAD_REQUEST
-            else:
-                resp_status = status.HTTP_200_OK
             return Response({"success_count": len(success), "errors_count": len(errors), "success": success,
-                             "errors": errors}, status=resp_status)
+                             "errors": errors}, status=status.HTTP_200_OK)
 
         else:
-            errors=[]
+            errors = []
             liste_id = [p_data.get("participation_id") for p_data in datas]
             for index in range(len(liste_id)):
                 err = serializer.errors[index]
@@ -804,17 +817,21 @@ class EventDebucqagesViewSet(EventParticipationByConsommateurEmptyViewSet):
         if not finss_id.isdigit():
             return Consommateur.objects.none()
 
-        display_debucquee = self.request.query_params.get("displayDebucquee", False)
+        display_debucquee = True if self.request.query_params.get("displayDebucquee", None) == "true" else False
 
-        queryset = Consommateur.objects.filter(
-            participation_event__product_participation__parent_event__pk=finss_id,
-            participation_event__participation_bucquee=True
-        )
-
-        if not display_debucquee:
-            queryset = queryset.filter(
+        # si display_debucquee est False, on ne guarde que les consommateur dont au moins une des participations n'est
+        # pas débucquée (et que la quantité bucquée est > 0)
+        if display_debucquee:
+            queryset = Consommateur.objects.filter(
+                participation_event__product_participation__parent_event__pk=finss_id,
+                participation_event__participation_bucquee=True
+            ).distinct()
+        else:
+            queryset = Consommateur.objects.filter(
+                participation_event__product_participation__parent_event__pk=finss_id,
+                participation_event__participation_bucquee=True,
                 participation_event__participation_debucquee=False,
                 participation_event__quantity__gt=0
-            )
+            ).distinct()
 
-        return queryset.distinct()
+        return queryset

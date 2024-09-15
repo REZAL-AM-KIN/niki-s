@@ -457,7 +457,6 @@ class PrebucquageEventSerializer(serializers.ModelSerializer):
         fields = ("id", "cible_participation", "product_participation", "prebucque_quantity")
 
     def validate(self, data):
-        print(data)
         user = self.context['request'].user
         if not user.has_perm("appevents.event_super_manager") and not user.is_superuser:
             if data.get("cible_participation") != user:
@@ -470,7 +469,6 @@ class PrebucquageEventSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        print(validated_data)
         if validated_data["prebucque_quantity"] == 0:
             try:
                 participation = ParticipationEvent.objects.get(cible_participation=validated_data.get("cible_participation"),
@@ -570,6 +568,12 @@ class EventBucquagesSerializer(BucquageEventDefaultSerializer):
 
 # Serializer pour l'affichage des participations bucquées, regroupées par consommateur
 class EventDebucquagesSerializer(BucquageEventDefaultSerializer):
+    prix_total = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Consommateur
+        fields = ("consommateur_id", "nom", "prenom", "bucque", "fams", "proms", "solde", "participation_event", "prix_total")
+
     def get_participation_event(self, consommateur):
         request = self.context.get("request")
         finss_id = request.query_params.get("finss", None)
@@ -588,3 +592,23 @@ class EventDebucquagesSerializer(BucquageEventDefaultSerializer):
 
         serializer = ParticipationEventSerializer(instance=queryset, many=True)
         return serializer.data
+
+    def get_prix_total(self, consommateur):
+        request = self.context.get("request")
+        finss_id = request.query_params.get("finss", None)
+        if finss_id is None:
+            queryset = ParticipationEvent.objects.none()
+        else:
+            if not finss_id.isdigit():
+                queryset = ParticipationEvent.objects.none()
+            else:
+                queryset = ParticipationEvent.objects.filter(
+                    cible_participation=consommateur,
+                    product_participation__parent_event__pk=finss_id,
+                    participation_bucquee=True,
+                    participation_debucquee=False
+                )
+        prix_total = 0
+        for participation in queryset:
+            prix_total += participation.prix_total
+        return str(prix_total)
