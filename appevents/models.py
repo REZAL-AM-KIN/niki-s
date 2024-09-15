@@ -41,19 +41,19 @@ class Event(models.Model):
             ("event_debucquage_negats", "Autorise le débucquage des produits d'un évenement en négatif."),
         ]
 
-    def end(self, *args, **kwargs):
+    def end(self):
         self.etat_event = self.EtatEventChoices.TERMINE
         self.save()
 
-    def mode_bucquage(self, *args, **kwargs):
+    def mode_bucquage(self):
         self.etat_event = self.EtatEventChoices.BUCQUAGE
         self.save()
 
-    def mode_debucquage(self, *args, **kwargs):
+    def mode_debucquage(self):
         self.etat_event = self.EtatEventChoices.DEBUCQUAGE
         self.save()
 
-    def mode_prebucquage(self, *args, **kwargs):
+    def mode_prebucquage(self):
         self.etat_event = self.EtatEventChoices.PREBUCQUAGE
         self.save()
 
@@ -97,7 +97,6 @@ class ParticipationEvent(models.Model):
     def prix_total(self):
         return self.product_participation.getPrixUnitaire()*Decimal(self.quantity)
 
-
     def test_debucquage(self, debucqueur, negats=False):
         if self.product_participation.parent_event.etat_event != Event.EtatEventChoices.DEBUCQUAGE:
             return "L'event n'est pas en mode débucquage"
@@ -113,7 +112,6 @@ class ParticipationEvent(models.Model):
             return True
         else:
             return "Le consommateur n'a pas assez d'argent pour ce produit"
-
 
     def debucquage(self, debucqueur, negats=False):
         res = self.test_debucquage(debucqueur, negats)
@@ -142,4 +140,3 @@ class ParticipationEvent(models.Model):
             )
             return True
         return "Le consommateur n'a pas assez d'argent pour ce produit"
-

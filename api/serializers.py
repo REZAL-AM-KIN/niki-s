@@ -1,17 +1,11 @@
 from datetime import datetime
-from random import randint
 
-from django.contrib.admin.utils import lookup_field
 from django.db.models import Q
 from rest_framework import serializers
-from rest_framework.decorators import action
-from rest_framework.fields import MultipleChoiceField
-from rest_framework.response import Response
 
 from appevents.models import Event, ProductEvent, ParticipationEvent
 from appkfet.models import *
 from lydia.models import *
-from appuser.models import Groupe
 
 # Assume that you have installed requests: pip install requests
 import requests
@@ -45,15 +39,16 @@ class PermissionsSerializer(serializers.Serializer):
 #         KFET         #
 ########################
 class ProduitSerializer(serializers.HyperlinkedModelSerializer):
-    #on renvoie le nom de l'entite
+    # On renvoie le nom de l'entite
     entite = serializers.SlugRelatedField(queryset=Entity.objects.all(), slug_field='nom')
+
     class Meta:
         model = Produit
         fields = ("id", "raccourci", "nom", "prix", "stock", "suivi_stock", "entite")
 
     def create(self, validated_data):
-        #on verifie que l'utilisateur à les permissions pour manager l'entité où il crée le produit
-        #permet de résoudre les requêtes avec le nom de l'entité ou l'objet entité
+        # On verifie que l'utilisateur à les permissions pour manager l'entité où il crée le produit.
+        # Permet de résoudre les requêtes avec le nom de l'entité ou l'objet entité
         request = self.context.get("request")
         try:
             entite = Entity.objects.get(
@@ -62,20 +57,21 @@ class ProduitSerializer(serializers.HyperlinkedModelSerializer):
         except Entity.DoesNotExist:
             raise serializers.ValidationError("Cannot resolve entity name")
 
-        #on vérifie les permissions
-        #soit l'utilisateur peut manager specifiquement l'entité, soit il a la permession de manager tout les produits
+        # On vérifie les permissions
+        # Soit l'utilisateur peut manager specifiquement l'entité, soit il a la permession de manager tout les produits
         utilisateur = Utilisateur.objects.get(pk=request.user.pk)
-        if utilisateur.entities_manageable.filter(nom=entite).exists() or request.user.has_perm("appkfet.produit_super_manager"):
-            validated_data["entite"]=entite
+        if utilisateur.entities_manageable.filter(nom=entite).exists() or request.user.has_perm(
+                "appkfet.produit_super_manager"):
+            validated_data["entite"] = entite
             return Produit.objects.create(**validated_data)
         else:
             raise serializers.ValidationError("Cannot create product in this entity")
 
     def update(self, instance, validated_data):
-        #on verifie que l'utilisateur à les permissions pour manager l'entité actuelle et celle visé du produit
-        #on vérifie que l'id de l'entite vise est correct
+        # On verifie que l'utilisateur à les permissions pour manager l'entité actuelle et celle visé du produit
+        # On vérifie que l'id de l'entite vise est correct
         request = self.context.get("request")
-        #permet de résoudre les requêtes avec le nom de l'entité ou l'objet entité
+        # Permet de résoudre les requêtes avec le nom de l'entité ou l'objet entité
         try:
             entite_vise = Entity.objects.get(
                 nom=validated_data["entite"]
@@ -83,22 +79,22 @@ class ProduitSerializer(serializers.HyperlinkedModelSerializer):
         except Entity.DoesNotExist:
             raise serializers.ValidationError("Cannot resolve entity name")
 
-        #soit l'utilisateur peut manager specifiquement les 2 entités, soit il a la permession de manager tout les produits
-        #(super_user accord toutes les permission, donc on ne vérifie pas ça en plus)
+        # Soit l'utilisateur peut manager specifiquement les 2 entités, soit il a la permession de manager tout les produits
+        # (super_user accord toutes les permission, donc on ne vérifie pas ça en plus)
         utilisateur = Utilisateur.objects.get(pk=request.user.pk)
-        if (utilisateur.entities_manageable.filter(nom=entite_vise).exists() and utilisateur.entities_manageable.filter(nom=instance.entite).exists() ) or utilisateur.has_perm("appkfet.produit_super_manager"):
-            #on modifie l'entite à la main et on laisse faire le reste à la methode update de la classe. c'est elle qui va appeler la méthode save() de l'instance
-            validated_data["entite"]=entite_vise
+        if (utilisateur.entities_manageable.filter(nom=entite_vise).exists() and utilisateur.entities_manageable.filter(
+                nom=instance.entite).exists()) or utilisateur.has_perm("appkfet.produit_super_manager"):
+            # On modifie l'entite à la main et on laisse faire le reste à la methode update de la classe. c'est elle qui va appeler la méthode save() de l'instance
+            validated_data["entite"] = entite_vise
             return super(ProduitSerializer, self).update(instance, validated_data)
         else:
-            if not(utilisateur.entities_manageable.filter(nom=instance.entite).exists()):
-                raise serializers.ValidationError("Cannot edit product from entity '"+instance.entite+"'")
-            if not(utilisateur.entities_manageable.filter(nom=entite_vise).exists()):
-                raise serializers.ValidationError("Cannot add product in entity '"+entite_vise.nom+"'")
+            if not (utilisateur.entities_manageable.filter(nom=instance.entite).exists()):
+                raise serializers.ValidationError("Cannot edit product from entity '" + instance.entite + "'")
+            if not (utilisateur.entities_manageable.filter(nom=entite_vise).exists()):
+                raise serializers.ValidationError("Cannot add product in entity '" + entite_vise.nom + "'")
 
 
 class EntiteSerializer(serializers.HyperlinkedModelSerializer):
-
     class Meta:
         model = Entity
         fields = ("id", "nom", "description", "color")
@@ -179,8 +175,8 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
         if consommateur.solde - produit.prix < 0:
             raise serializers.ValidationError("Consommateur has not enough money")
         if (
-            bucqueur.entities.filter(pk=produit.entite.pk).exists()
-            or bucqueur.is_superuser
+                bucqueur.entities.filter(pk=produit.entite.pk).exists()
+                or bucqueur.is_superuser
         ):
             validated_data["cible_bucquage"] = consommateur
             validated_data["date"] = datetime.now()
@@ -193,6 +189,7 @@ class BucquageSerializer(serializers.HyperlinkedModelSerializer):
             return Bucquage.objects.create(**validated_data)
         else:
             raise serializers.ValidationError("Cannot sell this product")
+
 
 class HistorySerializer(serializers.HyperlinkedModelSerializer):
     cible_evenement = ConsommateurSerializer()
@@ -208,6 +205,7 @@ class HistorySerializer(serializers.HyperlinkedModelSerializer):
             "date_evenement",
             "initiateur_evenement",
         )
+
 
 #########################
 #         LYDIA         #
@@ -244,7 +242,7 @@ class RechargeLydiaSerializer(serializers.HyperlinkedModelSerializer):
             'order_id': internal_uuid.hex,
         }
         # définition de l'url du endpoint
-        url_encaissement = LYDIA_URL+"/api/payment/payment.json"
+        url_encaissement = LYDIA_URL + "/api/payment/payment.json"
         # requête Lydia POST /api/payment/payment au format json
         r = requests.post(url_encaissement, data=data_object)
         r_status = r.status_code
@@ -298,9 +296,10 @@ class EventSerializer(serializers.HyperlinkedModelSerializer):
     def get_is_prebucque(self, obj):
         user = self.context.get('request').user
         consommateur = Consommateur.objects.get(consommateur=user)
-        participations = consommateur.participation_event.all()        # On récupère toute les participations de l'utilisateur
+        participations = consommateur.participation_event.all()  # On récupère toute les participations de l'utilisateur
 
-        return participations.filter(product_participation__parent_event=obj).exists()  # On check l'existence de participation pour le fin'ss
+        # On check l'existence de participation pour le fin'ss
+        return participations.filter(product_participation__parent_event=obj).exists()
 
     def create(self, validated_data):
         request = self.context.get("request")
@@ -321,7 +320,8 @@ class ProductEventSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = ProductEvent
-        fields = ("id", "parent_event", "nom", "description", "prix_total", "solde_requis", "obligatoire", "quantite_prebucque", "quantite_bucque", "prix_unitaire")
+        fields = ("id", "parent_event", "nom", "description", "prix_total", "solde_requis", "obligatoire",
+                  "quantite_prebucque", "quantite_bucque", "prix_unitaire")
 
     def get_quantite_prebucque(self, product):
         qts = 0
@@ -332,7 +332,8 @@ class ProductEventSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_quantite_bucque(self, product):
         qts = 0
-        participations = ParticipationEvent.objects.filter(Q(product_participation=product) & Q(participation_bucquee=True))
+        participations = ParticipationEvent.objects.filter(
+            Q(product_participation=product) & Q(participation_bucquee=True))
         for participation in participations:
             qts += participation.quantity
         return qts
@@ -357,7 +358,8 @@ class ParticipationEventSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = ParticipationEvent
-        fields = ("id", "cible_participation", "product_participation", "prebucque_quantity", "quantity", "is_bucquee", "is_debucquee")
+        fields = ("id", "cible_participation", "product_participation", "prebucque_quantity", "quantity", "is_bucquee",
+                  "is_debucquee")
 
     # On surcharge create pour faire une update si a participation existe déjà
     def create(self, validated_data):
@@ -376,8 +378,10 @@ class DebucquageEventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ParticipationEvent
-        fields = ("id", "cible_participation", "product_participation", "prebucque_quantity", "quantity", "participation_bucquee", "participation_debucquee", "negatss")
-        read_only_fields = ["cible_participation", "product_participation", "prebucque_quantity", "quantity", "participation_bucquee", "participation_debucquee"]
+        fields = ("id", "cible_participation", "product_participation", "prebucque_quantity", "quantity",
+                  "participation_bucquee", "participation_debucquee", "negatss")
+        read_only_fields = ["cible_participation", "product_participation", "prebucque_quantity", "quantity",
+                            "participation_bucquee", "participation_debucquee"]
 
     def update(self, instance, validated_data):
         pass
@@ -387,7 +391,7 @@ class DebucquageEventSerializer(serializers.ModelSerializer):
 
     def validate_id(self, value):
         try:
-            participation = ParticipationEvent.objects.get(pk=value)
+            ParticipationEvent.objects.get(pk=value)
         except ParticipationEvent.DoesNotExist:
             raise serializers.ValidationError(f"L'id {value} ne correspond à aucune participation.")
         return value
@@ -408,13 +412,11 @@ class BucquageEventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ParticipationEvent
-        fields = ("cible_participation", "product_participation", "prebucque_quantity", "quantity", "participation_bucquee", "participation_debucquee")
+        fields = ("cible_participation", "product_participation", "prebucque_quantity", "quantity",
+                  "participation_bucquee", "participation_debucquee")
         read_only_fields = ["prebucque_quantity", "participation_bucquee", "participation_debucquee"]
 
     def update(self, instance, validated_data):
-        pass
-
-    def create(self, validated_data):
         pass
 
     def validate_product_participation(self, value):
@@ -435,8 +437,9 @@ class BucquageEventSerializer(serializers.ModelSerializer):
         if not requester_user.has_perm("appevents.event_super_manager") and not requester_user.is_superuser:
             consommateur = Consommateur.objects.get(consommateur=requester_user)
             if consommateur not in data["product_participation"].parent_event.managers.all():
-                raise serializers.ValidationError({"product_participation": "Vous ne pouvez gérer les bucquages du produit " + str(
-                    data.get("product_participation"))})
+                raise serializers.ValidationError(
+                    {"product_participation": "Vous ne pouvez gérer les bucquages du produit " + str(
+                        data.get("product_participation"))})
         return data
 
     def create(self, validated_data):
@@ -460,19 +463,22 @@ class PrebucquageEventSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         if not user.has_perm("appevents.event_super_manager") and not user.is_superuser:
             if data.get("cible_participation") != user:
-                raise serializers.ValidationError({"cible_participation": "Vous ne pouvez gérer les participation du consommateur " + str(
-                    data.get("cible_participation"))})
+                raise serializers.ValidationError(
+                    {"cible_participation": "Vous ne pouvez gérer les participation du consommateur " + str(
+                        data.get("cible_participation"))})
 
         if data.get("product_participation").parent_event.etat_event != Event.EtatEventChoices.PREBUCQUAGE:
-            raise serializers.ValidationError({"product_participation": "Les prébucquages sont fermés pour le produit " + str(
-                data.get("product_participation").nom)})
+            raise serializers.ValidationError(
+                {"product_participation": "Les prébucquages sont fermés pour le produit " + str(
+                    data.get("product_participation").nom)})
         return data
 
     def create(self, validated_data):
         if validated_data["prebucque_quantity"] == 0:
             try:
-                participation = ParticipationEvent.objects.get(cible_participation=validated_data.get("cible_participation"),
-                                                               product_participation=validated_data.get("product_participation"))
+                participation = ParticipationEvent.objects.get(
+                    cible_participation=validated_data.get("cible_participation"),
+                    product_participation=validated_data.get("product_participation"))
                 participation.delete()
             except ParticipationEvent.DoesNotExist:
                 pass

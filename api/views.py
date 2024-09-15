@@ -3,6 +3,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import filters
+from rest_framework.decorators import action
 from datetime import timedelta
 from django.utils import timezone
 
@@ -14,6 +15,7 @@ from api.permissions import AllowedIP, AllowedIPEvenSaveMethods, get_client_ip, 
 from django.http.request import QueryDict
 from django.db.models.functions import Lower
 
+
 ########################
 #         KFET         #
 ########################
@@ -23,6 +25,7 @@ class CaseInsensitiveOrderingFilter(filters.OrderingFilter):
     """Permet de trier les résultats de la requête en ignorant la casse des champs définit dans ordering_case_insensitive_fields,
     et d'avoir des alias pour les champs de tri dans replace_ordering_fields.
     replace_ordering_fields est 'appliqué' en premier, puis ordering_case_insensitive_fields"""
+
     def filter_queryset(self, request, queryset, view):
         ordering = self.get_ordering(request, queryset, view)
         insensitive_ordering = getattr(view, 'ordering_case_insensitive_fields', ())
@@ -46,7 +49,7 @@ class CaseInsensitiveOrderingFilter(filters.OrderingFilter):
                 reverse = ordering_field.startswith('-')
                 field = ordering_field[1:] if reverse else ordering_field
                 if fields_to_replace.get(field):
-                    new_ordering.append(("-" if reverse else "")+fields_to_replace[field])
+                    new_ordering.append(("-" if reverse else "") + fields_to_replace[field])
                 else:
                     new_ordering.append(ordering_field)
             return new_ordering
@@ -184,7 +187,8 @@ class ConsommateurViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "options", "patch"]
     permission_classes = (permissions.DjangoModelPermissions, RequiersConsommateur,)
     filter_backends = [filters.SearchFilter]
-    search_fields = ["consommateur__first_name", "consommateur__last_name", "consommateur__bucque", "consommateur__fams", "consommateur__proms"]
+    search_fields = ["consommateur__first_name", "consommateur__last_name", "consommateur__bucque",
+                     "consommateur__fams", "consommateur__proms"]
 
     @action(methods=['PATCH'], detail=True)
     def annulerDernierDebucquage(self, request, pk=None):
@@ -352,7 +356,8 @@ class RechargeLydiaViewSet(viewsets.ModelViewSet):
 # GET : récupère la liste et les informations des tous les fin'ss dont l'utilisateur est gestionnaire.
 # POST : Ajoute un evenement (sous permissions addEvent)
 class EventViewSet(viewsets.ModelViewSet):
-    permission_classes = (RequiersConsommateur, EditEventPermission,)  #On combine les permissions de bases et la perm custom pour overide uniquement les permissions de modification d'objet
+    permission_classes = (RequiersConsommateur,
+                          EditEventPermission,)  # On combine les permissions de bases et la perm custom pour overide uniquement les permissions de modification d'objet
     http_method_names = ["get", "options", "post", "patch", "put", "delete"]
     filter_backends = [filters.SearchFilter, CaseInsensitiveOrderingFilter]
     ordering_fields = ["titre", "date_event"]
@@ -370,30 +375,34 @@ class EventViewSet(viewsets.ModelViewSet):
         if user.has_perm("appevents.event_super_manager") or user.is_superuser:
             return Event.objects.all()
 
-        return Event.objects.filter(~Q(etat_event=Event.EtatEventChoices.TERMINE)) # Si c'est un utilisateur Lambda, il ne peut voir que les Event non cloturé
+        return Event.objects.filter(
+            ~Q(etat_event=Event.EtatEventChoices.TERMINE))  # Si c'est un utilisateur Lambda, il ne peut voir que les Event non cloturé
 
     @action(methods=['PATCH'], detail=True)
     def fermeture_prebucquage(self, request, pk=None):
         event = self.get_object()
         if event.etat_event != Event.EtatEventChoices.PREBUCQUAGE:
-            return Response({'status': 'L\'évènement "'+event.titre+'" n\'est pas en mode prébucquage'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'status': 'L\'évènement "' + event.titre + '" n\'est pas en mode prébucquage'},
+                            status=status.HTTP_400_BAD_REQUEST)
         event.mode_bucquage()
-        return Response({'status': 'Prébucquage fermé pour "'+event.titre+'"'}, status=status.HTTP_200_OK)
+        return Response({'status': 'Prébucquage fermé pour "' + event.titre + '"'}, status=status.HTTP_200_OK)
 
     @action(methods=['PATCH'], detail=True)
     def fermeture_bucquage(self, request, pk=None):
         event = self.get_object()
         if event.etat_event != Event.EtatEventChoices.BUCQUAGE:
-            return Response({'status': 'L\'évènement "'+event.titre+'" n\'est pas en mode bucquage'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'status': 'L\'évènement "' + event.titre + '" n\'est pas en mode bucquage'},
+                            status=status.HTTP_400_BAD_REQUEST)
         # TODO: vérifier si tout les prébucquages sont passés? (et rajouter un booléen dans les données de la requête pour forcer)
         event.mode_debucquage()
-        return Response({'status': 'Bucquage fermé pour "'+event.titre+'"'}, status=status.HTTP_200_OK)
+        return Response({'status': 'Bucquage fermé pour "' + event.titre + '"'}, status=status.HTTP_200_OK)
 
     @action(methods=['PATCH'], detail=True)
     def fermeture_debucquage(self, request, pk=None):
         event = self.get_object()
         if event.etat_event != Event.EtatEventChoices.DEBUCQUAGE:
-            return Response({'status': 'L\'évènement "'+event.titre+'" n\'est pas en débucquage'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'status': 'L\'évènement "' + event.titre + '" n\'est pas en débucquage'},
+                            status=status.HTTP_400_BAD_REQUEST)
         not_all_debucquees = event.productevent_set.all().filter(
             Q(participationevent__participation_debucquee=False) & Q(participationevent__participation_bucquee=True)
         ).exists()
@@ -401,7 +410,7 @@ class EventViewSet(viewsets.ModelViewSet):
             return Response({'status': 'Toutes les participations ne sont pas débucquées pour "' + event.titre + '"'},
                             status=status.HTTP_400_BAD_REQUEST)
         event.end()
-        return Response({'status': 'Débucquage fermé pour "'+event.titre+'"'}, status=status.HTTP_200_OK)
+        return Response({'status': 'Débucquage fermé pour "' + event.titre + '"'}, status=status.HTTP_200_OK)
 
     @action(methods=['GET'], detail=True)
     def progression_bucquage(self, request, pk=None):
@@ -426,22 +435,23 @@ class EventViewSet(viewsets.ModelViewSet):
                 participation_event__quantity=0
             ).distinct().count()
 
-        return Response({'prebucquees': prebucquees.count(), 'bucquees': nb_bucquees_et_prebucquees}, status=status.HTTP_200_OK)
+        return Response({'prebucquees': prebucquees.count(), 'bucquees': nb_bucquees_et_prebucquees},
+                        status=status.HTTP_200_OK)
 
 
 # GET : renvoi tous les produits dont l'utilisateur peut gérer le fin'ss.
 # Filter : finss=<id finss> --> renvoi les produits du finss passer en argument url
 class ProductEventViewSet(viewsets.ModelViewSet):
     serializer_class = ProductEventSerializer
-    permission_classes = (RequiersConsommateur, EditProductEventPermission,) # On combine les permissions de bases et la perm custom pour overide uniquement les permissions de modification d'objet
+    permission_classes = (RequiersConsommateur,
+                          EditProductEventPermission,)  # On combine les permissions de bases et la perm custom pour overide uniquement les permissions de modification d'objet
     http_method_names = ["get", "options", "post", "patch", "put", "delete"]
     queryset = ProductEvent.objects.all()
-
 
     def get_queryset(self):
         finss_id = self.request.query_params.get("finss", None)
 
-        #Retrieving complete queryset
+        # Retrieving complete queryset
         if self.request.user.has_perm("appevents.event_super_manager") or self.request.user.is_superuser:
             self.queryset = self.queryset
         else:
@@ -527,7 +537,7 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
             if self.request.user.has_perm("appevents.event_super_manager") or self.request.user.is_superuser:
                 obj = Consommateur.objects.filter(
                     participation_event__product_participation__parent_event__etat_event__lt=Event.EtatEventChoices.TERMINE
-                    ).distinct()
+                ).distinct()
                 return obj
 
             # Si utilisateur manager d'un fin'ss, on récupère tous les Consommateurs qui ont des participations
@@ -540,7 +550,8 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
             return Consommateur.objects.none()
 
         # Si c'est une autre action que list alors on renvoie la liste de toutes les participations de fin'ss actif
-        return ParticipationEvent.objects.filter(product_participation__parent_event__etat_event__lt=Event.EtatEventChoices.TERMINE)
+        return ParticipationEvent.objects.filter(
+            product_participation__parent_event__etat_event__lt=Event.EtatEventChoices.TERMINE)
 
     # On permet la création de plusieurs objets en une seule fois
     # et l'édition d'un objet via le post (car perform_create appelle la méthode save du serializer)
@@ -559,10 +570,11 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
                     if serializer.validated_data.get("cible_participation") \
                             != Consommateur.objects.get(consommateur=request.user):
                         errors.append(["You don't have permission to access participations "
-                                       "of Consommateur "+str(serializer.data.get("cible_participation"))])
+                                       "of Consommateur " + str(serializer.data.get("cible_participation"))])
                         continue
 
-                self.perform_create(serializer)  # On appel le create du serializer (ce dernier est modifier pour permettre l'update des items)
+                self.perform_create(
+                    serializer)  # On appel le create du serializer (ce dernier est modifier pour permettre l'update des items)
                 success.append(serializer.data)
             else:
                 errors.append(serializer.errors)
@@ -623,18 +635,21 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
 
         if serializer.is_valid():
             def message_bucquage_valide(cible_participation_id, product_participation_id):
-                return {"cible_participation_id": cible_participation_id, "product_participation_id": product_participation_id, "status": "Participation bucquée"}
-            def message_bucquage_non_valide(cible_participation_id, product_participation_id, error):
-                return {"cible_participation_id": cible_participation_id, "product_participation_id": product_participation_id, "error": error}
+                return {"cible_participation_id": cible_participation_id,
+                        "product_participation_id": product_participation_id, "status": "Participation bucquée"}
 
-            #TODO: vérification du solde de chaque consommateur par rapport au total des buquages
+            def message_bucquage_non_valide(cible_participation_id, product_participation_id, error):
+                return {"cible_participation_id": cible_participation_id,
+                        "product_participation_id": product_participation_id, "error": error}
+
+            # TODO: vérification du solde de chaque consommateur par rapport au total des buquages
 
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         else:
             errors = []
-            liste_ids = [(p_data.get("cible_participation"),p_data.get("product_participation")) for p_data in datas]
+            liste_ids = [(p_data.get("cible_participation"), p_data.get("product_participation")) for p_data in datas]
             for index in range(len(liste_ids)):
                 err = serializer.errors[index]
                 if err != {}:
@@ -674,6 +689,7 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             def message_debucquage_valide(participation_id):
                 return {"participation_id": participation_id, "status": "Participation débucquée"}
+
             def message_debucquage_non_valide(participation_id, error):
                 return {"participation_id": participation_id, "error": error}
 
@@ -684,8 +700,10 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
             for consommateur in consommateurs:
                 # on sépare les participations qu'on autorise à débucquer en négatif des autres
                 participations_filter = participations.filter(cible_participation=consommateur)
-                participations_non_negats = participations_filter.filter(pk__in=[p.pk for p in participations_filter if not participations_request[p.pk]])
-                participations_negats = participations_filter.filter(pk__in=[p.pk for p in participations_filter if participations_request[p.pk]])
+                participations_non_negats = participations_filter.filter(
+                    pk__in=[p.pk for p in participations_filter if not participations_request[p.pk]])
+                participations_negats = participations_filter.filter(
+                    pk__in=[p.pk for p in participations_filter if participations_request[p.pk]])
 
                 # pour les participations qui ne seront pas débucqués en négatif, on regarde si ensemble, elles font passer le consommateur en négatif
                 cout_non_negats = sum([participation.prix_total for participation in participations_non_negats])
@@ -697,7 +715,9 @@ class BucqageEventViewSet(viewsets.ModelViewSet):
                         else:
                             errors.append(message_debucquage_non_valide(participation.id, debucquage))
                 else:
-                    errors.extend([message_debucquage_non_valide(p.pk, "Le consommateur n'a pas assez d'argent") for p in participations_non_negats])
+                    errors.extend(
+                        [message_debucquage_non_valide(p.pk, "Le consommateur n'a pas assez d'argent") for p in
+                         participations_non_negats])
 
                 # on débucque ensuite les participations du consommateur qu'on autorise à être débucquée en négatif.
                 for participation in participations_negats:
@@ -762,9 +782,11 @@ class EventParticipationByConsommateurEmptyViewSet(viewsets.ReadOnlyModelViewSet
     permission_classes = (RequiersConsommateur, BucquageEventPermission,)
     http_method_names = ["get", "options"]
     filter_backends = [filters.SearchFilter, CaseInsensitiveOrderingFilter]
-    search_fields = ["consommateur__first_name", "consommateur__last_name", "consommateur__bucque", "consommateur__fams", "consommateur__proms"]
+    search_fields = ["consommateur__first_name", "consommateur__last_name", "consommateur__bucque",
+                     "consommateur__fams", "consommateur__proms"]
     ordering_fields = ["prenom", "nom", "bucque", "fams", "proms"]
-    ordering_case_insensitive_fields = ["consommateur__first_name", "consommateur__last_name", "consommateur__bucque", "consommateur__proms"]
+    ordering_case_insensitive_fields = ["consommateur__first_name", "consommateur__last_name", "consommateur__bucque",
+                                        "consommateur__proms"]
     replace_ordering_fields = {"nom": "consommateur__last_name",
                                "prenom": "consommateur__first_name",
                                "fams": "consommateur__fams",
