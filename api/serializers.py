@@ -112,6 +112,12 @@ class ConsommateurSerializer(serializers.HyperlinkedModelSerializer):
         fields = ("id", "nom", "prenom", "bucque", "fams", "proms", "commentaire", "solde", "totaldep")
 
 
+class ConsommateurLightSerializer(ConsommateurSerializer):
+    class Meta:
+        model = Consommateur
+        fields = ("id", "nom", "prenom", "bucque", "fams", "proms")
+
+
 class RechargeSerializer(serializers.HyperlinkedModelSerializer):
     cible_id = serializers.CharField(source="cible_recharge.id")
     date = serializers.DateTimeField(read_only=True)

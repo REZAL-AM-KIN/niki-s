@@ -368,6 +368,8 @@ class EventViewSet(viewsets.ModelViewSet):
         if self.action in ["fermeture_prebucquage", "fermeture_bucquage", "fermeture_debucquage"]:
             # On n'a besoin d'aucune donnée dans champ data de la requête
             return serializers.BaseSerializer
+        if self.action == "managers_details":
+            return ConsommateurLightSerializer
         return EventSerializer
 
     def get_queryset(self):
@@ -437,6 +439,12 @@ class EventViewSet(viewsets.ModelViewSet):
 
         return Response({'prebucquees': prebucquees.count(), 'bucquees': nb_bucquees_et_prebucquees},
                         status=status.HTTP_200_OK)
+
+    @action(methods=['GET'], detail=True)
+    def managers_details(self, request, pk=None):
+        event = self.get_object()
+        serializer = self.get_serializer(event.managers.all(), many=True)
+        return Response(serializer.data)
 
 
 # GET : renvoi tous les produits dont l'utilisateur peut gérer le fin'ss.
