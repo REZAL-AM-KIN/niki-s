@@ -12,7 +12,7 @@ def check_user_cotiz_task():
     email_template = get_template("appuser/cotiz_expired_email.txt")
     email_content = email_template.render()
 
-    users = Utilisateur.objects.filter(Q(is_active=True) & Q(date_expiration=date.today()))
+    users = Utilisateur.objects.filter(Q(has_cotiz=True) & Q(date_expiration__lte=date.today()))
 
     emails = []
     for user in users:
@@ -21,20 +21,23 @@ def check_user_cotiz_task():
 
         emails.append(('Niki - Votre cotisation au rezal a expirée', email_content, None, [user.email]))
 
+    print(f"{len(users)} utilisateurs désactivés")
     send_mass_mail(emails)
+
 
 @shared_task()
 def send_mail_for_cotiz_task():
     email_template = get_template("appuser/cotiz_will_expire_email.txt")
 
-    #On sélectionne les users actifs qui expire dans 6 jours ou moins
+    # On sélectionne les users actifs qui expire dans 6 jours ou moins
     # et qui aucun mail n'a déjà été envoyé les 2 précédents jours
 
-    users = Utilisateur.objects.filter(Q(is_active=True)
+    users = Utilisateur.objects.filter(Q(has_cotiz=True)
                                        & Q(date_expiration__gt=date.today())
-                                       & Q(date_expiration__lte=(date.today()+timedelta(days=6)))
-                                       & (Q(last_email_date__lte=(date.today()-timedelta(days=2)))
-                                          | Q(last_email_date=None))
+                                       & Q(date_expiration__lte=(date.today() + timedelta(days=6)))
+                                       & (Q(last_email_date__lte=(date.today() - timedelta(days=2)))
+                                          | Q(last_email_date=None)
+                                          )
                                        )
 
     emails = []
@@ -42,12 +45,12 @@ def send_mail_for_cotiz_task():
         context = {
             'expiry_date': user.date_expiration,
             'time_left': (user.date_expiration - date.today()).days
-            }
+        }
 
         email_content = email_template.render(context)
         emails.append(('Niki - Expiration de votre cotisation au rezal', email_content, None, [user.email]))
         user.last_email_date = date.today()
         user.save()
 
+    print(f"{len(users)} utilisateurs contactés")
     send_mass_mail(emails)
-
