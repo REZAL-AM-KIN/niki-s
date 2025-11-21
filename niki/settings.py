@@ -281,11 +281,11 @@ CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 CELERY_BEAT_SCHEDULE = {
     "check_user_cotiz_task": {
         "task": "appuser.tasks.check_user_cotiz_task",
-        "schedule": crontab(minute=0, hour=0),
+        "schedule": crontab(minute=1, hour=0),
     },
     "send_mail_for_cotiz_task": {
         "task": "appuser.tasks.send_mail_for_cotiz_task",
-        "schedule": crontab(minute=0, hour=0),
+        "schedule": crontab(minute=2, hour=0),
     },
     "update_maclookup_vendors_list_task": {
         "task": "appmacgest.tasks.update_maclookup_vendors_list_task",
