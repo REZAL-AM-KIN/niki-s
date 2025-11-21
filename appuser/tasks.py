@@ -10,7 +10,6 @@ from datetime import date, timedelta
 @shared_task()
 def check_user_cotiz_task():
     email_template = get_template("appuser/cotiz_expired_email.txt")
-    email_content = email_template.render()
 
     users = Utilisateur.objects.filter(Q(has_cotiz=True) & Q(date_expiration__lte=date.today()))
 
@@ -19,6 +18,11 @@ def check_user_cotiz_task():
         user.has_cotiz = False
         user.save()
 
+        context = {
+            'first_name': user.first_name,
+            'expiry_date': user.date_expiration
+        }
+        email_content = email_template.render(context)
         emails.append(('Niki - Votre cotisation au rezal a expirée', email_content, None, [user.email]))
 
     print(f"{len(users)} utilisateurs désactivés")
@@ -43,6 +47,7 @@ def send_mail_for_cotiz_task():
     emails = []
     for user in users:
         context = {
+            'first_name': user.first_name,
             'expiry_date': user.date_expiration,
             'time_left': (user.date_expiration - date.today()).days
         }

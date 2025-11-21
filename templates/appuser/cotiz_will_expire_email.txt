@@ -1,4 +1,6 @@
 {% autoescape off %}
+Bonjour {{first_name}},
+
 Votre cotisation expire dans {{time_left}} jour(s).
 Pour la renouveler, veuillez contacter un membre du rezal à l'adresse contact@rezal.fr.
 
