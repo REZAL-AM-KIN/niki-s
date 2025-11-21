@@ -18,6 +18,7 @@ class AdminUtilisateur(admin.ModelAdmin):
         "is_staff",
         "is_superuser",
     )
+    readonly_fields = ("last_email_date",)
 
 class AdminGroupe(admin.ModelAdmin):
     list_display = (

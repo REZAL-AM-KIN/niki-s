@@ -227,7 +227,8 @@ LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "index"
 LOGOUT_REDIRECT_URL = "index"
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_FILE_PATH = getenv("EMAIL_FILE_PATH", "/var/log/niki/mail")
 EMAIL_HOST = getenv("EMAIL_HOST", "")
 EMAIL_HOST_USER = getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = getenv("EMAIL_HOST_PASSWORD", "")
@@ -280,11 +281,11 @@ CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 CELERY_BEAT_SCHEDULE = {
     "check_user_cotiz_task": {
         "task": "appuser.tasks.check_user_cotiz_task",
-        "schedule": crontab(minute=0, hour=0),
+        "schedule": crontab(minute=1, hour=0),
     },
     "send_mail_for_cotiz_task": {
         "task": "appuser.tasks.send_mail_for_cotiz_task",
-        "schedule": crontab(minute=0, hour=0),
+        "schedule": crontab(minute=2, hour=0),
     },
     "update_maclookup_vendors_list_task": {
         "task": "appmacgest.tasks.update_maclookup_vendors_list_task",
