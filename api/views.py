@@ -21,6 +21,19 @@ from django.http.request import QueryDict
 # GET : recupère les permissions de l'utilisateur
 
 
+class IsActivatedViewSet(viewsets.ModelViewSet):
+    serializer_class = IsActivatedSerializer
+    http_method_names = ["get", "options"]
+    permission_classes = (permissions.DjangoModelPermissions,)
+    queryset = Utilisateur.objects.none()
+
+    def list(self, request):
+        is_activated = Consommateur.objects.filter(consommateur=request.user.pk, activated=True).exists()
+        data = {"is_activated": is_activated}
+        serializer = self.get_serializer(data)
+        return Response(serializer.data)
+
+
 class PermissionsViewSet(viewsets.ModelViewSet):
     serializer_class = PermissionsSerializer
     http_method_names = ["get", "options"]

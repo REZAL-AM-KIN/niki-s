@@ -4,6 +4,7 @@ from rest_framework import routers
 from . import views
 
 router = routers.DefaultRouter()
+router.register(r"is_activated", views.IsActivatedViewSet, basename="is_activated")
 router.register(r"permissions", views.PermissionsViewSet, basename="permissions")
 router.register(r"utilisateur", views.CurrentUserViewSet, basename="utilisateur")
 router.register(r"produits", views.ProduitViewSet)
